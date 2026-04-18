@@ -10,12 +10,9 @@ dotenv.config();
 const app = express();
 const port = process.env.PORT || 8000;
 
-app.use((req, res, next) => {
-
+app.use((req, _res, next) => {
   console.log(req.method, req.url);
-
   next();
-
 });
 app.use(cors());
 app.options('*', cors());
@@ -23,17 +20,30 @@ app.use(express.json());
 
 const provider = createProvider();
 
-app.post('/translate', async (req: Request, res: Response) => {
-  const { text, targetLanguage } = req.body as { text?: string; targetLanguage?: string };
+interface TranslateSegment {
+  id: string;
+  text: string;
+}
 
-  if (!text || !targetLanguage) {
-    res.status(400).json({ error: 'text and targetLanguage are required' });
+app.post('/translate', async (req: Request, res: Response) => {
+  const { segments, targetLanguage } = req.body as {
+    segments?: TranslateSegment[];
+    targetLanguage?: string;
+  };
+
+  if (!segments?.length || !targetLanguage) {
+    res.status(400).json({ error: 'segments and targetLanguage are required' });
     return;
   }
 
   try {
-    const translatedText = await provider.translate(text, targetLanguage);
-    res.json({ translatedText });
+    const raw = await provider.translate(JSON.stringify(segments), targetLanguage);
+
+    // Strip markdown fences if the model wraps the response
+    const cleaned = raw.trim().replace(/^```(?:json)?\n?/, '').replace(/\n?```$/, '');
+    const translated = JSON.parse(cleaned) as { id: string; translatedText: string }[];
+
+    res.json({ segments: translated });
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : 'Translation failed';
     console.error('Translation error:', message);
@@ -42,5 +52,7 @@ app.post('/translate', async (req: Request, res: Response) => {
 });
 
 app.listen(port, () => {
-  console.log(`Translation server running on http://localhost:${port} [${process.env.LLM_PROVIDER || 'openai'}]`);
+  console.log(
+    `Translation server running on http://localhost:${port} [${process.env.LLM_PROVIDER || 'openai'}]`
+  );
 });

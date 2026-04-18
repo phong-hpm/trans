@@ -1,6 +1,7 @@
 // background.ts — Service worker proxy: relays translate requests to bypass content script CORS
 
 import type { TranslateRequest, TranslateResponse } from '../types';
+import { logCall, logError, logResponse } from './logger';
 
 interface TranslateMessage extends TranslateRequest {
   type: 'TRANSLATE';
@@ -9,7 +10,7 @@ interface TranslateMessage extends TranslateRequest {
 
 interface TranslateResult {
   success: true;
-  translatedText: string;
+  segments: TranslateResponse['segments'];
 }
 
 interface TranslateError {
@@ -23,13 +24,18 @@ chrome.runtime.onMessage.addListener(
   (message: TranslateMessage, _sender, sendResponse: (result: MessageResult) => void) => {
     if (message.type !== 'TRANSLATE') return;
 
-    fetch(`${message.backendUrl}/translate`, {
+    const url = `${message.backendUrl}/translate`;
+    const requestData: TranslateRequest = {
+      segments: message.segments,
+      targetLanguage: message.targetLanguage,
+    };
+
+    logCall('POST', url, requestData);
+
+    fetch(url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        text: message.text,
-        targetLanguage: message.targetLanguage,
-      } satisfies TranslateRequest),
+      body: JSON.stringify(requestData),
     })
       .then(async (res) => {
         if (!res.ok) {
@@ -38,13 +44,16 @@ chrome.runtime.onMessage.addListener(
         }
         return res.json() as Promise<TranslateResponse>;
       })
-      .then((data) => sendResponse({ success: true, translatedText: data.translatedText }))
+      .then((data) => {
+        logResponse('POST', url, requestData, data);
+        sendResponse({ success: true, segments: data.segments });
+      })
       .catch((err: unknown) => {
         const error = err instanceof Error ? err.message : 'Translation failed';
+        logError('POST', url, requestData, error);
         sendResponse({ success: false, error });
       });
 
-    // Return true to keep the message channel open for the async response
     return true;
   }
 );

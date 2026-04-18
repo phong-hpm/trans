@@ -1,12 +1,17 @@
 // types.ts — Shared TypeScript types across content script and popup
 
-export interface TranslateRequest {
+export interface TranslateSegment {
+  id: string;
   text: string;
+}
+
+export interface TranslateRequest {
+  segments: TranslateSegment[];
   targetLanguage: string;
 }
 
 export interface TranslateResponse {
-  translatedText: string;
+  segments: { id: string; translatedText: string }[];
 }
 
 export interface ExtensionSettings {
