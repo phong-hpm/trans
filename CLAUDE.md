@@ -51,6 +51,24 @@ or resolving dependency issues. It is auto-generated and contains no actionable 
 After any change that creates, deletes, or moves a file, update `TREE.md` to reflect the new
 structure before finishing the task. This keeps the project map accurate for future sessions.
 
+## Git Workflow
+
+### Starting a feature
+When the user's message is prefixed with `[feature]`, `[fix]`, or `[chore]`:
+1. Checkout `main` and pull latest
+2. Create a branch: `feat/...`, `fix/...`, or `chore/...`
+3. Implement with local commits only — do not push until told
+
+### Pushing
+Push when the user's intent is clearly to publish — e.g. "push", "push it", "push code",
+"đẩy lên", "ship it". Use intent, not exact wording.
+
+### Creating a PR
+When the user signals they want a PR — e.g. "tạo PR", "open PR", "make a PR", "PR đi":
+1. Push the branch
+2. Show the draft title + body for review
+3. Wait for explicit confirmation before creating
+
 ## Project Context
 
 Read `TREE.md` + `ARCHITECTURE.md` before making changes — they describe the full structure
