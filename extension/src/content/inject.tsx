@@ -25,14 +25,10 @@ const mountButton = (anchor: HTMLElement, contentEl: HTMLElement, blockId: strin
   createRoot(mount).render(
     <TranslateButton
       getSettings={getSettings}
-      getText={() => contentEl.innerText}
+      getText={() => contentEl.innerHTML}
       onTranslate={(translated) => {
         originalHTML = contentEl.innerHTML;
-        const wrapper = document.createElement('div');
-        wrapper.style.cssText = 'white-space: pre-wrap; line-height: 1.6; font-family: inherit;';
-        wrapper.textContent = translated;
-        contentEl.innerHTML = '';
-        contentEl.appendChild(wrapper);
+        contentEl.innerHTML = translated;
       }}
       onRestore={() => {
         contentEl.innerHTML = originalHTML;

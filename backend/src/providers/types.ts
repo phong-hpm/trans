@@ -5,4 +5,4 @@ export interface TranslationProvider {
 }
 
 export const buildSystemPrompt = (targetLanguage: string) =>
-  `You are a professional translator. Translate the following text to ${targetLanguage}. Preserve all markdown formatting, code blocks, inline code, URLs, and technical terms. Return only the translated text without any explanation or preamble.`;
+  `You are a professional translator. Translate the following HTML to ${targetLanguage}. Rules: preserve all HTML tags and attributes exactly as-is, only translate visible text content, keep code blocks and technical terms untranslated, return only the translated HTML with no explanation or preamble.`;
