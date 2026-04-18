@@ -6,6 +6,8 @@ import { TranslateButton } from './components/TranslateButton';
 import { getSettings } from './settings';
 import shadowStyles from './shadow.css?inline';
 
+const ANCHOR_STYLE = 'position:absolute;top:8px;right:-30px;z-index:9999;';
+
 const mountButton = (anchor: HTMLElement, contentEl: HTMLElement, blockId: string): void => {
   if (anchor.querySelector(`[data-trans-id="${blockId}"]`)) return;
 
@@ -20,23 +22,28 @@ const mountButton = (anchor: HTMLElement, contentEl: HTMLElement, blockId: strin
   const mount = document.createElement('div');
   shadow.appendChild(mount);
 
-  let originalHTML = '';
-
   createRoot(mount).render(
     <TranslateButton
+      blockId={blockId}
       getSettings={getSettings}
-      getText={() => contentEl.innerHTML}
-      onTranslate={(translated) => {
-        originalHTML = contentEl.innerHTML;
-        contentEl.innerHTML = translated;
-      }}
-      onRestore={() => {
-        contentEl.innerHTML = originalHTML;
-      }}
+      getElement={() => contentEl}
     />
   );
 
   anchor.appendChild(host);
+};
+
+const makeAnchor = (parent: HTMLElement, blockId: string): HTMLElement | null => {
+  if (parent.querySelector(`[data-trans-id="${blockId}"]`)) return null;
+
+  if (window.getComputedStyle(parent).position === 'static') {
+    parent.style.position = 'relative';
+  }
+
+  const anchor = document.createElement('div');
+  anchor.style.cssText = ANCHOR_STYLE;
+  parent.appendChild(anchor);
+  return anchor;
 };
 
 const injectIntoTitle = (): void => {
@@ -46,14 +53,8 @@ const injectIntoTitle = (): void => {
   const textEl = container.querySelector<HTMLElement>(q.titleText);
   if (!textEl) return;
 
-  const parent = container.parentElement ?? container;
-  if (window.getComputedStyle(parent).position === 'static') {
-    parent.style.position = 'relative';
-  }
-
-  const anchor = document.createElement('div');
-  anchor.style.cssText = 'position:absolute;top:4px;right:0;z-index:100;';
-  parent.appendChild(anchor);
+  const anchor = makeAnchor(container, 'issue-title');
+  if (!anchor) return;
 
   mountButton(anchor, textEl, 'issue-title');
 };
@@ -65,21 +66,9 @@ const injectIntoIssueBody = (): void => {
   const contentEl = block.querySelector<HTMLElement>(`${q.issueBodyViewer} ${q.markdownBody}`);
   if (!contentEl) return;
 
-  // Inject into the header actions area (same pattern as comments)
-  const actionsEl = block.querySelector<HTMLElement>(q.commentHeaderActions);
-  if (actionsEl) {
-    mountButton(actionsEl, contentEl, 'issue-body');
-    return;
-  }
+  const anchor = makeAnchor(block, 'issue-body');
+  if (!anchor) return;
 
-  // Fallback: position outside the block via parent
-  const parent = block.parentElement ?? block;
-  if (window.getComputedStyle(parent).position === 'static') {
-    parent.style.position = 'relative';
-  }
-  const anchor = document.createElement('div');
-  anchor.style.cssText = 'position:absolute;top:8px;right:8px;z-index:100;';
-  parent.appendChild(anchor);
   mountButton(anchor, contentEl, 'issue-body');
 };
 
@@ -87,10 +76,11 @@ const injectIntoComment = (block: Element, index: number): void => {
   const contentEl = block.querySelector<HTMLElement>(q.markdownBody);
   if (!contentEl) return;
 
-  const actionsEl = block.querySelector<HTMLElement>(q.commentHeaderActions);
-  if (!actionsEl) return;
+  const blockId = `comment-${index}`;
+  const anchor = makeAnchor(block as HTMLElement, blockId);
+  if (!anchor) return;
 
-  mountButton(actionsEl, contentEl, `comment-${index}`);
+  mountButton(anchor, contentEl, blockId);
 };
 
 export const processBlocks = (): void => {

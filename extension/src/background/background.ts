@@ -10,7 +10,7 @@ interface TranslateMessage extends TranslateRequest {
 
 interface TranslateResult {
   success: true;
-  translatedText: string;
+  segments: TranslateResponse['segments'];
 }
 
 interface TranslateError {
@@ -26,7 +26,7 @@ chrome.runtime.onMessage.addListener(
 
     const url = `${message.backendUrl}/translate`;
     const requestData: TranslateRequest = {
-      text: message.text,
+      segments: message.segments,
       targetLanguage: message.targetLanguage,
     };
 
@@ -46,7 +46,7 @@ chrome.runtime.onMessage.addListener(
       })
       .then((data) => {
         logResponse('POST', url, requestData, data);
-        sendResponse({ success: true, translatedText: data.translatedText });
+        sendResponse({ success: true, segments: data.segments });
       })
       .catch((err: unknown) => {
         const error = err instanceof Error ? err.message : 'Translation failed';

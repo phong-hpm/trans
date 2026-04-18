@@ -1,61 +1,97 @@
-// useTranslate.ts — Translation state machine with toast error reporting
+// useTranslate.ts — Translation state machine with DOM segment extraction and local cache
 
-import { useCallback, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import type { ExtensionSettings } from '../../types';
+import { applyTranslation, extractSegments, restoreOriginal } from '../domSegments';
+import type { TranslatedSegment } from '../domSegments';
+import { getCached, setCached } from '../translationCache';
 
 type TranslateState = 'idle' | 'loading' | 'translated';
 
 export const useTranslate = (
+  blockId: string,
   getSettings: () => Promise<ExtensionSettings>,
-  getText: () => string,
-  onTranslate: (text: string) => void,
-  onRestore: () => void
+  getElement: () => HTMLElement
 ) => {
-  const [state, setState] = useState<TranslateState>('idle');
-  const [cached, setCached] = useState<string | null>(null);
+  const [uiState, setUiState] = useState<TranslateState>('idle');
+  const stateRef = useRef<TranslateState>('idle');
+  const segmentsRef = useRef<TranslatedSegment[] | null>(null);
+
+  const setState = useCallback((s: TranslateState) => {
+    stateRef.current = s;
+    setUiState(s);
+  }, []);
 
   const trigger = useCallback(async () => {
+    const state = stateRef.current;
+    const segments = segmentsRef.current;
+
     if (state === 'loading') return;
 
-    if (state === 'translated') {
-      onRestore();
+    if (state === 'translated' && segments) {
+      restoreOriginal(segments, getElement());
       setState('idle');
       return;
     }
 
-    if (cached !== null) {
-      onTranslate(cached);
+    if (segments) {
+      applyTranslation(segments, getElement());
       setState('translated');
       return;
     }
 
-    const text = getText().trim();
-    if (!text) return;
-
     setState('loading');
 
     try {
-      const settings = await getSettings();
-      const result = await chrome.runtime.sendMessage({
-        type: 'TRANSLATE',
-        text,
-        targetLanguage: settings.targetLanguage,
-        backendUrl: settings.backendUrl,
-      });
+      const el = getElement();
+      const rawSegments = extractSegments(el);
 
-      if (!result) throw new Error('No response from background worker');
-      if (!result.success) throw new Error(result.error);
+      if (!rawSegments.length) {
+        setState('idle');
+        return;
+      }
 
-      setCached(result.translatedText);
-      onTranslate(result.translatedText);
+      // Check cache first — match by original text content
+      const cached = await getCached(blockId);
+      let translated: TranslatedSegment[];
+
+      if (cached) {
+        const map = new Map(cached.segments.map((s) => [s.text, s.translatedText]));
+        translated = rawSegments.map((s) => ({
+          ...s,
+          translatedText: map.get(s.text) ?? s.text,
+        }));
+      } else {
+        const settings = await getSettings();
+        const result = await chrome.runtime.sendMessage({
+          type: 'TRANSLATE',
+          segments: rawSegments,
+          targetLanguage: settings.targetLanguage,
+          backendUrl: settings.backendUrl,
+        });
+
+        if (!result) throw new Error('No response from background worker');
+        if (!result.success) throw new Error(result.error);
+
+        translated = rawSegments.map((s) => ({
+          ...s,
+          translatedText:
+            result.segments.find((r: { id: string }) => r.id === s.id)?.translatedText ?? s.text,
+        }));
+
+        await setCached(blockId, translated);
+      }
+
+      segmentsRef.current = translated;
+      applyTranslation(translated, el);
       setState('translated');
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Translation failed';
       toast.error(msg);
       setState('idle');
     }
-  }, [state, cached, getSettings, getText, onTranslate, onRestore]);
+  }, [blockId, getSettings, getElement, setState]);
 
-  return { state, trigger };
+  return { state: uiState, trigger };
 };
