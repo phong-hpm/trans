@@ -1,0 +1,23 @@
+{
+  "manifest_version": 3,
+  "name": "GitHub Translator",
+  "version": "1.0.2",
+  "description": "Translate GitHub Issues content with AI — one click per block",
+  "permissions": ["storage"],
+  "host_permissions": ["https://github.com/*", "http://localhost:*/*", "http://localhost:8000/*"],
+  "content_scripts": [
+    {
+      "matches": ["https://github.com/*"],
+      "js": ["src/content/content-script.tsx"],
+      "run_at": "document_idle"
+    }
+  ],
+  "background": {
+    "service_worker": "src/background/background.ts",
+    "type": "module"
+  },
+  "action": {
+    "default_popup": "src/popup/index.html",
+    "default_title": "GitHub Translator"
+  }
+}

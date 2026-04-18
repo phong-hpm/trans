@@ -1,0 +1,4 @@
+/* shadow.css — Tailwind CSS injected into each Shadow DOM root for style isolation */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
