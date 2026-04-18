@@ -2,9 +2,9 @@
 
 import { createRoot } from 'react-dom/client';
 import { githubIssueQueries as q } from '../constants/github-query';
-import shadowStyles from './shadow.css?inline';
 import { TranslateButton } from './components/TranslateButton';
 import { getSettings } from './settings';
+import shadowStyles from './shadow.css?inline';
 
 const mountButton = (anchor: HTMLElement, contentEl: HTMLElement, blockId: string): void => {
   if (anchor.querySelector(`[data-trans-id="${blockId}"]`)) return;
@@ -46,13 +46,14 @@ const injectIntoTitle = (): void => {
   const textEl = container.querySelector<HTMLElement>(q.titleText);
   if (!textEl) return;
 
-  if (window.getComputedStyle(container).position === 'static') {
-    container.style.position = 'relative';
+  const parent = container.parentElement ?? container;
+  if (window.getComputedStyle(parent).position === 'static') {
+    parent.style.position = 'relative';
   }
 
   const anchor = document.createElement('div');
   anchor.style.cssText = 'position:absolute;top:4px;right:0;z-index:100;';
-  container.appendChild(anchor);
+  parent.appendChild(anchor);
 
   mountButton(anchor, textEl, 'issue-title');
 };
@@ -64,14 +65,21 @@ const injectIntoIssueBody = (): void => {
   const contentEl = block.querySelector<HTMLElement>(`${q.issueBodyViewer} ${q.markdownBody}`);
   if (!contentEl) return;
 
-  if (window.getComputedStyle(block).position === 'static') {
-    block.style.position = 'relative';
+  // Inject into the header actions area (same pattern as comments)
+  const actionsEl = block.querySelector<HTMLElement>(q.commentHeaderActions);
+  if (actionsEl) {
+    mountButton(actionsEl, contentEl, 'issue-body');
+    return;
   }
 
+  // Fallback: position outside the block via parent
+  const parent = block.parentElement ?? block;
+  if (window.getComputedStyle(parent).position === 'static') {
+    parent.style.position = 'relative';
+  }
   const anchor = document.createElement('div');
   anchor.style.cssText = 'position:absolute;top:8px;right:8px;z-index:100;';
-  block.appendChild(anchor);
-
+  parent.appendChild(anchor);
   mountButton(anchor, contentEl, 'issue-body');
 };
 

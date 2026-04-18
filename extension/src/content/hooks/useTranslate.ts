@@ -44,6 +44,7 @@ export const useTranslate = (
         backendUrl: settings.backendUrl,
       });
 
+      if (!result) throw new Error('No response from background worker');
       if (!result.success) throw new Error(result.error);
 
       setCached(result.translatedText);

@@ -1,5 +1,5 @@
-import type React from 'react';
 import { Languages, Loader2, RotateCcw } from 'lucide-react';
+import type React from 'react';
 import type { ExtensionSettings } from '../../types';
 import { useTranslate } from '../hooks/useTranslate';
 
@@ -10,7 +10,12 @@ interface Props {
   onRestore: () => void;
 }
 
-export const TranslateButton: React.FC<Props> = ({ getSettings, getText, onTranslate, onRestore }) => {
+export const TranslateButton: React.FC<Props> = ({
+  getSettings,
+  getText,
+  onTranslate,
+  onRestore,
+}) => {
   const { state, trigger } = useTranslate(getSettings, getText, onTranslate, onRestore);
 
   const btnCls = [
