@@ -46,6 +46,11 @@ async function translate(text: string) { ... }
 Never read `yarn.lock` under any circumstances — not when adding packages, removing packages,
 or resolving dependency issues. It is auto-generated and contains no actionable information.
 
+## Keeping TREE.md in sync
+
+After any change that creates, deletes, or moves a file, update `TREE.md` to reflect the new
+structure before finishing the task. This keeps the project map accurate for future sessions.
+
 ## Project Context
 
 Read `TREE.md` + `ARCHITECTURE.md` before making changes — they describe the full structure
