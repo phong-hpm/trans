@@ -1,10 +1,10 @@
 // background.ts — Service worker proxy: relays translate requests to bypass content script CORS
 
-import type { TranslateRequest, TranslateResponse } from '../types';
+import { MessageType, type TranslateRequest, type TranslateResponse } from '../types';
 import { logCall, logError, logResponse } from './logger';
 
 interface TranslateMessage extends TranslateRequest {
-  type: 'TRANSLATE';
+  type: MessageType.Translate;
   backendUrl: string;
 }
 
@@ -22,7 +22,7 @@ type MessageResult = TranslateResult | TranslateError;
 
 chrome.runtime.onMessage.addListener(
   (message: TranslateMessage, _sender, sendResponse: (result: MessageResult) => void) => {
-    if (message.type !== 'TRANSLATE') return;
+    if (message.type !== MessageType.Translate) return;
 
     const url = `${message.backendUrl}/translate`;
     const requestData: TranslateRequest = {

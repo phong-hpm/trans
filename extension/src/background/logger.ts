@@ -1,9 +1,9 @@
 // logger.ts — Grouped DevTools logger for background service worker requests
 
-import { LogType } from '../types';
+import { LogType, MessageType } from '../types';
 
 interface LogPayload {
-  type: 'DEV_LOG';
+  type: MessageType.DevLog;
   logType: LogType;
   label: string;
   entries: unknown[];
@@ -23,7 +23,7 @@ export const logCall = (method: string, url: string, data: unknown): void => {
   console.groupEnd();
 
   if (import.meta.env.DEV) {
-    relayToPage({ type: 'DEV_LOG', logType: LogType.Call, label, entries: [data] });
+    relayToPage({ type: MessageType.DevLog, logType: LogType.Call, label, entries: [data] });
   }
 };
 
@@ -35,7 +35,7 @@ export const logResponse = (method: string, url: string, data: unknown, response
   console.groupEnd();
 
   if (import.meta.env.DEV) {
-    relayToPage({ type: 'DEV_LOG', logType: LogType.Response, label, entries: [data, response] });
+    relayToPage({ type: MessageType.DevLog, logType: LogType.Response, label, entries: [data, response] });
   }
 };
 
@@ -47,6 +47,6 @@ export const logError = (method: string, url: string, data: unknown, error: unkn
   console.groupEnd();
 
   if (import.meta.env.DEV) {
-    relayToPage({ type: 'DEV_LOG', logType: LogType.Error, label, entries: [data, error] });
+    relayToPage({ type: MessageType.DevLog, logType: LogType.Error, label, entries: [data, error] });
   }
 };
