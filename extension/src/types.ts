@@ -1,4 +1,10 @@
-// types.ts — Shared TypeScript types across content script and popup
+// types.ts — Shared TypeScript types and enums across extension bundles
+
+export enum LogType {
+  Call = 'call',
+  Response = 'response',
+  Error = 'error',
+}
 
 export interface TranslateSegment {
   id: string;

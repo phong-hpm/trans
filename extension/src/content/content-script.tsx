@@ -1,6 +1,7 @@
 // content-script.tsx — Entry point: initialises injection and watches for DOM changes
 
 import { githubIssueQueries as q } from '../constants/github-query';
+import { LogType } from '../types';
 import { processBlocks } from './inject';
 import { mountToaster } from './toast';
 
@@ -8,12 +9,12 @@ const initDevLogs = (): void => {
   chrome.runtime.onMessage.addListener((message) => {
     if (message.type !== 'DEV_LOG') return;
     const { logType, label, entries } = message as {
-      logType: 'call' | 'response' | 'error';
+      logType: LogType;
       label: string;
       entries: unknown[];
     };
 
-    if (logType === 'error') {
+    if (logType === LogType.Error) {
       console.group(`[BG][ERROR] ${label}`);
       console.warn(...entries);
       console.groupEnd();
