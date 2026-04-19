@@ -24,10 +24,12 @@ chrome.runtime.onMessage.addListener(
   (message: TranslateMessage, _sender, sendResponse: (result: MessageResult) => void) => {
     if (message.type !== MessageType.Translate) return;
 
-    const url = `${message.backendUrl}/translate`;
+    const url = `${message.backendUrl}/translate`;  // backendUrl already includes /api/v1
     const requestData: TranslateRequest = {
       segments: message.segments,
       targetLanguage: message.targetLanguage,
+      provider: message.provider,
+      model: message.model,
     };
 
     logCall('POST', url, requestData);

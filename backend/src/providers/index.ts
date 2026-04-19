@@ -1,20 +1,16 @@
-// index.ts — Factory that instantiates the configured LLM provider
+// index.ts — Provider registry
 
-import { TranslationProvider } from './types';
-import { OpenAIProvider } from './openai';
-import { GeminiProvider } from './gemini';
+import type { TranslationProvider } from '@/providers/types';
+import { openaiProvider } from '@/providers/openai';
+import { geminiProvider } from '@/providers/gemini';
 
-type ProviderName = 'openai' | 'gemini';
+const providers: Record<string, TranslationProvider> = {
+  openai: openaiProvider,
+  gemini: geminiProvider,
+};
 
-export const createProvider = (): TranslationProvider => {
-  const name = (process.env.LLM_PROVIDER || 'openai').toLowerCase() as ProviderName;
-
-  switch (name) {
-    case 'openai':
-      return new OpenAIProvider();
-    case 'gemini':
-      return new GeminiProvider();
-    default:
-      throw new Error(`Unknown LLM_PROVIDER "${name}". Supported: openai, gemini`);
-  }
+export const getProvider = (name: string): TranslationProvider => {
+  const provider = providers[name];
+  if (!provider) throw new Error(`Unknown provider "${name}". Supported: ${Object.keys(providers).join(', ')}`);
+  return provider;
 };

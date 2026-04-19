@@ -5,5 +5,7 @@ import type { ExtensionSettings } from '../types';
 
 export const DEFAULT_SETTINGS: ExtensionSettings = {
   targetLanguage: 'Vietnamese',
-  backendUrl: ENV.isDev ? 'http://localhost:8000' : '',
+  backendUrl: ENV.isDev ? 'http://localhost:8000/api/v1' : '',
+  provider: 'openai',
+  model: 'gpt-4o-mini',
 };

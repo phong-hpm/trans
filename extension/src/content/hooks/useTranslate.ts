@@ -69,6 +69,8 @@ export const useTranslate = (
           segments: rawSegments,
           targetLanguage: settings.targetLanguage,
           backendUrl: settings.backendUrl,
+          provider: settings.provider,
+          model: settings.model,
         });
 
         if (!result) throw new Error('No response from background worker');
