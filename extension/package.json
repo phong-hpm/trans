@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "build": "vite build",
-    "dev": "vite build --watch",
+    "dev": "vite",
     "fix": "biome check --write src"
   },
   "dependencies": {
