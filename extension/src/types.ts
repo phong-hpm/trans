@@ -1,4 +1,15 @@
-// types.ts — Shared TypeScript types across content script and popup
+// types.ts — Shared TypeScript types and enums across extension bundles
+
+export enum MessageType {
+  Translate = 'TRANSLATE',
+  DevLog = 'DEV_LOG',
+}
+
+export enum LogType {
+  Call = 'call',
+  Response = 'response',
+  Error = 'error',
+}
 
 export interface TranslateSegment {
   id: string;
@@ -18,8 +29,3 @@ export interface ExtensionSettings {
   targetLanguage: string;
   backendUrl: string;
 }
-
-export const DEFAULT_SETTINGS: ExtensionSettings = {
-  targetLanguage: 'Vietnamese',
-  backendUrl: 'http://localhost:8000',
-};

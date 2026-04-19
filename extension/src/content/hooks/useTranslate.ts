@@ -2,7 +2,7 @@
 
 import { useCallback, useRef, useState } from 'react';
 import { toast } from 'sonner';
-import type { ExtensionSettings } from '../../types';
+import { MessageType, type ExtensionSettings } from '../../types';
 import { applyTranslation, extractSegments, restoreOriginal } from '../domSegments';
 import type { TranslatedSegment } from '../domSegments';
 import { getCached, setCached } from '../translationCache';
@@ -65,7 +65,7 @@ export const useTranslate = (
       } else {
         const settings = await getSettings();
         const result = await chrome.runtime.sendMessage({
-          type: 'TRANSLATE',
+          type: MessageType.Translate,
           segments: rawSegments,
           targetLanguage: settings.targetLanguage,
           backendUrl: settings.backendUrl,

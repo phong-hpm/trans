@@ -2,7 +2,8 @@
 
 import type React from 'react';
 import { useEffect, useState } from 'react';
-import { DEFAULT_SETTINGS, type ExtensionSettings } from '../types';
+import { DEFAULT_SETTINGS } from '../constants/settings';
+import type { ExtensionSettings } from '../types';
 
 const LANGUAGES = [
   'Vietnamese',
