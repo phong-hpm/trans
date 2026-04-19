@@ -36,6 +36,7 @@ trans/
         ├── declarations.d.ts            — Vite + Chrome type references
         ├── types.ts                     — Shared types: ExtensionSettings, TranslateRequest/Response
         ├── constants/
+        │   ├── env.ts                   — ENV default export: { isDev } derived from import.meta.env
         │   ├── github-query.ts          — All GitHub DOM selectors (data-testid, class-based)
         │   └── settings.ts              — DEFAULT_SETTINGS; backendUrl auto-set to localhost in DEV mode
         ├── background/
