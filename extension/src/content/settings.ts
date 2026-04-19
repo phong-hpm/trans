@@ -1,6 +1,7 @@
 // settings.ts — Settings cache singleton for content scripts
 
-import { DEFAULT_SETTINGS, type ExtensionSettings } from '../types';
+import { DEFAULT_SETTINGS } from '../constants/settings';
+import type { ExtensionSettings } from '../types';
 
 let cache: ExtensionSettings | null = null;
 

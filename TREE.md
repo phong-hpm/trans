@@ -36,19 +36,23 @@ trans/
         ├── declarations.d.ts            — Vite + Chrome type references
         ├── types.ts                     — Shared types: ExtensionSettings, TranslateRequest/Response
         ├── constants/
-        │   └── github-query.ts          — All GitHub DOM selectors (data-testid, class-based)
+        │   ├── github-query.ts          — All GitHub DOM selectors (data-testid, class-based)
+        │   └── settings.ts              — DEFAULT_SETTINGS; backendUrl auto-set to localhost in DEV mode
         ├── background/
-        │   └── background.ts            — Service worker CORS proxy: relays /translate requests
+        │   ├── background.ts            — Service worker CORS proxy: relays /translate requests
+        │   └── logger.ts               — Grouped request logger; relays to page DevTools in DEV mode
         ├── content/
-        │   ├── content-script.tsx       — Slim entry: init + MutationObserver debounce
+        │   ├── content-script.tsx       — Entry: init, MutationObserver, DEV log listener
         │   ├── inject.tsx               — Shadow DOM mounting + block injection (title, body, comments)
         │   ├── settings.ts              — Settings cache singleton (chrome.storage.sync)
         │   ├── toast.tsx                — Mounts Sonner <Toaster> into document.body
+        │   ├── domSegments.ts           — Extract/apply/restore text segments via TreeWalker
+        │   ├── translationCache.ts      — chrome.storage.local cache keyed by pathname:blockId
         │   ├── shadow.css               — Tailwind directives; imported via ?inline → injected into shadow roots
         │   ├── components/
         │   │   └── TranslateButton.tsx  — Translate/restore toggle button (lucide-react icons)
         │   └── hooks/
-        │       └── useTranslate.ts      — Translation state machine; calls toast.error() on failure
+        │       └── useTranslate.ts      — Translation state machine with cache lookup and useRef toggle
         └── popup/
             ├── index.html              — Popup HTML entry (crxjs resolves this from manifest action.default_popup)
             ├── index.tsx               — Popup entry point

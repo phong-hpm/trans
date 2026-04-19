@@ -4,7 +4,30 @@ import { githubIssueQueries as q } from '../constants/github-query';
 import { processBlocks } from './inject';
 import { mountToaster } from './toast';
 
+const initDevLogs = (): void => {
+  chrome.runtime.onMessage.addListener((message) => {
+    if (message.type !== 'DEV_LOG') return;
+    const { logType, label, entries } = message as {
+      logType: 'call' | 'response' | 'error';
+      label: string;
+      entries: unknown[];
+    };
+
+    if (logType === 'error') {
+      console.group(`[BG][ERROR] ${label}`);
+      console.warn(...entries);
+      console.groupEnd();
+    } else {
+      console.groupCollapsed(`[BG][${logType.toUpperCase()}] ${label}`);
+      console.log(...entries);
+      console.groupEnd();
+    }
+  });
+};
+
 const init = (): void => {
+  if (import.meta.env.DEV) initDevLogs();
+
   mountToaster();
   processBlocks();
 

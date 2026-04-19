@@ -18,8 +18,3 @@ export interface ExtensionSettings {
   targetLanguage: string;
   backendUrl: string;
 }
-
-export const DEFAULT_SETTINGS: ExtensionSettings = {
-  targetLanguage: 'Vietnamese',
-  backendUrl: 'http://localhost:8000',
-};
