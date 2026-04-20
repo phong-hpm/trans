@@ -1,4 +1,4 @@
-// Popup.tsx — Extension popup for configuring target language and backend URL
+// Popup.tsx — Extension popup for configuring target language, backend URL, provider and model
 
 import type React from 'react';
 import { useEffect, useState } from 'react';
@@ -20,6 +20,22 @@ const LANGUAGES = [
   'Arabic',
 ];
 
+const PROVIDERS: { value: string; label: string }[] = [
+  { value: 'openai', label: 'OpenAI' },
+  { value: 'gemini', label: 'Google Gemini' },
+];
+
+const MODELS: Record<string, { value: string; label: string }[]> = {
+  openai: [
+    { value: 'gpt-4o-mini', label: 'GPT-4o Mini' },
+    { value: 'gpt-4o', label: 'GPT-4o' },
+  ],
+  gemini: [
+    { value: 'gemini-2.5-flash', label: 'Gemini 2.5 Flash' },
+    { value: 'gemini-2.0-flash', label: 'Gemini 2.0 Flash' },
+  ],
+};
+
 export const Popup: React.FC = () => {
   const [settings, setSettings] = useState<ExtensionSettings>(DEFAULT_SETTINGS);
   const [saved, setSaved] = useState(false);
@@ -29,6 +45,11 @@ export const Popup: React.FC = () => {
       setSettings(items as ExtensionSettings);
     });
   }, []);
+
+  const handleProviderChange = (provider: string) => {
+    const defaultModel = MODELS[provider]?.[0]?.value ?? '';
+    setSettings((s) => ({ ...s, provider, model: defaultModel }));
+  };
 
   const handleSave = () => {
     chrome.storage.sync.set(settings, () => {
@@ -71,12 +92,42 @@ export const Popup: React.FC = () => {
         </div>
 
         <div>
+          <div className="block text-xs font-medium text-gray-600 mb-1">Provider</div>
+          <select
+            value={settings.provider}
+            onChange={(e) => handleProviderChange(e.target.value)}
+            className="w-full text-sm border border-gray-300 rounded-md px-2.5 py-1.5 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          >
+            {PROVIDERS.map((p) => (
+              <option key={p.value} value={p.value}>
+                {p.label}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div>
+          <div className="block text-xs font-medium text-gray-600 mb-1">Model</div>
+          <select
+            value={settings.model}
+            onChange={(e) => setSettings({ ...settings, model: e.target.value })}
+            className="w-full text-sm border border-gray-300 rounded-md px-2.5 py-1.5 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          >
+            {(MODELS[settings.provider] ?? []).map((m) => (
+              <option key={m.value} value={m.value}>
+                {m.label}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div>
           <div className="block text-xs font-medium text-gray-600 mb-1">Backend URL</div>
           <input
             type="url"
             value={settings.backendUrl}
             onChange={(e) => setSettings({ ...settings, backendUrl: e.target.value })}
-            placeholder="http://localhost:3000"
+            placeholder="http://localhost:8000"
             className="w-full text-sm border border-gray-300 rounded-md px-2.5 py-1.5 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           />
           <p className="text-xs text-gray-400 mt-1">The translation server URL</p>

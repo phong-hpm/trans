@@ -2,7 +2,9 @@
   "permissions": {
     "allow": [
       "Bash(git *)",
-      "Bash(gh pr create *)"
+      "Bash(gh pr create *)",
+      "Bash(node -e \"require\\('chalk'\\)\")",
+      "Bash(yarn add *)"
     ]
   }
 }

@@ -69,6 +69,32 @@ When the user signals they want a PR — e.g. "tạo PR", "open PR", "make a PR"
 2. Show the draft title + body for review
 3. Wait for explicit confirmation before creating
 
+## Backend — Import Aliases
+
+Always use `@/` for imports inside `backend/src/`. Never use relative paths like `../../`.
+
+```ts
+// correct
+import { translateSegments } from '@/services/translate.service';
+
+// incorrect
+import { translateSegments } from '../../services/translate.service';
+```
+
+This is enabled via `tsconfig.json` `paths` + `tsconfig-paths` (dev) + `tsc-alias` (build).
+
+## Backend — Service Function Params
+
+Service functions must accept a single object param, not positional args. This makes call sites readable and the function easy to extend.
+
+```ts
+// correct
+export const translateSegments = async ({ segments, targetLanguage, provider, model }: TranslateParams) => { ... }
+
+// incorrect
+export const translateSegments = async (segments, targetLanguage, provider, model) => { ... }
+```
+
 ## Project Context
 
 Read `TREE.md` + `ARCHITECTURE.md` before making changes — they describe the full structure

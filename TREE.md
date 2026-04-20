@@ -10,17 +10,32 @@ trans/
 ├── TREE.md                  — This file
 │
 ├── backend/
-│   ├── .env.example         — Environment variable template (LLM_PROVIDER, OPENAI_API_KEY, GEMINI_API_KEY, PORT)
+│   ├── .env.example         — Environment variable template (OPENAI_API_KEY, GEMINI_API_KEY, PORT)
 │   ├── .gitignore
 │   ├── package.json
-│   ├── tsconfig.json
+│   ├── tsconfig.json        — Includes @/ path alias pointing to src/
 │   └── src/
-│       ├── server.ts        — Express server with POST /translate endpoint
+│       ├── server.ts        — Express app setup, mounts /api router
+│       ├── types.ts         — Shared API types: TranslateSegment, TranslateRequest, TranslatedSegment
+│       ├── lib/
+│       │   └── logger.ts            — Chalk-coloured request/response/error logger (Logger class)
+│       ├── routes/
+│       │   ├── index.ts     — Root router: mounts /v1
+│       │   └── v1/
+│       │       └── translate.route.ts — POST /api/v1/translate
+│       ├── controllers/
+│       │   └── translate.controller.ts — Validates request, delegates to service
+│       ├── services/
+│       │   └── translate.service.ts   — Calls provider, merges original text into response
 │       └── providers/
-│           ├── index.ts     — Factory: createProvider() reads LLM_PROVIDER env var
-│           ├── types.ts     — TranslationProvider interface + buildSystemPrompt helper
-│           ├── openai.ts    — OpenAI provider implementation
-│           └── gemini.ts    — Gemini provider implementation
+│           ├── types.ts     — TranslationProvider interface
+│           ├── index.ts     — Provider registry (lookup by name)
+│           ├── openai/
+│           │   ├── index.ts — OpenAI provider (lazy client init)
+│           │   └── prompt.ts — GPT-optimised system prompt
+│           └── gemini/
+│               ├── index.ts — Gemini provider (lazy client init)
+│               └── prompt.ts — Gemini-optimised system prompt
 │
 └── extension/
     ├── .gitignore

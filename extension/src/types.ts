@@ -19,13 +19,17 @@ export interface TranslateSegment {
 export interface TranslateRequest {
   segments: TranslateSegment[];
   targetLanguage: string;
+  provider: string;
+  model: string;
 }
 
 export interface TranslateResponse {
-  segments: { id: string; translatedText: string }[];
+  segments: { id: string; text: string; translatedText: string }[];
 }
 
 export interface ExtensionSettings {
   targetLanguage: string;
   backendUrl: string;
+  provider: string;
+  model: string;
 }
