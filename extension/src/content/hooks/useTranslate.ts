@@ -2,7 +2,7 @@
 
 import { useCallback, useRef, useState } from 'react';
 import { toast } from 'sonner';
-import { MessageType, type ExtensionSettings } from '../../types';
+import { MessageType, type BlockType, type ContextBlock, type ExtensionSettings } from '../../types';
 import { applyTranslation, extractSegments, restoreOriginal } from '../domSegments';
 import type { TranslatedSegment } from '../domSegments';
 import { getCached, setCached } from '../translationCache';
@@ -11,8 +11,10 @@ type TranslateState = 'idle' | 'loading' | 'translated';
 
 export const useTranslate = (
   blockId: string,
+  blockType: BlockType,
   getSettings: () => Promise<ExtensionSettings>,
-  getElement: () => HTMLElement
+  getElement: () => HTMLElement,
+  getContextBlocks?: () => ContextBlock[]
 ) => {
   const [uiState, setUiState] = useState<TranslateState>('idle');
   const stateRef = useRef<TranslateState>('idle');
@@ -23,17 +25,17 @@ export const useTranslate = (
     setUiState(s);
   }, []);
 
-  const trigger = useCallback(async () => {
-    const state = stateRef.current;
+  const restore = useCallback(() => {
     const segments = segmentsRef.current;
+    if (!segments) return;
+    restoreOriginal(segments, getElement());
+    setState('idle');
+  }, [getElement, setState]);
 
-    if (state === 'loading') return;
+  const translate = useCallback(async () => {
+    if (stateRef.current === 'loading') return;
 
-    if (state === 'translated' && segments) {
-      restoreOriginal(segments, getElement());
-      setState('idle');
-      return;
-    }
+    const segments = segmentsRef.current;
 
     if (segments) {
       applyTranslation(segments, getElement());
@@ -52,7 +54,6 @@ export const useTranslate = (
         return;
       }
 
-      // Check cache first — match by original text content
       const cached = await getCached(blockId);
       let translated: TranslatedSegment[];
 
@@ -64,9 +65,13 @@ export const useTranslate = (
         }));
       } else {
         const settings = await getSettings();
+        const contextBlocks = getContextBlocks?.() ?? [];
+
         const result = await chrome.runtime.sendMessage({
           type: MessageType.Translate,
+          blockType,
           segments: rawSegments,
+          contextBlocks,
           targetLanguage: settings.targetLanguage,
           backendUrl: settings.backendUrl,
           provider: settings.provider,
@@ -93,7 +98,7 @@ export const useTranslate = (
       toast.error(msg);
       setState('idle');
     }
-  }, [blockId, getSettings, getElement, setState]);
+  }, [blockId, blockType, getSettings, getElement, getContextBlocks, setState]);
 
-  return { state: uiState, trigger };
+  return { state: uiState, translate, restore };
 };

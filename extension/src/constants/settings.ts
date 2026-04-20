@@ -1,11 +1,11 @@
-// settings.ts — Default extension settings, DEV/PROD aware
+// settings.ts — Default extension settings
 
 import ENV from './env';
 import type { ExtensionSettings } from '../types';
 
 export const DEFAULT_SETTINGS: ExtensionSettings = {
   targetLanguage: 'Vietnamese',
-  backendUrl: ENV.isDev ? 'http://localhost:8000/api/v1' : '',
-  provider: 'openai',
-  model: 'gpt-4o-mini',
+  backendUrl: ENV.backendUrl,
+  provider: 'gemini',
+  model: 'gemini-2.5-flash',
 };

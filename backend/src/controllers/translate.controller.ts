@@ -6,17 +6,17 @@ import { logger } from '@/lib/logger';
 import type { TranslateRequest } from '@/types';
 
 export const translateController = async (req: Request, res: Response): Promise<void> => {
-  const { segments, targetLanguage, provider, model } = req.body as Partial<TranslateRequest>;
+  const { blockType, segments, contextBlocks, targetLanguage, provider, model } = req.body as Partial<TranslateRequest>;
 
-  if (!segments?.length || !targetLanguage || !provider || !model) {
-    res.status(400).json({ error: 'segments, targetLanguage, provider, and model are required' });
+  if (!blockType || !segments?.length || !targetLanguage || !provider || !model) {
+    res.status(400).json({ error: 'blockType, segments, targetLanguage, provider, and model are required' });
     return;
   }
 
   logger.request(req.method, req.path, req.body);
 
   try {
-    const translated = await translateSegments({ segments, targetLanguage, provider, model });
+    const translated = await translateSegments({ segments, contextBlocks, targetLanguage, provider, model });
     logger.success(req.method, req.path, 200, { segments: translated });
     res.json({ segments: translated });
   } catch (err: unknown) {

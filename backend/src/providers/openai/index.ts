@@ -1,18 +1,20 @@
 // index.ts — OpenAI translation provider (client initialized per-call to avoid missing-key errors at startup)
 
+import OpenAI from 'openai';
 import type { TranslationProvider } from '@/providers/types';
 import { buildPrompt } from './prompt';
 
 export const openaiProvider: TranslationProvider = {
-  async translate(segments, targetLanguage, model) {
-    const { default: OpenAI } = await import('openai');
+  async translate({ segments, contextBlocks, targetLanguage, model }) {
     const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+
+    const userMessage = JSON.stringify({ context: contextBlocks ?? [], segments });
 
     const completion = await client.chat.completions.create({
       model,
       messages: [
         { role: 'system', content: buildPrompt(targetLanguage) },
-        { role: 'user', content: JSON.stringify(segments) },
+        { role: 'user', content: userMessage },
       ],
     });
 

@@ -11,13 +11,22 @@ export enum LogType {
   Error = 'error',
 }
 
+export type BlockType = 'title' | 'task' | 'comment';
+
+export interface ContextBlock {
+  type: BlockType;
+  text: string;
+}
+
 export interface TranslateSegment {
   id: string;
   text: string;
 }
 
 export interface TranslateRequest {
+  blockType: BlockType;
   segments: TranslateSegment[];
+  contextBlocks?: ContextBlock[];
   targetLanguage: string;
   provider: string;
   model: string;

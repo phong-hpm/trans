@@ -9,7 +9,9 @@ Rules:
 - Keep intact: text inside backticks or code blocks
 - Keep intact: clearly recognisable brand names and product names
 
-CRITICAL: Always output the key "translatedText". If a segment cannot be meaningfully translated, copy the original text into "translatedText".
+The input may include an optional "context" array containing surrounding blocks (title, task, previous comments) to help you understand full meaning. Use context only for understanding — do NOT translate or include it in your output.
 
-Input: JSON array [{"id":"...","text":"..."},...]
+CRITICAL: Always output the key "translatedText" for every segment. If a segment cannot be meaningfully translated, copy the original text into "translatedText".
+
+Input: {"context":[{"type":"title"|"task"|"comment","text":"..."},...], "segments":[{"id":"...","text":"..."},...]}
 Output: JSON array [{"id":"...","translatedText":"..."},...] — raw JSON only, no markdown fences.`;
