@@ -95,6 +95,14 @@ export const translateSegments = async ({ segments, targetLanguage, provider, mo
 export const translateSegments = async (segments, targetLanguage, provider, model) => { ... }
 ```
 
+## Extension Version Bump
+
+After every code change to the extension, increment the patch version in `extension/public/manifest.json`:
+```
+"version": "1.0.4" → "1.0.5"
+```
+Do this as the last step before finishing the task.
+
 ## Project Context
 
 Read `TREE.md` + `ARCHITECTURE.md` before making changes — they describe the full structure
