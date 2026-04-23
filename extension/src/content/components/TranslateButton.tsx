@@ -49,7 +49,7 @@ export const TranslateButton: React.FC<Props> = ({
     <div className="relative inline-block" style={{ fontFamily: 'system-ui, sans-serif' }}>
       <button
         className={clsx(
-          'flex items-center justify-center w-7 h-7 rounded-full cursor-pointer',
+          'flex items-center justify-center w-7 h-7 rounded-full cursor-pointer p-1',
           'transition-all duration-150 select-none text-black',
           state === 'translated' ? 'bg-blue-400 hover:bg-blue-500' : 'bg-white hover:bg-gray-100'
         )}
@@ -60,7 +60,7 @@ export const TranslateButton: React.FC<Props> = ({
         {state === 'loading' && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
         {state === 'translated' && <RotateCcw className="w-3.5 h-3.5" />}
         {state === 'idle' && (
-          <img src={logoUrl} alt="Translate" className="w-full h-full rounded-full object-cover" />
+          <img src={logoUrl} alt="Translate" className="w-full h-full object-contain" />
         )}
       </button>
 

@@ -10,9 +10,8 @@ export default defineConfig({
   // Set root to src/ so dist output is flat — no src/ subfolder in dist
   // root: resolve(__dirname, 'src'),
   publicDir: false,
-  // build: {
-  //   outDir: resolve(__dirname, 'dist'),
-  //   emptyOutDir: true,
-  // },
+  build: {
+    assetsInlineLimit: 1024 * 1024, // inline all assets as base64 — avoids chrome-extension:// URL issues in content scripts
+  },
   plugins: [react(), crx({ manifest })],
 });
