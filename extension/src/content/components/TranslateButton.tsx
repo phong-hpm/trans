@@ -1,38 +1,76 @@
-// TranslateButton.tsx — Translate/restore toggle button rendered inside shadow DOM
+// TranslateButton.tsx — Translate icon button with inline mode-selection popup
 
-import { Languages, Loader2, RotateCcw } from 'lucide-react';
-import type React from 'react';
-import type { ExtensionSettings } from '../../types';
-import { useTranslate } from '../hooks/useTranslate';
 import clsx from 'clsx';
+import { Loader2, RotateCcw } from 'lucide-react';
+import logoUrl from '../../assets/logo.png';
+import type React from 'react';
+import { useState } from 'react';
+import type { BlockType, ContextBlock, ExtensionSettings } from '../../types';
+import { useTranslate } from '../hooks/useTranslate';
+import { TranslatePopup } from './TranslatePopup';
 
 interface Props {
   blockId: string;
+  blockType: BlockType;
   getSettings: () => Promise<ExtensionSettings>;
   getElement: () => HTMLElement;
+  getContextBlocks?: () => ContextBlock[];
 }
 
-export const TranslateButton: React.FC<Props> = ({ blockId, getSettings, getElement }) => {
-  const { state, trigger } = useTranslate(blockId, getSettings, getElement);
+export const TranslateButton: React.FC<Props> = ({
+  blockId,
+  blockType,
+  getSettings,
+  getElement,
+  getContextBlocks,
+}) => {
+  const [popupOpen, setPopupOpen] = useState(false);
+  const { state, translate, restore } = useTranslate(
+    blockId,
+    blockType,
+    getSettings,
+    getElement,
+    getContextBlocks
+  );
+
+  const handleClick = () => {
+    if (state === 'loading') return;
+    if (state === 'translated') { restore(); return; }
+    setPopupOpen((v) => !v);
+  };
+
+  const handleSelect = (_mode: string) => {
+    translate();
+  };
 
   const tooltip = state === 'translated' ? 'Show original' : 'Translate with AI';
 
   return (
-    <div className='relative inline-block' style={{ fontFamily: 'system-ui, sans-serif' }}>
+    <div className="relative inline-block" style={{ fontFamily: 'system-ui, sans-serif' }}>
       <button
         className={clsx(
           'flex items-center justify-center w-7 h-7 rounded-full cursor-pointer',
           'transition-all duration-150 select-none text-black',
-          state === 'translated' ? 'bg-blue-400/50 hover:bg-blue-400/70' : 'bg-white/50 hover:bg-white/70'
+          state === 'translated' ? 'bg-blue-400 hover:bg-blue-500' : 'bg-white hover:bg-gray-100'
         )}
-        onClick={trigger}
+        onClick={handleClick}
         title={tooltip}
-        type='button'
+        type="button"
       >
-        {state === 'loading' && <Loader2 className='w-3.5 h-3.5 animate-spin' />}
-        {state === 'translated' && <RotateCcw className='w-3.5 h-3.5' />}
-        {state === 'idle' && <Languages className='w-3.5 h-3.5' />}
+        {state === 'loading' && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+        {state === 'translated' && <RotateCcw className="w-3.5 h-3.5" />}
+        {state === 'idle' && (
+          <img src={logoUrl} alt="Translate" className="w-full h-full rounded-full object-cover" />
+        )}
       </button>
+
+      {popupOpen && (
+        <TranslatePopup
+          blockType={blockType}
+          onSelect={handleSelect}
+          onClose={() => setPopupOpen(false)}
+        />
+      )}
     </div>
   );
 };

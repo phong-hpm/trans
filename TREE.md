@@ -66,7 +66,8 @@ trans/
         │   ├── translationCache.ts      — chrome.storage.local cache keyed by pathname:blockId
         │   ├── shadow.css               — Tailwind directives; imported via ?inline → injected into shadow roots
         │   ├── components/
-        │   │   └── TranslateButton.tsx  — Translate/restore toggle button (lucide-react icons)
+        │   │   ├── TranslateButton.tsx  — Icon button; opens TranslatePopup on click
+        │   │   └── TranslatePopup.tsx   — Inline mode-selection popup (1 option for title/task, 3 for comment)
         │   └── hooks/
         │       └── useTranslate.ts      — Translation state machine with cache lookup and useRef toggle
         └── popup/

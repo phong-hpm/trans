@@ -43,9 +43,11 @@ export const extractSegments = (root: HTMLElement): TranslateSegment[] => {
 };
 
 export const applyTranslation = (segments: TranslatedSegment[], root: HTMLElement): void => {
-  segments.forEach(({ id, translatedText }) => {
+  segments.forEach(({ id, text, translatedText }) => {
     const el = root.querySelector(`[data-trans-id="${id}"]`);
-    if (el) el.textContent = translatedText;
+    if (!el) return;
+    el.setAttribute('data-original', text);
+    el.textContent = translatedText;
   });
 };
 

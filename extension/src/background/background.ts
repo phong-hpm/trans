@@ -26,7 +26,9 @@ chrome.runtime.onMessage.addListener(
 
     const url = `${message.backendUrl}/translate`;  // backendUrl already includes /api/v1
     const requestData: TranslateRequest = {
+      blockType: message.blockType,
       segments: message.segments,
+      contextBlocks: message.contextBlocks,
       targetLanguage: message.targetLanguage,
       provider: message.provider,
       model: message.model,
