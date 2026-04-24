@@ -1,5 +1,6 @@
 // Toggle.tsx — Reusable toggle switch component
 
+import clsx from 'clsx';
 import type React from 'react';
 
 interface Props {
@@ -11,14 +12,16 @@ export const Toggle: React.FC<Props> = ({ checked, onChange }) => (
   <button
     type="button"
     onClick={() => onChange(!checked)}
-    className={`relative w-10 h-6 rounded-full transition-colors duration-200 flex-shrink-0 ${
-      checked ? 'bg-gray-900' : 'bg-gray-200'
-    }`}
+    className={clsx(
+      'relative w-10 h-6 rounded-full transition-colors duration-200 flex-shrink-0',
+      checked ? 'bg-gray-900' : 'bg-gray-200',
+    )}
   >
     <span
-      className={`absolute top-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform duration-200 ${
-        checked ? 'translate-x-4' : 'translate-x-0.5'
-      }`}
+      className={clsx(
+        'absolute top-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform duration-200',
+        checked ? 'translate-x-4' : 'translate-x-0.5',
+      )}
     />
   </button>
 );
