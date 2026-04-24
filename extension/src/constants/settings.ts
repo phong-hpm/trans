@@ -4,10 +4,10 @@ import type { ExtensionSettings } from '../types';
 import ENV from './env';
 
 export const DEFAULT_SETTINGS: ExtensionSettings = {
-  targetLanguage: 'Vietnamese',
+  targetLanguage: 'English',
   backendUrl: ENV.backendUrl,
-  provider: 'gemini',
-  model: 'gemini-2.5-flash',
+  provider: 'openai',
+  model: 'gpt-4o-mini',
   alwaysShowTranslated: false,
   theme: 'light',
 };

@@ -108,6 +108,7 @@ export const Popup: React.FC = () => {
 
           <Select
             label='Model'
+            disabled
             value={settings.model}
             options={MODELS[settings.provider] ?? []}
             onChange={(model) => setSettings({ ...settings, model })}
