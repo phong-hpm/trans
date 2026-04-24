@@ -1,9 +1,9 @@
 // vite.config.ts — Vite build config for Chrome extension (MV3) via @crxjs/vite-plugin
 
-import { defineConfig } from 'vite';
+import { crx } from '@crxjs/vite-plugin';
 // import { resolve } from 'path';
 import react from '@vitejs/plugin-react';
-import { crx } from '@crxjs/vite-plugin';
+import { defineConfig } from 'vite';
 import manifest from './public/manifest.json';
 
 export default defineConfig({

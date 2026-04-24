@@ -18,7 +18,9 @@ const getSegmentText = (el: HTMLElement): string => {
       .map((s) => s.getAttribute('data-original') ?? s.textContent ?? '')
       .join(' ');
   }
-  return extractSegments(el).map((s) => s.text).join(' ');
+  return extractSegments(el)
+    .map((s) => s.text)
+    .join(' ');
 };
 
 const mountButton = (
@@ -67,8 +69,7 @@ const makeAnchor = (parent: HTMLElement, blockId: string): HTMLElement | null =>
   return anchor;
 };
 
-const getTitleEl = (): HTMLElement | null =>
-  document.querySelector<HTMLElement>(q.titleText);
+const getTitleEl = (): HTMLElement | null => document.querySelector<HTMLElement>(q.titleText);
 
 const getTaskEl = (): HTMLElement | null =>
   document.querySelector<HTMLElement>(`${q.issueBodyViewer} ${q.markdownBody}`);

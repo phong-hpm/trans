@@ -6,8 +6,7 @@ interface CacheEntry {
   segments: { text: string; translatedText: string }[];
 }
 
-const cacheKey = (blockId: string): string =>
-  `trans:${location.pathname}:${blockId}`;
+const cacheKey = (blockId: string): string => `trans:${location.pathname}:${blockId}`;
 
 export const getCached = (blockId: string): Promise<CacheEntry | null> =>
   new Promise((resolve) => {

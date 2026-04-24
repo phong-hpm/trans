@@ -2,7 +2,12 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
-import { MessageType, type BlockType, type ContextBlock, type ExtensionSettings } from '../../types';
+import {
+  type BlockType,
+  type ContextBlock,
+  type ExtensionSettings,
+  MessageType,
+} from '../../types';
 import { applyTranslation, extractSegments, restoreOriginal } from '../domSegments';
 import type { TranslatedSegment } from '../domSegments';
 import { getCached, setCached } from '../translationCache';

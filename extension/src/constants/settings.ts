@@ -1,7 +1,7 @@
 // settings.ts — Default extension settings
 
-import ENV from './env';
 import type { ExtensionSettings } from '../types';
+import ENV from './env';
 
 export const DEFAULT_SETTINGS: ExtensionSettings = {
   targetLanguage: 'Vietnamese',

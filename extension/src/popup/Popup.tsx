@@ -66,9 +66,7 @@ export const Popup: React.FC = () => {
   return (
     <div className="w-72 p-4 font-sans bg-white" style={{ fontFamily: 'system-ui, sans-serif' }}>
       <h1 className="text-sm font-semibold text-gray-800 mb-4 flex items-center gap-1.5">
-        <svg className="w-4 h-4 text-blue-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129" />
-        </svg>
+        <img src="/icons/icon32.png" alt="GitHub Translator" className="w-4 h-4" />
         GitHub Translator
       </h1>
 
@@ -82,7 +80,9 @@ export const Popup: React.FC = () => {
             className="w-full text-sm border border-gray-300 rounded-md px-2.5 py-1.5 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           >
             {LANGUAGES.map((lang) => (
-              <option key={lang} value={lang}>{lang}</option>
+              <option key={lang} value={lang}>
+                {lang}
+              </option>
             ))}
           </select>
         </div>
@@ -96,7 +96,9 @@ export const Popup: React.FC = () => {
             className="w-full text-sm border border-gray-300 rounded-md px-2.5 py-1.5 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           >
             {PROVIDERS.map((p) => (
-              <option key={p.value} value={p.value}>{p.label}</option>
+              <option key={p.value} value={p.value}>
+                {p.label}
+              </option>
             ))}
           </select>
         </div>
@@ -110,7 +112,9 @@ export const Popup: React.FC = () => {
             className="w-full text-sm border border-gray-300 rounded-md px-2.5 py-1.5 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           >
             {(MODELS[settings.provider] ?? []).map((m) => (
-              <option key={m.value} value={m.value}>{m.label}</option>
+              <option key={m.value} value={m.value}>
+                {m.label}
+              </option>
             ))}
           </select>
         </div>
@@ -131,7 +135,9 @@ export const Popup: React.FC = () => {
         <div className="flex items-center justify-between pt-1">
           <div>
             <div className="text-xs font-medium text-gray-700">Always show translated</div>
-            <div className="text-xs text-gray-400 mt-0.5">Auto-apply cached translations on page load</div>
+            <div className="text-xs text-gray-400 mt-0.5">
+              Auto-apply cached translations on page load
+            </div>
           </div>
           <Toggle checked={settings.alwaysShowTranslated} onChange={handleToggleAlwaysShow} />
         </div>

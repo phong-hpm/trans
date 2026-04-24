@@ -69,7 +69,9 @@ export const TranslatePopup: React.FC<Props> = ({ blockType, anchorRef, onSelect
   }, []);
 
   useEffect(() => {
-    return () => { document.body.removeChild(portalMount.host); };
+    return () => {
+      document.body.removeChild(portalMount.host);
+    };
   }, [portalMount]);
 
   useEffect(() => {
@@ -90,10 +92,13 @@ export const TranslatePopup: React.FC<Props> = ({ blockType, anchorRef, onSelect
         <button
           key={opt.value}
           type="button"
-          onClick={() => { onSelect(opt.value); onClose(); }}
+          onClick={() => {
+            onSelect(opt.value);
+            onClose();
+          }}
           className={clsx(
             'w-full text-left px-3 py-2.5 cursor-pointer hover:bg-gray-100 transition-colors',
-            i < options.length - 1 && 'border-b border-gray-100',
+            i < options.length - 1 && 'border-b border-gray-100'
           )}
         >
           <div className="text-xs font-semibold text-gray-800 leading-tight">{opt.label}</div>
