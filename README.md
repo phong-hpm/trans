@@ -19,18 +19,18 @@ A Chrome extension that adds one-click translate buttons to every block in GitHu
 cd backend
 yarn install
 cp .env.example .env
-# Edit .env — set LLM_PROVIDER and the corresponding API key
+# Edit .env — add your API key(s)
 yarn dev
 ```
 
 The server starts on `http://localhost:8000` by default.
 
-**LLM providers** — set `LLM_PROVIDER` in `.env`:
+**LLM providers** — set the corresponding API key in `.env`:
 
-| Provider | Key | Default model |
-|---|---|---|
-| `openai` | `OPENAI_API_KEY` | `gpt-4o-mini` |
-| `gemini` | `GEMINI_API_KEY` | `gemini-2.5-flash` |
+| Provider | Key |
+|---|---|
+| OpenAI | `OPENAI_API_KEY` |
+| Google Gemini | `GEMINI_API_KEY` |
 
 ### Extension
 

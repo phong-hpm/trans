@@ -5,11 +5,29 @@ import { translateSegments } from '@/services/translate.service';
 import { logger } from '@/lib/logger';
 import type { TranslateRequest } from '@/types';
 
+// Model whitelist per provider — configured via env vars, falls back to built-in defaults
+const ALLOWED_MODELS: Record<string, string[]> = {
+  openai: (process.env.OPENAI_ALLOWED_MODELS || '').split(',').map((m) => m.trim()),
+  gemini: (process.env.GEMINI_ALLOWED_MODELS || '').split(',').map((m) => m.trim()),
+};
+
 export const translateController = async (req: Request, res: Response): Promise<void> => {
   const { blockType, segments, contextBlocks, targetLanguage, provider, model } = req.body as Partial<TranslateRequest>;
 
   if (!blockType || !segments?.length || !targetLanguage || !provider || !model) {
     res.status(400).json({ error: 'blockType, segments, targetLanguage, provider, and model are required' });
+    return;
+  }
+
+  const knownProviders = Object.keys(ALLOWED_MODELS);
+  if (!knownProviders.includes(provider)) {
+    res.status(400).json({ error: `Unknown provider "${provider}". Allowed: ${knownProviders.join(', ')}` });
+    return;
+  }
+
+  const allowedModels = ALLOWED_MODELS[provider];
+  if (!allowedModels.includes(model)) {
+    res.status(400).json({ error: `Model "${model}" is not allowed for provider "${provider}". Allowed: ${allowedModels.join(', ')}` });
     return;
   }
 
