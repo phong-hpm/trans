@@ -24,3 +24,13 @@ export const setCached = (blockId: string, segments: TranslatedSegment[]): Promi
     };
     chrome.storage.local.set({ [cacheKey(blockId)]: entry }, resolve);
   });
+
+export const clearPageCache = (pathname: string): Promise<void> =>
+  new Promise((resolve) => {
+    const prefix = `trans:${pathname}:`;
+    chrome.storage.local.get(null, (all) => {
+      const keys = Object.keys(all).filter((k) => k.startsWith(prefix));
+      if (!keys.length) return resolve();
+      chrome.storage.local.remove(keys, resolve);
+    });
+  });

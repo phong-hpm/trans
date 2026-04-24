@@ -8,4 +8,5 @@ export const DEFAULT_SETTINGS: ExtensionSettings = {
   backendUrl: ENV.backendUrl,
   provider: 'gemini',
   model: 'gemini-2.5-flash',
+  alwaysShowTranslated: false,
 };
