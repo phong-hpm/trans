@@ -57,3 +57,14 @@ export const restoreOriginal = (segments: TranslatedSegment[], root: HTMLElement
     if (el) el.textContent = text;
   });
 };
+
+// Returns the original (pre-translation) text of an element, reading data-original if available
+export const getSegmentText = (el: HTMLElement): string => {
+  const spans = el.querySelectorAll<HTMLElement>('[data-trans-id]');
+  if (spans.length) {
+    return Array.from(spans)
+      .map((s) => s.getAttribute('data-original') ?? s.textContent ?? '')
+      .join(' ');
+  }
+  return extractSegments(el).map((s) => s.text).join(' ');
+};

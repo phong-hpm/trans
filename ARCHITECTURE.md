@@ -11,23 +11,58 @@ Monorepo with two packages:
 
 ---
 
-## How the Extension Injects into GitHub
+## Multi-Platform Design
 
-`content-script.tsx` runs on every `https://github.com/*/issues/*` page at `document_idle`.
+The extension is built around a **platform adapter** pattern so new issue trackers can be added without touching the injection engine.
 
-It scans the DOM for two types of blocks:
+```
+src/platforms/
+  types.ts          — Block + PlatformAdapter interfaces
+  index.ts          — PLATFORMS registry + detectPlatform(url)
+  github/
+    queries.ts      — GitHub DOM selectors + getTitleEl / getTaskEl helpers
+    index.ts        — GitHub adapter (implements PlatformAdapter)
+```
 
-1. **Issue title** — `h1.gh-header-title`
-2. **Comments / issue body** — `.timeline-comment`, `.js-comment-container`
+### Adding a new platform
 
-For each block found:
+1. Create `src/platforms/<name>/queries.ts` — DOM selectors for that site
+2. Create `src/platforms/<name>/index.ts` — implement `PlatformAdapter` (`pagePattern` + `getBlocks`)
+3. Register the adapter in `src/platforms/index.ts` → `PLATFORMS` array
+4. Add the domain to `host_permissions` and `content_scripts.matches` in `manifest.json`
 
-1. A `<div>` anchor is appended inside the block's header area (or the block itself).
-2. A **Shadow DOM** is attached to the anchor to isolate styles.
-3. A `<style>` element containing the compiled Tailwind CSS is injected into the shadow root.
-4. React's `createRoot` mounts a `TranslateButton` component inside the shadow root.
+### PlatformAdapter interface
 
-A `MutationObserver` re-runs the scan (debounced 400 ms) whenever new nodes are added to `document.body`, handling lazy-loaded comments.
+```ts
+interface Block {
+  blockId: string;
+  blockType: BlockType;           // 'title' | 'task' | 'comment'
+  containerEl: HTMLElement;       // parent for the anchor div
+  contentEl: HTMLElement;         // element whose text gets translated
+  getContextBlocks?: () => ContextBlock[];
+}
+
+interface PlatformAdapter {
+  pagePattern: RegExp;            // matched against location.href
+  getBlocks: () => Block[];       // called on init + every MutationObserver tick
+}
+```
+
+---
+
+## Injection Flow
+
+`content-script.tsx` runs at `document_idle`. It calls `detectPlatform(location.href)` — if a matching adapter is found, `init(platform)` runs:
+
+1. Retry loop (10 × 500 ms) calls `processBlocks(platform.getBlocks())` to handle async renders
+2. `MutationObserver` (debounced 400 ms) re-calls `processBlocks` on DOM changes
+
+For each `Block` returned by the adapter, `inject.tsx`:
+
+1. Appends a `<div>` anchor to `block.containerEl` (absolutely positioned)
+2. Attaches a **Shadow DOM** to isolate styles from the host page
+3. Injects compiled Tailwind CSS into the shadow root
+4. Mounts `<TranslateButton>` via React `createRoot`
 
 ---
 
@@ -37,46 +72,33 @@ A `MutationObserver` re-runs the scan (debounced 400 ms) whenever new nodes are 
 User clicks TranslateButton
         │
         ▼
-Read settings from chrome.storage.sync
-(target language, backend URL)
+Check chrome.storage.local for cached translation
+        │
+   hit ─┤─ miss
+        │         │
+        │         ▼
+        │   Read settings (chrome.storage.sync)
+        │   Extract text segments via TreeWalker
+        │   POST { segments, contextBlocks, targetLanguage, provider, model }
+        │       → background service worker (CORS proxy)
+        │       → backend /api/v1/translate
+        │       → LLM provider (OpenAI / Gemini)
+        │   Cache result in chrome.storage.local
         │
         ▼
-Extract innerText from .comment-body
-        │
-        ▼
-POST {text, targetLanguage} → backend /translate
-        │
-        ▼
-Backend calls OpenAI GPT-4o-mini
-System prompt instructs: translate to {language},
-preserve markdown, code blocks, technical terms
-        │
-        ▼
-Backend returns {translatedText}
-        │
-        ▼
-Store original innerHTML in React state (cache)
-Replace .comment-body content with translated text
+Apply translated text to DOM spans
 Button state → "translated"
         │
         ▼
-User clicks again
-        │
-        ▼
-Restore original innerHTML from React state
-Button state → "idle"
+User clicks again → restore original text → "idle"
 ```
-
-On subsequent toggles, the cached translation is used — no API call.
 
 ---
 
 ## Shadow DOM Usage
 
-Each translate button lives in its own Shadow DOM:
-
 ```
-.timeline-comment (GitHub element)
+.issue-block (platform element)
 └── div[data-trans-id] (anchor, absolute positioned)
     └── #shadow-root (open)
         ├── <style>  ← compiled Tailwind CSS
@@ -85,8 +107,8 @@ Each translate button lives in its own Shadow DOM:
 ```
 
 **Why Shadow DOM:**
-- GitHub's global CSS cannot bleed into button styles
-- Extension styles cannot break GitHub's layout
+- Host page CSS cannot bleed into button styles
+- Extension styles cannot break the host page layout
 - Complete visual isolation with zero class-name conflicts
 
 ---
@@ -98,25 +120,29 @@ Settings are persisted in `chrome.storage.sync`:
 | Key | Default | Description |
 |---|---|---|
 | `targetLanguage` | `"Vietnamese"` | Language name passed to the AI |
-| `backendUrl` | `"http://localhost:3000"` | Translation server base URL |
-
-The content script caches settings in memory and invalidates on `chrome.storage.onChanged`.
+| `backendUrl` | `""` | Translation server base URL |
+| `provider` | `"openai"` | LLM provider |
+| `model` | `"gpt-4o-mini"` | Model name |
+| `alwaysShowTranslated` | `false` | Auto-apply cached translations on page load |
 
 ---
 
 ## Backend API
 
-Single endpoint:
-
 ```
-POST /translate
+POST /api/v1/translate
 Content-Type: application/json
 
-{ "text": "...", "targetLanguage": "Vietnamese" }
+{
+  "blockType": "comment",
+  "segments": [{ "id": "abc123", "text": "..." }],
+  "contextBlocks": [{ "type": "title", "text": "..." }],
+  "targetLanguage": "Vietnamese",
+  "provider": "openai",
+  "model": "gpt-4o-mini"
+}
 
-→ 200 { "translatedText": "..." }
-→ 400 { "error": "text and targetLanguage are required" }
+→ 200 { "segments": [{ "id": "abc123", "text": "...", "translatedText": "..." }] }
+→ 400 { "error": "..." }
 → 500 { "error": "..." }
 ```
-
-CORS is open (`*`) since requests come from the `github.com` origin (content scripts run in the page context).
