@@ -4,24 +4,9 @@ import type React from 'react';
 import { useEffect, useState } from 'react';
 import { Toggle } from '../components/Toggle';
 import { LANGUAGES } from '../constants/languages';
+import { MODELS, PROVIDERS } from '../constants/providers';
 import { DEFAULT_SETTINGS } from '../constants/settings';
 import type { ExtensionSettings } from '../types';
-
-const PROVIDERS: { value: string; label: string }[] = [
-  { value: 'openai', label: 'OpenAI' },
-  { value: 'gemini', label: 'Google Gemini' },
-];
-
-const MODELS: Record<string, { value: string; label: string }[]> = {
-  openai: [
-    { value: 'gpt-4o-mini', label: 'GPT-4o Mini' },
-    { value: 'gpt-4o', label: 'GPT-4o' },
-  ],
-  gemini: [
-    { value: 'gemini-2.5-flash', label: 'Gemini 2.5 Flash' },
-    { value: 'gemini-2.0-flash', label: 'Gemini 2.0 Flash' },
-  ],
-};
 
 export const Popup: React.FC = () => {
   const [settings, setSettings] = useState<ExtensionSettings>(DEFAULT_SETTINGS);

@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "GitHub Translator",
-  "version": "1.0.12",
+  "version": "1.0.13",
   "description": "Translate GitHub Issues content with AI — one click per block",
   "permissions": ["storage", "tabs"],
   "host_permissions": ["https://github.com/*", "http://localhost:*/*", "http://localhost:8000/*"],

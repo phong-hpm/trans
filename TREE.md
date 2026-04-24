@@ -54,6 +54,7 @@ trans/
         │   ├── env.ts                   — ENV default export: { isDev, backendUrl } derived from import.meta.env
         │   ├── github-query.ts          — All GitHub DOM selectors (data-testid, class-based)
         │   ├── languages.ts             — LANGUAGES constant: supported target languages
+        │   ├── providers.ts             — PROVIDERS list and MODELS map (provider → model options)
         │   └── settings.ts              — DEFAULT_SETTINGS; backendUrl, alwaysShowTranslated defaults
         ├── background/
         │   ├── background.ts            — Service worker CORS proxy: relays /translate requests
