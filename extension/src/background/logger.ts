@@ -28,7 +28,12 @@ export const logCall = (method: string, url: string, data: unknown): void => {
   }
 };
 
-export const logResponse = (method: string, url: string, data: unknown, response: unknown): void => {
+export const logResponse = (
+  method: string,
+  url: string,
+  data: unknown,
+  response: unknown
+): void => {
   const label = `${method} ${url}`;
   console.groupCollapsed(`[RESPONSE] ${label}`);
   console.log('Request', data);
@@ -36,7 +41,12 @@ export const logResponse = (method: string, url: string, data: unknown, response
   console.groupEnd();
 
   if (ENV.isDev) {
-    relayToPage({ type: MessageType.DevLog, logType: LogType.Response, label, entries: [data, response] });
+    relayToPage({
+      type: MessageType.DevLog,
+      logType: LogType.Response,
+      label,
+      entries: [data, response],
+    });
   }
 };
 
@@ -48,6 +58,11 @@ export const logError = (method: string, url: string, data: unknown, error: unkn
   console.groupEnd();
 
   if (ENV.isDev) {
-    relayToPage({ type: MessageType.DevLog, logType: LogType.Error, label, entries: [data, error] });
+    relayToPage({
+      type: MessageType.DevLog,
+      logType: LogType.Error,
+      label,
+      entries: [data, error],
+    });
   }
 };

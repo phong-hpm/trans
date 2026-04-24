@@ -41,4 +41,5 @@ export interface ExtensionSettings {
   backendUrl: string;
   provider: string;
   model: string;
+  alwaysShowTranslated: boolean;
 }

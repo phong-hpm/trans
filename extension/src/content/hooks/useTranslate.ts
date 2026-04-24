@@ -1,8 +1,13 @@
 // useTranslate.ts — Translation state machine with DOM segment extraction and local cache
 
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
-import { MessageType, type BlockType, type ContextBlock, type ExtensionSettings } from '../../types';
+import {
+  type BlockType,
+  type ContextBlock,
+  type ExtensionSettings,
+  MessageType,
+} from '../../types';
 import { applyTranslation, extractSegments, restoreOriginal } from '../domSegments';
 import type { TranslatedSegment } from '../domSegments';
 import { getCached, setCached } from '../translationCache';
@@ -99,6 +104,41 @@ export const useTranslate = (
       setState('idle');
     }
   }, [blockId, blockType, getSettings, getElement, getContextBlocks, setState]);
+
+  // Keep stable refs so effects don't need to re-subscribe on every render
+  const translateRef = useRef(translate);
+  translateRef.current = translate;
+  const restoreRef = useRef(restore);
+  restoreRef.current = restore;
+
+  // Auto-apply cached translation on mount if alwaysShowTranslated is enabled
+  useEffect(() => {
+    const check = async () => {
+      if (stateRef.current !== 'idle') return;
+      const settings = await getSettings();
+      if (!settings.alwaysShowTranslated) return;
+      const cached = await getCached(blockId);
+      if (cached) translateRef.current();
+    };
+    check();
+  }, [blockId, getSettings]);
+
+  // React live to alwaysShowTranslated toggle from popup
+  useEffect(() => {
+    const listener = (changes: Record<string, chrome.storage.StorageChange>) => {
+      if (!('alwaysShowTranslated' in changes)) return;
+      const enabled = changes.alwaysShowTranslated.newValue as boolean;
+      if (enabled && stateRef.current === 'idle') {
+        getCached(blockId).then((cached) => {
+          if (cached) translateRef.current();
+        });
+      } else if (!enabled && stateRef.current === 'translated') {
+        restoreRef.current();
+      }
+    };
+    chrome.storage.onChanged.addListener(listener);
+    return () => chrome.storage.onChanged.removeListener(listener);
+  }, [blockId]);
 
   return { state: uiState, translate, restore };
 };

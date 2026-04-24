@@ -2,9 +2,9 @@
 
 import clsx from 'clsx';
 import { Loader2, RotateCcw } from 'lucide-react';
-import logoUrl from '../../assets/logo.png';
 import type React from 'react';
 import { useRef, useState } from 'react';
+import logoUrl from '../../assets/logo.png';
 import type { BlockType, ContextBlock, ExtensionSettings } from '../../types';
 import { useTranslate } from '../hooks/useTranslate';
 import { TranslatePopup } from './TranslatePopup';
@@ -36,7 +36,10 @@ export const TranslateButton: React.FC<Props> = ({
 
   const handleClick = () => {
     if (state === 'loading') return;
-    if (state === 'translated') { restore(); return; }
+    if (state === 'translated') {
+      restore();
+      return;
+    }
     setPopupOpen((v) => !v);
   };
 

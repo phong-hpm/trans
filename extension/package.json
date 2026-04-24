@@ -5,7 +5,7 @@
   "scripts": {
     "build": "vite build",
     "dev": "vite build --watch --mode development",
-    "fix": "biome check --write src"
+    "fix": "biome check --write src && biome format --write src"
   },
   "dependencies": {
     "clsx": "^2.1.1",

@@ -1,7 +1,7 @@
 // content-script.tsx — Entry point: initialises injection and watches for DOM changes
 
-import { githubIssueQueries as q } from '../constants/github-query';
 import ENV from '../constants/env';
+import { githubIssueQueries as q } from '../constants/github-query';
 import { LogType, MessageType } from '../types';
 import { processBlocks } from './inject';
 import { mountToaster } from './toast';

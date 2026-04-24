@@ -1,4 +1,4 @@
-# GitHub Translator
+# Task Translator
 
 A Chrome extension that adds one-click translate buttons to every block in GitHub Issues (title, description, comments). Powered by GPT-4o-mini or Gemini via a local Node.js backend.
 
