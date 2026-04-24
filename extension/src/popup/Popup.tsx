@@ -102,16 +102,12 @@ export const Popup: React.FC = () => {
           placeholder="http://localhost:8000/api/v1"
         />
 
-        {/* Always show translated toggle */}
-        <div className="flex items-center justify-between pt-1">
-          <div>
-            <div className="text-xs font-medium text-gray-700">Always show translated</div>
-            <div className="text-xs text-gray-400 mt-0.5">
-              Auto-apply cached translations on page load
-            </div>
-          </div>
-          <Toggle checked={settings.alwaysShowTranslated} onChange={handleToggleAlwaysShow} />
-        </div>
+        <Toggle
+          label="Always show translated"
+          sublabel="Auto-apply cached translations on page load"
+          checked={settings.alwaysShowTranslated}
+          onChange={handleToggleAlwaysShow}
+        />
 
         <div className="border-t border-gray-100 pt-3 space-y-2">
           <button
