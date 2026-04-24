@@ -66,7 +66,7 @@ export const Popup: React.FC = () => {
   };
 
   return (
-    <div className="w-72 p-4 font-sans bg-white" style={{ fontFamily: 'system-ui, sans-serif' }}>
+    <div className="w-72 p-4 bg-white rounded-xl shadow-lg" style={{ fontFamily: 'system-ui, sans-serif' }}>
       <h1 className="text-sm font-semibold text-gray-800 mb-4 flex items-center gap-1.5">
         <img src="/icons/icon32.png" alt="Task Translator" className="w-4 h-4" />
         Task Translator
