@@ -22,12 +22,14 @@ export const useTranslate = (
   getContextBlocks?: () => ContextBlock[]
 ) => {
   const [uiState, setUiState] = useState<TranslateState>('idle');
+  const [hasTranslation, setHasTranslation] = useState(false);
   const stateRef = useRef<TranslateState>('idle');
   const segmentsRef = useRef<TranslatedSegment[] | null>(null);
 
   const setState = useCallback((s: TranslateState) => {
     stateRef.current = s;
     setUiState(s);
+    if (s === 'translated') setHasTranslation(true);
   }, []);
 
   const restore = useCallback(() => {
@@ -140,5 +142,5 @@ export const useTranslate = (
     return () => chrome.storage.onChanged.removeListener(listener);
   }, [blockId]);
 
-  return { state: uiState, translate, restore };
+  return { state: uiState, translate, restore, hasTranslation };
 };

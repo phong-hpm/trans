@@ -7,13 +7,13 @@ import { createPortal } from 'react-dom';
 import type { BlockType } from '../../types';
 import shadowStyles from '../shadow.css?inline';
 
-interface Option {
+export interface TranslateOption {
+  value: string;
   label: string;
   sublabel: string;
-  value: string;
 }
 
-const COMMENT_OPTIONS: Option[] = [
+export const COMMENT_OPTIONS: TranslateOption[] = [
   {
     value: 'full',
     label: 'Full Context Translation',
@@ -31,7 +31,7 @@ const COMMENT_OPTIONS: Option[] = [
   },
 ];
 
-const SIMPLE_OPTIONS: Option[] = [
+export const SIMPLE_OPTIONS: TranslateOption[] = [
   {
     value: 'translate',
     label: 'Translation',

@@ -77,8 +77,9 @@ trans/
         │   ├── translationCache.ts      — chrome.storage.local cache keyed by pathname:blockId
         │   ├── shadow.css               — Tailwind directives; imported via ?inline → injected into shadow roots
         │   ├── components/
-        │   │   ├── TranslateButton.tsx  — Icon button; opens TranslatePopup on click
-        │   │   └── TranslatePopup.tsx   — Inline mode-selection popup (1 option for title/task, 3 for comment)
+        │   │   ├── TranslateButton.tsx  — Circle icon button used for title blocks
+        │   │   ├── TranslatePopup.tsx   — Mode-selection dropdown (exports options + TranslateOption type)
+        │   │   └── TranslateToolbar.tsx — Top-right toolbar for task/comment blocks: toggle + split translate button
         │   └── hooks/
         │       └── useTranslate.ts      — Translation state machine with cache lookup and useRef toggle
         └── popup/
