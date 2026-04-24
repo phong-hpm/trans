@@ -49,6 +49,12 @@ export const Popup: React.FC = () => {
     chrome.storage.sync.set({ alwaysShowTranslated: value });
   };
 
+  const handleToggleTheme = (isDark: boolean) => {
+    const theme = isDark ? 'dark' : 'light';
+    setSettings((s) => ({ ...s, theme }));
+    chrome.storage.sync.set({ theme });
+  };
+
   const handleSave = () => {
     chrome.storage.sync.set(settings, () => {
       setSaved(true);
@@ -65,68 +71,75 @@ export const Popup: React.FC = () => {
     });
   };
 
+  const isDark = settings.theme === 'dark';
+
   return (
-    <div className="w-72 p-4 bg-white" style={{ fontFamily: 'system-ui, sans-serif' }}>
-      <h1 className="text-sm font-semibold text-gray-800 mb-4 flex items-center gap-1.5">
-        <img src="/icons/icon32.png" alt="Task Translator" className="w-4 h-4" />
-        Task Translator
-      </h1>
+    <div className={isDark ? 'dark' : ''}>
+      <div className="w-72 p-4 bg-white dark:bg-gray-950" style={{ fontFamily: 'system-ui, sans-serif' }}>
+        <h1 className='text-sm font-semibold text-gray-800 dark:text-gray-100 mb-4 flex items-center gap-1.5'>
+          <img src='/icons/icon32.png' alt='Task Translator' className='w-4 h-4' />
+          Task Translator
+        </h1>
 
-      <div className="space-y-3">
-        <Select
-          label="Your language"
-          value={settings.targetLanguage}
-          options={LANGUAGES.map((lang) => ({ value: lang, label: lang }))}
-          onChange={(lang) => setSettings({ ...settings, targetLanguage: lang })}
-        />
+        <div className='space-y-3'>
 
-        <Select
-          label="Provider"
-          value={settings.provider}
-          options={PROVIDERS}
-          onChange={handleProviderChange}
-        />
+          <div className='border-b border-gray-100 dark:border-gray-700 pb-3 space-y-3'>
+            <Toggle
+              label='Always show translated'
+              sublabel='Auto-apply cached translations on page load'
+              checked={settings.alwaysShowTranslated}
+              onChange={handleToggleAlwaysShow}
+            />
 
-        <Select
-          label="Model"
-          value={settings.model}
-          options={MODELS[settings.provider] ?? []}
-          onChange={(model) => setSettings({ ...settings, model })}
-        />
+            <Toggle
+              label='Dark mode'
+              checked={isDark}
+              onChange={handleToggleTheme}
+            />
+          </div>
+          <Select
+            label='Your language'
+            value={settings.targetLanguage}
+            options={LANGUAGES.map((lang) => ({ value: lang, label: lang }))}
+            onChange={(lang) => setSettings({ ...settings, targetLanguage: lang })}
+          />
 
-        <Input
-          label="Backend URL"
-          type="url"
-          value={settings.backendUrl}
-          onChange={(e) => setSettings({ ...settings, backendUrl: e.target.value })}
-          placeholder="http://localhost:8000/api/v1"
-        />
+          <Select label='Provider' value={settings.provider} options={PROVIDERS} onChange={handleProviderChange} />
 
-        <Toggle
-          label="Always show translated"
-          sublabel="Auto-apply cached translations on page load"
-          checked={settings.alwaysShowTranslated}
-          onChange={handleToggleAlwaysShow}
-        />
+          <Select
+            label='Model'
+            value={settings.model}
+            options={MODELS[settings.provider] ?? []}
+            onChange={(model) => setSettings({ ...settings, model })}
+          />
 
-        <div className="border-t border-gray-100 pt-3 space-y-2">
-          <button
-            type="button"
-            onClick={handleSave}
-            className="w-full py-1.5 px-3 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white text-sm font-medium rounded-md transition-colors"
-          >
-            {saved ? '✓ Saved' : 'Save Settings'}
-          </button>
+          <Input
+            label='Backend URL'
+            type='url'
+            value={settings.backendUrl}
+            onChange={(e) => setSettings({ ...settings, backendUrl: e.target.value })}
+            placeholder='http://localhost:8000/api/v1'
+          />
 
-          {hasPageCache && (
+          <div className='space-y-2'>
             <button
-              type="button"
-              onClick={handleClearCache}
-              className="w-full py-1.5 px-3 bg-white hover:bg-red-50 text-red-500 border border-red-200 text-sm font-medium rounded-md transition-colors"
+              type='button'
+              onClick={handleSave}
+              className='w-full py-1.5 px-3 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white text-sm font-medium rounded-md transition-colors'
             >
-              Clear all page translations
+              {saved ? '✓ Saved' : 'Save Settings'}
             </button>
-          )}
+
+            {hasPageCache && (
+              <button
+                type='button'
+                onClick={handleClearCache}
+                className='w-full py-1.5 px-3 bg-white dark:bg-gray-800 hover:bg-red-50 dark:hover:bg-red-900/20 text-red-500 dark:text-red-400 border border-red-200 dark:border-red-800 text-sm font-medium rounded-md transition-colors'
+              >
+                Clear all page translations
+              </button>
+            )}
+          </div>
         </div>
       </div>
     </div>
