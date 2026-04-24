@@ -2,6 +2,8 @@
 
 import type React from 'react';
 import { useEffect, useState } from 'react';
+import { Input } from '../components/Input';
+import { Select } from '../components/Select';
 import { Toggle } from '../components/Toggle';
 import { LANGUAGES } from '../constants/languages';
 import { MODELS, PROVIDERS } from '../constants/providers';
@@ -71,65 +73,34 @@ export const Popup: React.FC = () => {
       </h1>
 
       <div className="space-y-3">
-        {/* Your language */}
-        <div>
-          <div className="block text-xs font-medium text-gray-600 mb-1">Your language</div>
-          <select
-            value={settings.targetLanguage}
-            onChange={(e) => setSettings({ ...settings, targetLanguage: e.target.value })}
-            className="w-full text-sm border border-gray-300 rounded-md px-2.5 py-1.5 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-          >
-            {LANGUAGES.map((lang) => (
-              <option key={lang} value={lang}>
-                {lang}
-              </option>
-            ))}
-          </select>
-        </div>
+        <Select
+          label="Your language"
+          value={settings.targetLanguage}
+          options={LANGUAGES.map((lang) => ({ value: lang, label: lang }))}
+          onChange={(lang) => setSettings({ ...settings, targetLanguage: lang })}
+        />
 
-        {/* Provider */}
-        <div>
-          <div className="block text-xs font-medium text-gray-600 mb-1">Provider</div>
-          <select
-            value={settings.provider}
-            onChange={(e) => handleProviderChange(e.target.value)}
-            className="w-full text-sm border border-gray-300 rounded-md px-2.5 py-1.5 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-          >
-            {PROVIDERS.map((p) => (
-              <option key={p.value} value={p.value}>
-                {p.label}
-              </option>
-            ))}
-          </select>
-        </div>
+        <Select
+          label="Provider"
+          value={settings.provider}
+          options={PROVIDERS}
+          onChange={handleProviderChange}
+        />
 
-        {/* Model */}
-        <div>
-          <div className="block text-xs font-medium text-gray-600 mb-1">Model</div>
-          <select
-            value={settings.model}
-            onChange={(e) => setSettings({ ...settings, model: e.target.value })}
-            className="w-full text-sm border border-gray-300 rounded-md px-2.5 py-1.5 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-          >
-            {(MODELS[settings.provider] ?? []).map((m) => (
-              <option key={m.value} value={m.value}>
-                {m.label}
-              </option>
-            ))}
-          </select>
-        </div>
+        <Select
+          label="Model"
+          value={settings.model}
+          options={MODELS[settings.provider] ?? []}
+          onChange={(model) => setSettings({ ...settings, model })}
+        />
 
-        {/* Backend URL */}
-        <div>
-          <div className="block text-xs font-medium text-gray-600 mb-1">Backend URL</div>
-          <input
-            type="url"
-            value={settings.backendUrl}
-            onChange={(e) => setSettings({ ...settings, backendUrl: e.target.value })}
-            placeholder="http://localhost:8000/api/v1"
-            className="w-full text-sm border border-gray-300 rounded-md px-2.5 py-1.5 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-          />
-        </div>
+        <Input
+          label="Backend URL"
+          type="url"
+          value={settings.backendUrl}
+          onChange={(e) => setSettings({ ...settings, backendUrl: e.target.value })}
+          placeholder="http://localhost:8000/api/v1"
+        />
 
         {/* Always show translated toggle */}
         <div className="flex items-center justify-between pt-1">

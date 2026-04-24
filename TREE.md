@@ -56,6 +56,10 @@ trans/
         │   ├── languages.ts             — LANGUAGES constant: supported target languages
         │   ├── providers.ts             — PROVIDERS list and MODELS map (provider → model options)
         │   └── settings.ts              — DEFAULT_SETTINGS; backendUrl, alwaysShowTranslated defaults
+        ├── components/
+        │   ├── Input.tsx                — Reusable labeled text input component
+        │   ├── Select.tsx               — Reusable labeled select component
+        │   └── Toggle.tsx               — Reusable toggle switch component
         ├── background/
         │   ├── background.ts            — Service worker CORS proxy: relays /translate requests
         │   └── logger.ts               — Grouped request logger; relays to page DevTools in DEV mode
