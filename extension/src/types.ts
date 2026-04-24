@@ -36,10 +36,13 @@ export interface TranslateResponse {
   segments: { id: string; text: string; translatedText: string }[];
 }
 
+export type Theme = 'light' | 'dark';
+
 export interface ExtensionSettings {
   targetLanguage: string;
   backendUrl: string;
   provider: string;
   model: string;
   alwaysShowTranslated: boolean;
+  theme: Theme;
 }

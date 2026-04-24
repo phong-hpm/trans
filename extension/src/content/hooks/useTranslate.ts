@@ -107,6 +107,13 @@ export const useTranslate = (
     }
   }, [blockId, blockType, getSettings, getElement, getContextBlocks, setState]);
 
+  // Initialize hasTranslation from cache on mount — toggle shows without re-translating
+  useEffect(() => {
+    getCached(blockId).then((cached) => {
+      if (cached) setHasTranslation(true);
+    });
+  }, [blockId]);
+
   // Keep stable refs so effects don't need to re-subscribe on every render
   const translateRef = useRef(translate);
   translateRef.current = translate;

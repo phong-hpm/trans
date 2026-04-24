@@ -9,4 +9,5 @@ export const DEFAULT_SETTINGS: ExtensionSettings = {
   provider: 'gemini',
   model: 'gemini-2.5-flash',
   alwaysShowTranslated: false,
+  theme: 'light',
 };

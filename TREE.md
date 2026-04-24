@@ -81,6 +81,7 @@ trans/
         │   │   ├── TranslatePopup.tsx   — Mode-selection dropdown (exports options + TranslateOption type)
         │   │   └── TranslateToolbar.tsx — Top-right toolbar for task/comment blocks: toggle + split translate button
         │   └── hooks/
+        │       ├── useTheme.ts          — Reads theme from chrome.storage.sync, reacts to popup changes
         │       └── useTranslate.ts      — Translation state machine with cache lookup and useRef toggle
         └── popup/
             ├── index.html              — Popup HTML entry (crxjs resolves this from manifest action.default_popup)

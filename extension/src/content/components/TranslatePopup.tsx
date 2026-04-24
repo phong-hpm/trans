@@ -5,6 +5,7 @@ import type React from 'react';
 import { useEffect, useMemo, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import type { BlockType } from '../../types';
+import { useTheme } from '../hooks/useTheme';
 import shadowStyles from '../shadow.css?inline';
 
 export interface TranslateOption {
@@ -48,11 +49,12 @@ interface Props {
 
 export const TranslatePopup: React.FC<Props> = ({ blockType, anchorRef, onSelect, onClose }) => {
   const ref = useRef<HTMLDivElement>(null);
+  const theme = useTheme();
   const options = blockType === 'comment' ? COMMENT_OPTIONS : SIMPLE_OPTIONS;
 
   const rect = anchorRef.current?.getBoundingClientRect();
   const top = rect ? rect.bottom + 4 : 0;
-  const right = rect ? window.innerWidth - rect.right : 0;
+  const left = rect ? rect.left : 0;
 
   // Create a shadow root in document.body so Tailwind styles apply and z-index escapes shadow DOM
   const portalMount = useMemo(() => {
@@ -83,29 +85,52 @@ export const TranslatePopup: React.FC<Props> = ({ blockType, anchorRef, onSelect
   }, [onClose]);
 
   return createPortal(
-    <div
-      ref={ref}
-      className="fixed w-64 rounded-lg shadow-lg border border-gray-200 bg-white overflow-hidden"
-      style={{ top, right, fontFamily: 'system-ui, sans-serif' }}
-    >
-      {options.map((opt, i) => (
-        <button
-          key={opt.value}
-          type="button"
-          onClick={() => {
-            onSelect(opt.value);
-            onClose();
-          }}
-          className={clsx(
-            'w-full text-left px-3 py-2.5 cursor-pointer hover:bg-gray-100 transition-colors',
-            i < options.length - 1 && 'border-b border-gray-100'
-          )}
-        >
-          <div className="text-xs font-semibold text-gray-800 leading-tight">{opt.label}</div>
-          <div className="text-xs text-gray-400 mt-0.5 leading-tight">{opt.sublabel}</div>
-        </button>
-      ))}
+    <div className={theme === 'dark' ? 'dark' : ''}>
+      <div
+        ref={ref}
+        className={clsx(
+          'fixed w-64 rounded-lg shadow-lg border overflow-hidden',
+          'border-gray-200 bg-white',
+          'dark:border-gray-700 dark:bg-gray-900',
+        )}
+        style={{ top, left, fontFamily: 'system-ui, sans-serif' }}
+      >
+        {options.map((opt, i) => (
+          <button
+            key={opt.value}
+            type="button"
+            onClick={() => {
+              onSelect(opt.value);
+              onClose();
+            }}
+            className={clsx(
+              ['w-full text-left px-3 py-2.5 cursor-pointer transition-colors', i < options.length - 1 && 'border-b'],
+              'border-gray-100 hover:bg-gray-100',
+              'dark:border-gray-800 dark:hover:bg-gray-800',
+            )}
+          >
+            <div
+              className={clsx(
+                'text-xs font-semibold leading-tight',
+                'text-gray-800',
+                'dark:text-gray-100',
+              )}
+            >
+              {opt.label}
+            </div>
+            <div
+              className={clsx(
+                'text-xs mt-0.5 leading-tight',
+                'text-gray-500',
+                'dark:text-gray-400',
+              )}
+            >
+              {opt.sublabel}
+            </div>
+          </button>
+        ))}
+      </div>
     </div>,
-    portalMount.mount
+    portalMount.mount,
   );
 };
