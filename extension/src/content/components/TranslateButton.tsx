@@ -4,7 +4,7 @@ import clsx from 'clsx';
 import { Loader2, RotateCcw } from 'lucide-react';
 import logoUrl from '../../assets/logo.png';
 import type React from 'react';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import type { BlockType, ContextBlock, ExtensionSettings } from '../../types';
 import { useTranslate } from '../hooks/useTranslate';
 import { TranslatePopup } from './TranslatePopup';
@@ -25,6 +25,7 @@ export const TranslateButton: React.FC<Props> = ({
   getContextBlocks,
 }) => {
   const [popupOpen, setPopupOpen] = useState(false);
+  const buttonRef = useRef<HTMLButtonElement>(null);
   const { state, translate, restore } = useTranslate(
     blockId,
     blockType,
@@ -46,13 +47,14 @@ export const TranslateButton: React.FC<Props> = ({
   const tooltip = state === 'translated' ? 'Show original' : 'Translate with AI';
 
   return (
-    <div className="relative inline-block" style={{ fontFamily: 'system-ui, sans-serif' }}>
+    <div className="relative w-7 h-7" style={{ fontFamily: 'system-ui, sans-serif' }}>
       <button
         className={clsx(
           'flex items-center justify-center w-7 h-7 rounded-full cursor-pointer p-1',
           'transition-all duration-150 select-none text-black',
           state === 'translated' ? 'bg-blue-400 hover:bg-blue-500' : 'bg-white hover:bg-gray-100'
         )}
+        ref={buttonRef}
         onClick={handleClick}
         title={tooltip}
         type="button"
@@ -67,6 +69,7 @@ export const TranslateButton: React.FC<Props> = ({
       {popupOpen && (
         <TranslatePopup
           blockType={blockType}
+          anchorRef={buttonRef}
           onSelect={handleSelect}
           onClose={() => setPopupOpen(false)}
         />

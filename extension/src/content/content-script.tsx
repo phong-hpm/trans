@@ -31,7 +31,13 @@ const init = (): void => {
   if (ENV.isDev) initDevLogs();
 
   mountToaster();
-  processBlocks();
+
+  // Retry on init — GitHub renders issue content asynchronously, so the first call may find nothing
+  let attempts = 0;
+  const retry = setInterval(() => {
+    processBlocks();
+    if (++attempts >= 10) clearInterval(retry);
+  }, 500);
 
   let debounce: ReturnType<typeof setTimeout>;
   new MutationObserver(() => {
