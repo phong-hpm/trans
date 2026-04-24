@@ -19,8 +19,8 @@ export const Toggle: React.FC<Props> = ({ checked, onChange }) => (
   >
     <span
       className={clsx(
-        'absolute top-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform duration-200',
-        checked ? 'translate-x-4' : 'translate-x-0.5'
+        'absolute top-0.5 left-0 w-5 h-5 rounded-full bg-white shadow transition-transform duration-200',
+        checked ? 'translate-x-[18px]' : 'translate-x-0.5'
       )}
     />
   </button>
