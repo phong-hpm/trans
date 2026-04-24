@@ -1,7 +1,7 @@
 // prompt.ts — System prompt for OpenAI GPT models
 
 export const buildPrompt = (targetLanguage: string): string =>
-  `You are a translation assistant helping software developers understand GitHub issues written in any language. Translate all human-readable text into ${targetLanguage}.
+  `You are a translation assistant helping software developers understand issue tracker content written in any language. Translate all human-readable text into ${targetLanguage}.
 
 Rules:
 - Translate all natural language, including non-English human languages (e.g. Swedish, French, German)

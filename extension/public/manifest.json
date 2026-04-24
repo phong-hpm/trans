@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "Task Translator",
-  "version": "1.0.22",
-  "description": "Translate GitHub Issues content with AI — one click per block",
+  "version": "1.0.23",
+  "description": "AI-powered translator for issue trackers — translate tasks, comments, and titles in one click",
   "permissions": ["storage", "tabs"],
   "host_permissions": ["https://github.com/*", "http://localhost:*/*", "http://localhost:8000/*"],
   "content_scripts": [

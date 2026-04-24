@@ -1,7 +1,8 @@
-// content-script.tsx — Entry point: initialises injection and watches for DOM changes
+// content-script.tsx — Entry point: detects platform, initialises injection, watches DOM
 
 import ENV from '../constants/env';
-import { githubIssueQueries as q } from '../constants/github-query';
+import { detectPlatform } from '../platforms';
+import type { PlatformAdapter } from '../platforms/types';
 import { LogType, MessageType } from '../types';
 import { processBlocks } from './inject';
 import { mountToaster } from './toast';
@@ -27,25 +28,24 @@ const initDevLogs = (): void => {
   });
 };
 
-const init = (): void => {
+const init = (platform: PlatformAdapter): void => {
   if (ENV.isDev) initDevLogs();
 
   mountToaster();
 
-  // Retry on init — GitHub renders issue content asynchronously, so the first call may find nothing
+  // Retry on init — some platforms render content asynchronously
   let attempts = 0;
   const retry = setInterval(() => {
-    processBlocks();
+    processBlocks(platform.getBlocks());
     if (++attempts >= 10) clearInterval(retry);
   }, 500);
 
   let debounce: ReturnType<typeof setTimeout>;
   new MutationObserver(() => {
     clearTimeout(debounce);
-    debounce = setTimeout(processBlocks, 400);
+    debounce = setTimeout(() => processBlocks(platform.getBlocks()), 400);
   }).observe(document.body, { childList: true, subtree: true });
 };
 
-if (location.pathname.match(q.pagePattern)) {
-  init();
-}
+const platform = detectPlatform(location.href);
+if (platform) init(platform);
