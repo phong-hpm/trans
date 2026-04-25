@@ -56,6 +56,7 @@ trans/
         │   ├── providers.ts             — PROVIDERS list and MODELS map (provider → model options)
         │   └── settings.ts              — DEFAULT_SETTINGS; backendUrl, alwaysShowTranslated defaults
         ├── components/
+        │   ├── Button.tsx               — Reusable button with primary, danger, and ghost variants
         │   ├── Input.tsx                — Reusable labeled text input component
         │   ├── Select.tsx               — Reusable labeled select component
         │   └── Toggle.tsx               — Reusable toggle switch component with label/sublabel

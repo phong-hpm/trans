@@ -110,7 +110,7 @@ export const TranslateToolbar: React.FC<Props> = ({
           <Toggle
             checked={isTranslated}
             onChange={handleToggle}
-            label={isTranslated ? 'Showing translated' : 'Showing original'}
+            label='Show translation'
           />
         )}
 
