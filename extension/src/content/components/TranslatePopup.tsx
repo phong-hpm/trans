@@ -5,7 +5,7 @@ import type React from 'react';
 import { useEffect, useMemo, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import type { BlockType } from '../../types';
-import { useTheme } from '../hooks/useTheme';
+import { useGlobalStore } from '../../store/global';
 import shadowStyles from '../shadow.css?inline';
 
 export interface TranslateOption {
@@ -49,7 +49,7 @@ interface Props {
 
 export const TranslatePopup: React.FC<Props> = ({ blockType, anchorRef, onSelect, onClose }) => {
   const ref = useRef<HTMLDivElement>(null);
-  const theme = useTheme();
+  const { theme } = useGlobalStore();
   const options = blockType === 'comment' ? COMMENT_OPTIONS : SIMPLE_OPTIONS;
 
   const rect = anchorRef.current?.getBoundingClientRect();
@@ -104,7 +104,8 @@ export const TranslatePopup: React.FC<Props> = ({ blockType, anchorRef, onSelect
               onClose();
             }}
             className={clsx(
-              ['w-full text-left px-3 py-2.5 cursor-pointer transition-colors', i < options.length - 1 && 'border-b'],
+              'w-full text-left p-3 cursor-pointer transition-colors',
+              i < options.length - 1 && 'border-b',
               'border-gray-100 hover:bg-gray-100',
               'dark:border-gray-800 dark:hover:bg-gray-800',
             )}

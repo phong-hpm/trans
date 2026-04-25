@@ -1,7 +1,8 @@
-// content-script.tsx — Entry point: detects platform, initialises injection, watches DOM
+// main.tsx — Entry point: detects platform, initialises injection, watches DOM
 
 import ENV from '../constants/env';
 import { detectPlatform } from '../platforms';
+import { useGlobalStore } from '../store/global';
 import type { PlatformAdapter } from '../platforms/types';
 import { LogType, MessageType } from '../types';
 import { processBlocks } from './inject';
@@ -46,6 +47,8 @@ const init = (platform: PlatformAdapter): void => {
     debounce = setTimeout(() => processBlocks(platform.getBlocks()), 400);
   }).observe(document.body, { childList: true, subtree: true });
 };
+
+useGlobalStore.getState().init();
 
 const platform = detectPlatform(location.href);
 if (platform) init(platform);

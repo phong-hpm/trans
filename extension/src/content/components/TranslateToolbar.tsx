@@ -5,8 +5,8 @@ import { ChevronDown, Loader2 } from 'lucide-react';
 import type React from 'react';
 import { useRef, useState } from 'react';
 import { Toggle } from '../../components/Toggle';
-import type { BlockType, ContextBlock, ExtensionSettings } from '../../types';
-import { useTheme } from '../hooks/useTheme';
+import type { BlockType, ContextBlock } from '../../types';
+import { useGlobalStore } from '../../store/global';
 import { useTranslate } from '../hooks/useTranslate';
 import { COMMENT_OPTIONS, SIMPLE_OPTIONS, TranslatePopup } from './TranslatePopup';
 import type { TranslateOption } from './TranslatePopup';
@@ -14,7 +14,6 @@ import type { TranslateOption } from './TranslatePopup';
 interface Props {
   blockId: string;
   blockType: BlockType;
-  getSettings: () => Promise<ExtensionSettings>;
   getElement: () => HTMLElement;
   getContextBlocks?: () => ContextBlock[];
 }
@@ -22,7 +21,6 @@ interface Props {
 export const TranslateToolbar: React.FC<Props> = ({
   blockId,
   blockType,
-  getSettings,
   getElement,
   getContextBlocks,
 }) => {
@@ -30,12 +28,11 @@ export const TranslateToolbar: React.FC<Props> = ({
   const [selectedOption, setSelectedOption] = useState<TranslateOption>(options[0]);
   const [popupOpen, setPopupOpen] = useState(false);
   const dropdownRef = useRef<HTMLButtonElement>(null);
-  const theme = useTheme();
+  const { theme } = useGlobalStore();
 
   const { state, translate, restore, hasTranslation } = useTranslate(
     blockId,
     blockType,
-    getSettings,
     getElement,
     getContextBlocks
   );

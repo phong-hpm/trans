@@ -68,10 +68,11 @@ trans/
         ├── background/
         │   ├── background.ts            — Service worker CORS proxy: relays /translate requests
         │   └── logger.ts               — Grouped request logger; relays to page DevTools in DEV mode
+        ├── store/
+        │   └── global.ts                — Zustand global store: flat settings + ready flag, init(), updateSettings(), patchSettings(), saveSettings()
         ├── content/
-        │   ├── content-script.tsx       — Entry: detectPlatform, init, MutationObserver, DEV logs
+        │   ├── main.tsx                 — Entry: detectPlatform, init, MutationObserver, DEV logs
         │   ├── inject.tsx               — Generic injection engine: mounts TranslateButton per Block
-        │   ├── settings.ts              — Settings cache singleton (chrome.storage.sync)
         │   ├── toast.tsx                — Mounts Sonner <Toaster> into document.body
         │   ├── domSegments.ts           — Extract/apply/restore/getSegmentText for DOM text segments
         │   ├── translationCache.ts      — chrome.storage.local cache keyed by pathname:blockId
@@ -81,7 +82,6 @@ trans/
         │   │   ├── TranslatePopup.tsx   — Mode-selection dropdown (exports options + TranslateOption type)
         │   │   └── TranslateToolbar.tsx — Top-right toolbar for task/comment blocks: toggle + split translate button
         │   └── hooks/
-        │       ├── useTheme.ts          — Reads theme from chrome.storage.sync, reacts to popup changes
         │       └── useTranslate.ts      — Translation state machine with cache lookup and useRef toggle
         └── popup/
             ├── index.html              — Popup HTML entry (crxjs resolves this from manifest action.default_popup)
@@ -91,6 +91,9 @@ trans/
 ```
 
 # To delete: rm extension/src/constants/github-query.ts
+# To delete: rm extension/src/content/settings.ts
+# To delete: rm extension/src/content/hooks/useTheme.ts
+# To delete: rm extension/src/store/index.ts
 
 ## Key files to edit for common tasks
 
