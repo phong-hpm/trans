@@ -2,25 +2,18 @@
 
 import type React from 'react';
 import { useEffect, useState } from 'react';
-import { Input } from '../components/Input';
 import { Select } from '../components/Select';
 import { Toggle } from '../components/Toggle';
 import { LANGUAGES } from '../constants/languages';
 import { MODELS, PROVIDERS } from '../constants/providers';
-import { DEFAULT_SETTINGS } from '../constants/settings';
-import type { ExtensionSettings } from '../types';
+import { useGlobalStore } from '../store/global';
 
 export const Popup: React.FC = () => {
-  const [settings, setSettings] = useState<ExtensionSettings>(DEFAULT_SETTINGS);
+  const { ready, theme, targetLanguage, provider, model, alwaysShowTranslated, updateSettings, patchSettings, saveSettings } = useGlobalStore();
+
   const [saved, setSaved] = useState(false);
   const [hasPageCache, setHasPageCache] = useState(false);
   const [pagePathname, setPagePathname] = useState('');
-
-  useEffect(() => {
-    chrome.storage.sync.get(DEFAULT_SETTINGS, (items) => {
-      setSettings(items as ExtensionSettings);
-    });
-  }, []);
 
   // Check if current page has any cached translations
   useEffect(() => {
@@ -38,28 +31,15 @@ export const Popup: React.FC = () => {
     });
   }, []);
 
-  const handleProviderChange = (provider: string) => {
-    const defaultModel = MODELS[provider]?.[0]?.value ?? '';
-    setSettings((s) => ({ ...s, provider, model: defaultModel }));
-  };
-
-  const handleToggleAlwaysShow = (value: boolean) => {
-    const updated = { ...settings, alwaysShowTranslated: value };
-    setSettings(updated);
-    chrome.storage.sync.set({ alwaysShowTranslated: value });
-  };
-
-  const handleToggleTheme = (isDark: boolean) => {
-    const theme = isDark ? 'dark' : 'light';
-    setSettings((s) => ({ ...s, theme }));
-    chrome.storage.sync.set({ theme });
+  const handleProviderChange = (newProvider: string) => {
+    const defaultModel = MODELS[newProvider]?.[0]?.value ?? '';
+    updateSettings({ provider: newProvider, model: defaultModel });
   };
 
   const handleSave = () => {
-    chrome.storage.sync.set(settings, () => {
-      setSaved(true);
-      setTimeout(() => setSaved(false), 2000);
-    });
+    saveSettings();
+    setSaved(true);
+    setTimeout(() => setSaved(false), 2000);
   };
 
   const handleClearCache = () => {
@@ -71,7 +51,9 @@ export const Popup: React.FC = () => {
     });
   };
 
-  const isDark = settings.theme === 'dark';
+  if (!ready) return null;
+
+  const isDark = theme === 'dark';
 
   return (
     <div className={isDark ? 'dark' : ''}>
@@ -82,44 +64,41 @@ export const Popup: React.FC = () => {
         </h1>
 
         <div className='space-y-3'>
-
           <div className='border-b border-gray-100 dark:border-gray-700 pb-3 space-y-3'>
             <Toggle
               label='Always show translated'
               sublabel='Auto-apply cached translations on page load'
-              checked={settings.alwaysShowTranslated}
-              onChange={handleToggleAlwaysShow}
+              checked={alwaysShowTranslated}
+              onChange={(value) => patchSettings({ alwaysShowTranslated: value })}
             />
 
             <Toggle
               label='Dark mode'
               checked={isDark}
-              onChange={handleToggleTheme}
+              onChange={(value) => patchSettings({ theme: value ? 'dark' : 'light' })}
             />
           </div>
+
           <Select
             label='Your language'
-            value={settings.targetLanguage}
+            value={targetLanguage}
             options={LANGUAGES.map((lang) => ({ value: lang, label: lang }))}
-            onChange={(lang) => setSettings({ ...settings, targetLanguage: lang })}
+            onChange={(targetLanguage) => updateSettings({ targetLanguage })}
           />
 
-          <Select label='Provider' value={settings.provider} options={PROVIDERS} onChange={handleProviderChange} />
+          <Select
+            label='Provider'
+            value={provider}
+            options={PROVIDERS}
+            onChange={handleProviderChange}
+          />
 
           <Select
             label='Model'
             disabled
-            value={settings.model}
-            options={MODELS[settings.provider] ?? []}
-            onChange={(model) => setSettings({ ...settings, model })}
-          />
-
-          <Input
-            label='Backend URL'
-            type='url'
-            value={settings.backendUrl}
-            onChange={(e) => setSettings({ ...settings, backendUrl: e.target.value })}
-            placeholder='http://localhost:8000/api/v1'
+            value={model}
+            options={MODELS[provider] ?? []}
+            onChange={(model) => updateSettings({ model })}
           />
 
           <div className='space-y-2'>

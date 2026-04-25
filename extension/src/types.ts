@@ -40,7 +40,6 @@ export type Theme = 'light' | 'dark';
 
 export interface ExtensionSettings {
   targetLanguage: string;
-  backendUrl: string;
   provider: string;
   model: string;
   alwaysShowTranslated: boolean;

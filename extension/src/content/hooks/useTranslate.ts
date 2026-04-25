@@ -2,12 +2,9 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
-import {
-  type BlockType,
-  type ContextBlock,
-  type ExtensionSettings,
-  MessageType,
-} from '../../types';
+import { type BlockType, type ContextBlock, MessageType } from '../../types';
+import ENV from '../../constants/env';
+import { useGlobalStore } from '../../store/global';
 import { applyTranslation, extractSegments, restoreOriginal } from '../domSegments';
 import type { TranslatedSegment } from '../domSegments';
 import { getCached, setCached } from '../translationCache';
@@ -17,10 +14,10 @@ type TranslateState = 'idle' | 'loading' | 'translated';
 export const useTranslate = (
   blockId: string,
   blockType: BlockType,
-  getSettings: () => Promise<ExtensionSettings>,
   getElement: () => HTMLElement,
   getContextBlocks?: () => ContextBlock[]
 ) => {
+  const { targetLanguage, provider, model, ready, alwaysShowTranslated } = useGlobalStore();
   const [uiState, setUiState] = useState<TranslateState>('idle');
   const [hasTranslation, setHasTranslation] = useState(false);
   const stateRef = useRef<TranslateState>('idle');
@@ -71,7 +68,6 @@ export const useTranslate = (
           translatedText: map.get(s.text) ?? s.text,
         }));
       } else {
-        const settings = await getSettings();
         const contextBlocks = getContextBlocks?.() ?? [];
 
         const result = await chrome.runtime.sendMessage({
@@ -79,10 +75,10 @@ export const useTranslate = (
           blockType,
           segments: rawSegments,
           contextBlocks,
-          targetLanguage: settings.targetLanguage,
-          backendUrl: settings.backendUrl,
-          provider: settings.provider,
-          model: settings.model,
+          targetLanguage,
+          backendUrl: ENV.backendUrl,
+          provider,
+          model,
         });
 
         if (!result) throw new Error('No response from background worker');
@@ -105,7 +101,7 @@ export const useTranslate = (
       toast.error(msg);
       setState('idle');
     }
-  }, [blockId, blockType, getSettings, getElement, getContextBlocks, setState]);
+  }, [blockId, blockType, targetLanguage, provider, model, getElement, getContextBlocks, setState]);
 
   // Initialize hasTranslation from cache on mount — toggle shows without re-translating
   useEffect(() => {
@@ -114,39 +110,32 @@ export const useTranslate = (
     });
   }, [blockId]);
 
-  // Keep stable refs so effects don't need to re-subscribe on every render
+  // Keep stable refs so subscriptions always call the latest version
   const translateRef = useRef(translate);
   translateRef.current = translate;
   const restoreRef = useRef(restore);
   restoreRef.current = restore;
 
-  // Auto-apply cached translation on mount if alwaysShowTranslated is enabled
+  // Auto-apply cached translation when store is ready and alwaysShowTranslated is enabled
   useEffect(() => {
-    const check = async () => {
-      if (stateRef.current !== 'idle') return;
-      const settings = await getSettings();
-      if (!settings.alwaysShowTranslated) return;
-      const cached = await getCached(blockId);
+    if (!ready || stateRef.current !== 'idle' || !alwaysShowTranslated) return;
+    getCached(blockId).then((cached) => {
       if (cached) translateRef.current();
-    };
-    check();
-  }, [blockId, getSettings]);
+    });
+  }, [blockId, ready, alwaysShowTranslated]);
 
-  // React live to alwaysShowTranslated toggle from popup
+  // React to alwaysShowTranslated changes from popup
   useEffect(() => {
-    const listener = (changes: Record<string, chrome.storage.StorageChange>) => {
-      if (!('alwaysShowTranslated' in changes)) return;
-      const enabled = changes.alwaysShowTranslated.newValue as boolean;
-      if (enabled && stateRef.current === 'idle') {
+    return useGlobalStore.subscribe((state, prev) => {
+      if (state.alwaysShowTranslated === prev.alwaysShowTranslated) return;
+      if (state.alwaysShowTranslated && stateRef.current === 'idle') {
         getCached(blockId).then((cached) => {
           if (cached) translateRef.current();
         });
-      } else if (!enabled && stateRef.current === 'translated') {
+      } else if (!state.alwaysShowTranslated && stateRef.current === 'translated') {
         restoreRef.current();
       }
-    };
-    chrome.storage.onChanged.addListener(listener);
-    return () => chrome.storage.onChanged.removeListener(listener);
+    });
   }, [blockId]);
 
   return { state: uiState, translate, restore, hasTranslation };

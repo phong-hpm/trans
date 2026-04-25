@@ -5,7 +5,6 @@ import type { Block } from '../platforms/types';
 import type { BlockType, ContextBlock } from '../types';
 import { TranslateButton } from './components/TranslateButton';
 import { TranslateToolbar } from './components/TranslateToolbar';
-import { getSettings } from './settings';
 import shadowStyles from './shadow.css?inline';
 
 // Title: floats outside the container to the right (small circle button)
@@ -34,7 +33,6 @@ const mountUI = (
   const props = {
     blockId,
     blockType,
-    getSettings,
     getElement: () => contentEl,
     getContextBlocks,
   };

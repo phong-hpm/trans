@@ -5,14 +5,13 @@ import { Loader2, RotateCcw } from 'lucide-react';
 import type React from 'react';
 import { useRef, useState } from 'react';
 import logoUrl from '../../assets/logo.png';
-import type { BlockType, ContextBlock, ExtensionSettings } from '../../types';
+import type { BlockType, ContextBlock } from '../../types';
 import { useTranslate } from '../hooks/useTranslate';
 import { TranslatePopup } from './TranslatePopup';
 
 interface Props {
   blockId: string;
   blockType: BlockType;
-  getSettings: () => Promise<ExtensionSettings>;
   getElement: () => HTMLElement;
   getContextBlocks?: () => ContextBlock[];
 }
@@ -20,7 +19,6 @@ interface Props {
 export const TranslateButton: React.FC<Props> = ({
   blockId,
   blockType,
-  getSettings,
   getElement,
   getContextBlocks,
 }) => {
@@ -29,7 +27,6 @@ export const TranslateButton: React.FC<Props> = ({
   const { state, translate, restore } = useTranslate(
     blockId,
     blockType,
-    getSettings,
     getElement,
     getContextBlocks
   );
