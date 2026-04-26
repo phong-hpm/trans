@@ -17,6 +17,7 @@ const mountUI = (
   contentEl: HTMLElement,
   blockId: string,
   blockType: BlockTypeEnum,
+  getLiveElement: (() => HTMLElement | null) | undefined,
   getContextBlocks?: () => ContextBlock[]
 ): void => {
   if (anchor.querySelector(`[data-trans-id="${blockId}"]`)) return;
@@ -32,10 +33,14 @@ const mountUI = (
   const mount = document.createElement('div');
   shadow.appendChild(mount);
 
+  // Prefer getLiveElement (re-queries DOM each call) over the captured contentEl reference,
+  // so getElement() never returns a stale node after GitHub re-renders the block.
+  const getElement = (): HTMLElement => getLiveElement?.() ?? contentEl;
+
   const props = {
     blockId,
     blockType,
-    getElement: () => contentEl,
+    getElement,
     getContextBlocks,
   };
 
@@ -83,6 +88,13 @@ export const processBlocks = (blocks: Block[]): void => {
         : makeBlockAnchor(block.contentEl, block.blockId);
 
     if (!anchor) continue;
-    mountUI(anchor, block.contentEl, block.blockId, block.blockType, block.getContextBlocks);
+    mountUI(
+      anchor,
+      block.contentEl,
+      block.blockId,
+      block.blockType,
+      block.getLiveElement,
+      block.getContextBlocks
+    );
   }
 };

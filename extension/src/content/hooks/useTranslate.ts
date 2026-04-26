@@ -16,7 +16,7 @@ import {
   getBlockHistory,
   getSelectedEntry,
   selectEntry,
-} from '../translationHistory';
+} from '../translationSync';
 
 type TranslateState = TranslateStateEnum;
 
@@ -241,6 +241,50 @@ export const useTranslate = (
       if (hist?.entries.length) translateRef.current();
     });
   }, [blockId, ready, alwaysShowTranslated]);
+
+  // Watch for re-rendering the block (soft nav, internal updates) and re-apply translation.
+  // When the framework replaces the content, our data-trans-id spans are gone — detect this via
+  // MutationObserver on the element's parent and re-extract + re-apply automatically.
+  useEffect(() => {
+    const el = getElement();
+    const parent = el.parentElement ?? document.body;
+
+    const observer = new MutationObserver(() => {
+      if (stateRef.current !== TranslateStateEnum.Translated) return;
+      if (!segmentsRef.current?.length) return;
+
+      const liveEl = getElement();
+      // Skip if the element is detached (framework may still be mounting the new tree)
+      if (!liveEl.isConnected) return;
+
+      // If our spans are still present, this mutation is unrelated — ignore
+      const firstId = segmentsRef.current[0].id;
+      if (liveEl.querySelector(`[data-trans-id="${firstId}"]`)) return;
+
+      // Spans are gone — framework re-rendered the content. Re-extract and re-apply.
+      const translationMap = new Map(segmentsRef.current.map((s) => [s.text, s.translatedText]));
+
+      // Pause observation so our own DOM mutations don't retrigger the callback
+      observer.disconnect();
+
+      const raw = extractSegments(liveEl);
+      if (raw.length) {
+        const rehydrated = raw.map((s) => ({
+          ...s,
+          translatedText: translationMap.get(s.text) ?? s.text,
+        }));
+        segmentsRef.current = rehydrated;
+        applyTranslation(rehydrated, liveEl);
+      }
+
+      // Resume — observe the (potentially new) parent in case the element moved
+      const newParent = liveEl.parentElement ?? document.body;
+      observer.observe(newParent, { childList: true, subtree: true });
+    });
+
+    observer.observe(parent, { childList: true, subtree: true });
+    return () => observer.disconnect();
+  }, [getElement]);
 
   // React to alwaysShowTranslated changes from popup
   useEffect(() => {

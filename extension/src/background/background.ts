@@ -21,11 +21,19 @@ interface TranslateError {
 
 type MessageResult = TranslateResult | TranslateError;
 
-// Forward icon click to the active content script as a ToggleModal message
-// Silently ignore tabs where the content script is not running (non-GitHub pages, chrome://, etc.)
+// Forward icon click to the active content script as a ToggleModal message.
+// Retries up to 3 times with a 350ms delay if the content script is not yet ready.
 chrome.action.onClicked.addListener((tab) => {
   if (!tab.id) return;
-  chrome.tabs.sendMessage(tab.id, { type: MessageTypeEnum.ToggleModal }).catch(() => {});
+  const tabId = tab.id;
+
+  const attemptToggle = (retriesLeft: number): void => {
+    chrome.tabs.sendMessage(tabId, { type: MessageTypeEnum.ToggleModal }).catch(() => {
+      if (retriesLeft > 0) setTimeout(() => attemptToggle(retriesLeft - 1), 350);
+    });
+  };
+
+  attemptToggle(3);
 });
 
 chrome.runtime.onMessage.addListener(

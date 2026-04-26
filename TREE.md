@@ -68,6 +68,11 @@ trans/
         │   ├── Modal.tsx                — Generic modal shell: backdrop + rounded card with header and body slot
         │   ├── Select.tsx               — Reusable labeled select component
         │   ├── TextareaInput.tsx        — Reusable labeled textarea with optional help text
+        ├── apis/
+        │   ├── historyApi.ts            — chrome.storage.local CRUD for BlockHistory
+        │   ├── storageApi.ts            — chrome.storage quota/usage helpers
+        │   ├── syncApi.ts               — chrome.storage.sync for settings
+        │   └── dbHistoryApi.ts          — Backend REST API calls for history DB sync
         │   ├── ThemeWrapper.tsx         — Wraps children with current theme class for dark mode support
         │   └── Toggle.tsx               — Reusable toggle switch component with label/sublabel
         ├── platforms/
@@ -89,6 +94,7 @@ trans/
         │   ├── modal.tsx                — Mounts Modal into document.body via shadow DOM
         │   ├── domSegments.ts           — Extract/apply/restore/getSegmentText for DOM text segments
         │   ├── translationHistory.ts    — Block translation history CRUD: addTranslationEntry, selectEntry, deleteEntry
+        │   ├── translationSync.ts       — Sync coordinator: wraps translationHistory + optionally syncs to backend DB
         │   ├── shadow.css               — Tailwind directives; imported via ?inline → injected into shadow roots
         │   ├── components/
         │   │   ├── TranslateButton.tsx  — Circle icon button used for title blocks; uses BlockTypeEnum

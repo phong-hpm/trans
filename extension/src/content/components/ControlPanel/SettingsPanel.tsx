@@ -9,7 +9,7 @@ import { ThemeEnum } from '../../../enums';
 import { useGlobalStore } from '../../../store/global';
 
 export const SettingsPanel: React.FC = () => {
-  const { theme, targetLanguage, alwaysShowTranslated, showSidebar, updateSettings } =
+  const { theme, targetLanguage, alwaysShowTranslated, showSidebar, syncToDb, updateSettings } =
     useGlobalStore();
 
   return (
@@ -25,6 +25,12 @@ export const SettingsPanel: React.FC = () => {
           label="Auto-show translations"
           checked={alwaysShowTranslated}
           onChange={(v) => updateSettings({ alwaysShowTranslated: v })}
+        />
+        <Toggle
+          label="Sync history to server"
+          sublabel="Saves translation history to the backend database"
+          checked={syncToDb}
+          onChange={(v) => updateSettings({ syncToDb: v })}
         />
         <Toggle
           label="Dark mode"
