@@ -21,7 +21,8 @@
       "Skill(update-config:*)",
       "Bash(yarn fix *)",
       "Bash(yarn tsc *)",
-      "Bash(npx tsc *)"
+      "Bash(npx tsc *)",
+      "Bash(yarn build *)"
     ]
   }
 }

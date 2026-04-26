@@ -22,6 +22,7 @@ export const githubAdapter: PlatformAdapter = {
         blockType: BlockTypeEnum.Title,
         containerEl: titleContainer,
         contentEl: titleContentEl,
+        getLiveElement: () => document.querySelector<HTMLElement>(q.titleText),
       });
     }
 
@@ -36,6 +37,8 @@ export const githubAdapter: PlatformAdapter = {
         blockType: BlockTypeEnum.Task,
         containerEl: issueBodyBlock,
         contentEl: bodyContentEl,
+        getLiveElement: () =>
+          document.querySelector<HTMLElement>(`${q.issueBodyViewer} ${q.markdownBody}`),
         getContextBlocks: (): ContextBlock[] => {
           const titleEl = getTitleEl();
           if (!titleEl) return [];
@@ -50,11 +53,14 @@ export const githubAdapter: PlatformAdapter = {
       const contentEl = block.querySelector<HTMLElement>(q.markdownBody);
       if (!contentEl) return;
 
+      const commentEl = block as HTMLElement;
       blocks.push({
         blockId: `comment-${i}`,
         blockType: BlockTypeEnum.Comment,
-        containerEl: block as HTMLElement,
+        containerEl: commentEl,
         contentEl,
+        // Re-query within the stable comment container in case markdown-body is replaced
+        getLiveElement: () => commentEl.querySelector<HTMLElement>(q.markdownBody),
         getContextBlocks: (): ContextBlock[] => {
           const ctx: ContextBlock[] = [];
           const titleEl = getTitleEl();
