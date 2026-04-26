@@ -60,40 +60,46 @@ export const Modal: React.FC<Props> = ({
           onClick={onClose}
         />
 
-        {/* Card */}
+        {/* Card — outer wrapper carries shadow + rounded; inner clips overflow for children */}
         <div
           className={clsx(
-            'relative z-10 flex flex-col rounded-xl overflow-hidden',
-            'bg-white dark:bg-gray-950',
-            'border border-gray-200 dark:border-gray-700',
+            'relative z-10 rounded-xl',
             'shadow-[0_24px_64px_-12px_rgba(0,0,0,0.35),0_8px_24px_-4px_rgba(0,0,0,0.2)]',
             'max-h-[80vh]',
             SIZE_CLASS[size]
           )}
         >
-          {/* Header */}
           <div
             className={clsx(
-              'flex items-center justify-between px-4 py-3 flex-shrink-0',
-              'border-b border-gray-200 dark:border-gray-700'
+              'flex flex-col h-full rounded-xl overflow-hidden',
+              'bg-white dark:bg-gray-950',
+              'border border-gray-200 dark:border-gray-700'
             )}
           >
-            <div className="text-sm font-semibold text-gray-800 dark:text-gray-100">{title}</div>
-            <button
-              type="button"
-              onClick={onClose}
+            {/* Header */}
+            <div
               className={clsx(
-                'p-1 rounded-md transition-colors',
-                'text-gray-400 hover:text-gray-600 hover:bg-gray-100',
-                'dark:text-gray-500 dark:hover:text-gray-300 dark:hover:bg-gray-800'
+                'flex items-center justify-between px-4 py-3 flex-shrink-0',
+                'border-b border-gray-200 dark:border-gray-700'
               )}
             >
-              <X className="w-4 h-4" />
-            </button>
-          </div>
+              <div className="text-sm font-semibold text-gray-800 dark:text-gray-100">{title}</div>
+              <button
+                type="button"
+                onClick={onClose}
+                className={clsx(
+                  'p-1 rounded-md transition-colors',
+                  'text-gray-400 hover:text-gray-600 hover:bg-gray-100',
+                  'dark:text-gray-500 dark:hover:text-gray-300 dark:hover:bg-gray-800'
+                )}
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
 
-          {/* Body */}
-          <div className="flex flex-col flex-1 min-h-0">{children}</div>
+            {/* Body */}
+            <div className="flex flex-col flex-1 min-h-0">{children}</div>
+          </div>
         </div>
       </div>
     </ThemeWrapper>

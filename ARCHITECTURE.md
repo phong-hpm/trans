@@ -72,7 +72,7 @@ For each `Block` returned by the adapter, `inject.tsx`:
 User clicks TranslateButton
         │
         ▼
-Check chrome.storage.local for cached translation
+Check chrome.storage.local for saved translation
         │
    hit ─┤─ miss
         │         │
@@ -83,7 +83,7 @@ Check chrome.storage.local for cached translation
         │       → background service worker (CORS proxy)
         │       → backend /api/v1/translate
         │       → LLM provider (OpenAI / Gemini)
-        │   Cache result in chrome.storage.local
+        │   Save result in chrome.storage.local
         │
         ▼
 Apply translated text to DOM spans
@@ -123,7 +123,7 @@ Settings are persisted in `chrome.storage.sync`:
 | `backendUrl` | `""` | Translation server base URL |
 | `provider` | `"openai"` | LLM provider |
 | `model` | `"gpt-4o-mini"` | Model name |
-| `alwaysShowTranslated` | `false` | Auto-apply cached translations on page load |
+| `alwaysShowTranslated` | `false` | Auto-apply saved translations on page load |
 
 ---
 

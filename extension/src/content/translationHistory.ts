@@ -1,4 +1,4 @@
-// translationCache.ts — Block translation history operations for the current page
+// translationHistory.ts — Block translation history operations for the current page
 
 import { nanoid } from 'nanoid';
 

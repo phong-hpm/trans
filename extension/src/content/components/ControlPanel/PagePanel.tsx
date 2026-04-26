@@ -1,4 +1,4 @@
-// ControlPanel/PagePanel.tsx — Page panel: platform info + cached translation count + clear
+// ControlPanel/PagePanel.tsx — Page panel: platform info + saved translation count + clear
 
 import clsx from 'clsx';
 import type React from 'react';
@@ -54,7 +54,7 @@ export const PagePanel: React.FC<Props> = ({ pathname }) => {
       </div>
 
       <p className="text-xs text-gray-500 dark:text-gray-400">
-        Cached translations:{' '}
+        Saved translations:{' '}
         <span className="font-semibold text-gray-800 dark:text-gray-100">{pageCount}</span>
       </p>
 
@@ -70,7 +70,7 @@ export const PagePanel: React.FC<Props> = ({ pathname }) => {
           Clear page history
         </ConfirmButton>
       ) : (
-        <p className="text-xs text-gray-400 dark:text-gray-500 italic">No cached translations.</p>
+        <p className="text-xs text-gray-400 dark:text-gray-500 italic">No saved translations.</p>
       )}
     </div>
   );

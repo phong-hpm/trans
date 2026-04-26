@@ -19,10 +19,7 @@ Every source file must have a short header comment on line 1 describing its role
 
 ## Deleting Files
 
-Claude cannot delete files. When a file should be deleted, leave a comment in the response:
-```
-# To delete: rm path/to/file
-```
+Claude can delete files directly using the shell when a file is no longer needed.
 Never overwrite the file content with a placeholder.
 
 ## Code Style — Functions

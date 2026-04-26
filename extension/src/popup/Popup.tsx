@@ -1,4 +1,4 @@
-// Popup.tsx — Extension popup: language settings, provider/model, always-show toggle, clear cache
+// Popup.tsx — Extension popup: language settings, provider/model, always-show toggle, clear history
 
 import clsx from 'clsx';
 import type React from 'react';

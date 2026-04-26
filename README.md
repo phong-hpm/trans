@@ -7,7 +7,7 @@ A Chrome extension that adds one-click translate buttons to every block in GitHu
 - Translate button on every block — always visible, no hover required
 - Loading spinner while translating, error tooltip on failure
 - Toggle between translated and original with one click
-- Translations cached in session — no repeat API calls on toggle
+- Translations saved locally — no repeat API calls on toggle
 - Configure target language and backend URL via the extension popup
 - Supports multiple LLM providers: OpenAI and Gemini
 

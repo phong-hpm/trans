@@ -1,7 +1,7 @@
 // Sidebar/index.tsx — Main sidebar shell with drawer and page display modes
 
 import clsx from 'clsx';
-import { AlignRight, PanelRight, X } from 'lucide-react';
+import { AlignRight, Languages, PanelRight, X } from 'lucide-react';
 import type React from 'react';
 import { useEffect, useState } from 'react';
 
@@ -14,7 +14,6 @@ import { Tabs } from './Tabs';
 
 const TABS = [{ id: SidebarTabEnum.History, label: 'History' }];
 const SIDEBAR_WIDTH = 320;
-const ICON_URL = chrome.runtime.getURL('icons/icon32.png');
 
 export const Sidebar: React.FC = () => {
   const { showSidebar, sidebarMode, updateSettings } = useGlobalStore();
@@ -62,7 +61,7 @@ export const Sidebar: React.FC = () => {
               'dark:text-gray-100'
             )}
           >
-            <img src={ICON_URL} alt="Task Translator" className="w-4 h-4" />
+            <Languages className="w-4 h-4 text-blue-500" />
             Task Translator
           </div>
 
