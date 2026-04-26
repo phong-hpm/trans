@@ -4,14 +4,16 @@ import clsx from 'clsx';
 import { Loader2, RotateCcw } from 'lucide-react';
 import type React from 'react';
 import { useRef, useState } from 'react';
+
 import logoUrl from '../../assets/logo.png';
-import type { BlockType, ContextBlock } from '../../types';
+import { type BlockTypeEnum, TranslateStateEnum } from '../../enums';
+import type { ContextBlock } from '../../types';
 import { useTranslate } from '../hooks/useTranslate';
 import { TranslatePopup } from './TranslatePopup';
 
 interface Props {
   blockId: string;
-  blockType: BlockType;
+  blockType: BlockTypeEnum;
   getElement: () => HTMLElement;
   getContextBlocks?: () => ContextBlock[];
 }
@@ -32,8 +34,8 @@ export const TranslateButton: React.FC<Props> = ({
   );
 
   const handleClick = () => {
-    if (state === 'loading') return;
-    if (state === 'translated') {
+    if (state === TranslateStateEnum.Loading) return;
+    if (state === TranslateStateEnum.Translated) {
       restore();
       return;
     }
@@ -44,7 +46,7 @@ export const TranslateButton: React.FC<Props> = ({
     translate();
   };
 
-  const tooltip = state === 'translated' ? 'Show original' : 'Translate with AI';
+  const tooltip = state === TranslateStateEnum.Translated ? 'Show original' : 'Translate with AI';
 
   return (
     <div className="relative w-7 h-7" style={{ fontFamily: 'system-ui, sans-serif' }}>
@@ -52,16 +54,18 @@ export const TranslateButton: React.FC<Props> = ({
         className={clsx(
           'flex items-center justify-center w-7 h-7 rounded-full cursor-pointer p-1',
           'transition-all duration-150 select-none text-black',
-          state === 'translated' ? 'bg-blue-400 hover:bg-blue-500' : 'bg-white hover:bg-gray-100'
+          state === TranslateStateEnum.Translated
+            ? 'bg-blue-400 hover:bg-blue-500'
+            : 'bg-white hover:bg-gray-100'
         )}
         ref={buttonRef}
         onClick={handleClick}
         title={tooltip}
         type="button"
       >
-        {state === 'loading' && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
-        {state === 'translated' && <RotateCcw className="w-3.5 h-3.5" />}
-        {state === 'idle' && (
+        {state === TranslateStateEnum.Loading && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+        {state === TranslateStateEnum.Translated && <RotateCcw className="w-3.5 h-3.5" />}
+        {state === TranslateStateEnum.Idle && (
           <img src={logoUrl} alt="Translate" className="w-full h-full object-contain" />
         )}
       </button>

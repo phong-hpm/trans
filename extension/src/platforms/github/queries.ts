@@ -28,5 +28,5 @@ export const getTitleEl = (): HTMLElement | null =>
 
 export const getTaskEl = (): HTMLElement | null =>
   document.querySelector<HTMLElement>(
-    `${githubQueries.issueBodyViewer} ${githubQueries.markdownBody}`,
+    `${githubQueries.issueBodyViewer} ${githubQueries.markdownBody}`
   );

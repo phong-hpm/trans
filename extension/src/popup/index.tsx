@@ -1,9 +1,11 @@
 // index.tsx — Popup entry point
 
+import './popup.css';
+
 import { createRoot } from 'react-dom/client';
+
 import { useGlobalStore } from '../store/global';
 import { Popup } from './Popup';
-import './popup.css';
 
 useGlobalStore.getState().init();
 

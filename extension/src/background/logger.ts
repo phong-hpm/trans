@@ -1,11 +1,11 @@
 // logger.ts — Grouped DevTools logger for background service worker requests
 
 import ENV from '../constants/env';
-import { LogType, MessageType } from '../types';
+import { LogTypeEnum, MessageTypeEnum } from '../enums';
 
 interface LogPayload {
-  type: MessageType.DevLog;
-  logType: LogType;
+  type: MessageTypeEnum.DevLog;
+  logType: LogTypeEnum;
   label: string;
   entries: unknown[];
 }
@@ -24,7 +24,12 @@ export const logCall = (method: string, url: string, data: unknown): void => {
   console.groupEnd();
 
   if (ENV.isDev) {
-    relayToPage({ type: MessageType.DevLog, logType: LogType.Call, label, entries: [data] });
+    relayToPage({
+      type: MessageTypeEnum.DevLog,
+      logType: LogTypeEnum.Call,
+      label,
+      entries: [data],
+    });
   }
 };
 
@@ -42,8 +47,8 @@ export const logResponse = (
 
   if (ENV.isDev) {
     relayToPage({
-      type: MessageType.DevLog,
-      logType: LogType.Response,
+      type: MessageTypeEnum.DevLog,
+      logType: LogTypeEnum.Response,
       label,
       entries: [data, response],
     });
@@ -59,8 +64,8 @@ export const logError = (method: string, url: string, data: unknown, error: unkn
 
   if (ENV.isDev) {
     relayToPage({
-      type: MessageType.DevLog,
-      logType: LogType.Error,
+      type: MessageTypeEnum.DevLog,
+      logType: LogTypeEnum.Error,
       label,
       entries: [data, error],
     });

@@ -17,13 +17,7 @@ interface Props extends Omit<React.SelectHTMLAttributes<HTMLSelectElement>, 'onC
 
 export const Select: React.FC<Props> = ({ label, value, options, onChange, disabled, ...rest }) => (
   <div>
-    <div
-      className={clsx(
-        'block text-xs font-medium mb-1',
-        'text-gray-600',
-        'dark:text-gray-300',
-      )}
-    >
+    <div className={clsx('block text-xs font-medium mb-1', 'text-gray-600', 'dark:text-gray-300')}>
       {label}
     </div>
     <select

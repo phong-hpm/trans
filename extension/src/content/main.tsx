@@ -1,24 +1,24 @@
 // main.tsx — Entry point: detects platform, initialises injection, watches DOM
 
 import ENV from '../constants/env';
+import { LogTypeEnum, MessageTypeEnum } from '../enums';
 import { detectPlatform } from '../platforms';
-import { useGlobalStore } from '../store/global';
 import type { PlatformAdapter } from '../platforms/types';
-import { LogType, MessageType } from '../types';
+import { useGlobalStore } from '../store/global';
 import { processBlocks } from './inject';
 import { mountSidebar } from './sidebar';
 import { mountToaster } from './toast';
 
 const initDevLogs = (): void => {
   chrome.runtime.onMessage.addListener((message) => {
-    if (message.type !== MessageType.DevLog) return;
+    if (message.type !== MessageTypeEnum.DevLog) return;
     const { logType, label, entries } = message as {
-      logType: LogType;
+      logType: LogTypeEnum;
       label: string;
       entries: unknown[];
     };
 
-    if (logType === LogType.Error) {
+    if (logType === LogTypeEnum.Error) {
       console.group(`[BG][ERROR] ${label}`);
       console.warn(...entries);
       console.groupEnd();

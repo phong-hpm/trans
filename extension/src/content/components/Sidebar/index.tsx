@@ -4,76 +4,82 @@ import clsx from 'clsx';
 import { AlignRight, PanelRight, X } from 'lucide-react';
 import type React from 'react';
 import { useEffect, useState } from 'react';
+
 import { IconButton } from '../../../components/IconButton';
+import { ThemeWrapper } from '../../../components/ThemeWrapper';
+import { SidebarModeEnum, SidebarTabEnum } from '../../../enums';
 import { useGlobalStore } from '../../../store/global';
-import { SidebarModeEnum, SidebarTabEnum } from '../../../types';
 import { HistoryTab } from './HistoryTab';
 import { Tabs } from './Tabs';
 
 const TABS = [{ id: SidebarTabEnum.History, label: 'History' }];
-
+const SIDEBAR_WIDTH = 320;
 const ICON_URL = chrome.runtime.getURL('icons/icon32.png');
 
 export const Sidebar: React.FC = () => {
-  const { theme, showSidebar, sidebarMode, patchSettings } = useGlobalStore();
+  const { showSidebar, sidebarMode, updateSettings } = useGlobalStore();
   const [activeTab, setActiveTab] = useState<string>(SidebarTabEnum.History);
 
-  const isPage = sidebarMode === SidebarModeEnum.Page;
+  const isDrawerMode = sidebarMode === SidebarModeEnum.Drawer;
 
-  // Push page content when in page mode
+  // Push page content when NOT in drawer mode (i.e., page mode)
   useEffect(() => {
-    if (!showSidebar || !isPage) return;
-    document.body.style.marginRight = '320px';
+    if (!showSidebar || isDrawerMode) return;
+    document.body.style.marginRight = `${SIDEBAR_WIDTH}px`;
     return () => {
       document.body.style.marginRight = '';
     };
-  }, [showSidebar, isPage]);
+  }, [showSidebar, isDrawerMode]);
 
   if (!showSidebar) return null;
 
-  const handleClose = () => patchSettings({ showSidebar: false });
+  const handleClose = () => updateSettings({ showSidebar: false });
   const handleModeToggle = () =>
-    patchSettings({ sidebarMode: isPage ? SidebarModeEnum.Drawer : SidebarModeEnum.Page });
+    updateSettings({ sidebarMode: isDrawerMode ? SidebarModeEnum.Page : SidebarModeEnum.Drawer });
 
   return (
-    <div className={theme.themeClass} style={{ pointerEvents: 'auto' }}>
+    <ThemeWrapper style={{ pointerEvents: 'auto' }}>
       <div
         className={clsx(
-          'fixed top-0 right-0 h-dvh w-80 flex flex-col border-l shadow-xl',
+          'fixed top-0 right-0 h-dvh flex flex-col border-l shadow-xl',
           'bg-white border-gray-300',
-          'dark:bg-gray-950 dark:border-gray-600',
+          'dark:bg-gray-950 dark:border-gray-600'
         )}
-        style={{ fontFamily: 'system-ui, sans-serif' }}
+        style={{ fontFamily: 'system-ui, sans-serif', width: SIDEBAR_WIDTH }}
       >
         {/* Header */}
         <div
           className={clsx(
             'flex items-center justify-between px-3 py-2.5 border-b flex-shrink-0',
             'border-gray-200',
-            'dark:border-gray-700',
+            'dark:border-gray-700'
           )}
         >
           <div
             className={clsx(
               'flex items-center gap-1.5 text-sm font-semibold',
               'text-gray-800',
-              'dark:text-gray-100',
+              'dark:text-gray-100'
             )}
           >
-            <img src={ICON_URL} alt='Task Translator' className='w-4 h-4' />
+            <img src={ICON_URL} alt="Task Translator" className="w-4 h-4" />
             Task Translator
           </div>
 
-          <div className='flex items-center gap-1'>
+          <div className="flex items-center gap-1">
             <IconButton
               onClick={handleModeToggle}
-              title={isPage ? 'Switch to drawer mode' : 'Switch to page mode'}
+              title={isDrawerMode ? 'Switch to page mode' : 'Switch to drawer mode'}
             >
-              {isPage ? <AlignRight className='w-4 h-4' /> : <PanelRight className='w-4 h-4' />}
+              {isDrawerMode ? (
+                <PanelRight className="w-4 h-4" />
+              ) : (
+                <AlignRight className="w-4 h-4" />
+              )}
             </IconButton>
 
-            <IconButton onClick={handleClose} title='Close sidebar'>
-              <X className='w-4 h-4' />
+            <IconButton onClick={handleClose} title="Close sidebar">
+              <X className="w-4 h-4" />
             </IconButton>
           </div>
         </div>
@@ -82,10 +88,10 @@ export const Sidebar: React.FC = () => {
         <Tabs tabs={TABS} activeTab={activeTab} onChange={setActiveTab} />
 
         {/* Tab content — scrollable */}
-        <div className='flex-1 overflow-y-auto'>
+        <div className="flex-1 overflow-y-auto">
           {activeTab === SidebarTabEnum.History && <HistoryTab />}
         </div>
       </div>
-    </div>
+    </ThemeWrapper>
   );
 };

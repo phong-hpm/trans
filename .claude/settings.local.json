@@ -4,7 +4,19 @@
       "Bash(git *)",
       "Bash(gh pr create *)",
       "Bash(node -e \"require\\('chalk'\\)\")",
-      "Bash(yarn add *)"
+      "Bash(yarn add *)",
+      "Bash(sed -i '' \"s/from '..\\\\/types'/from '..\\\\/enums'/\" /Volumes/Work/projects/trans/extension/src/background/logger.ts)",
+      "Bash(sed -i '' \"s/from '..\\\\/types'/from '..\\\\/enums'/\" /Volumes/Work/projects/trans/extension/src/content/main.tsx)",
+      "Bash(yarn remove *)",
+      "Bash(sed -i '' \"s|from '../apis/localApi'|from '../apis/cacheApi'|g\" /Volumes/Work/projects/trans/extension/src/popup/Popup.tsx /Volumes/Work/projects/trans/extension/src/content/translationCache.ts)",
+      "Bash(sed -i '' \"s|from '../../apis/localApi'|from '../../apis/cacheApi'|g\" /Volumes/Work/projects/trans/extension/src/content/hooks/useTranslate.ts /Volumes/Work/projects/trans/extension/src/content/hooks/useBlockHistories.ts)",
+      "Bash(sed -i '' 's/const key = cacheKey/const id = cacheKey/g' /Volumes/Work/projects/trans/extension/src/content/translationCache.ts)",
+      "Bash(sed -i '' 's/Api<BlockHistory>\\(key\\)/Api<BlockHistory>\\(id\\)/g' /Volumes/Work/projects/trans/extension/src/content/translationCache.ts)",
+      "Bash(sed -i '' 's/Api\\(key,/Api\\(id,/g' /Volumes/Work/projects/trans/extension/src/content/translationCache.ts)",
+      "Bash(sed -i '' 's/Api\\(key\\)/Api\\(id\\)/g' /Volumes/Work/projects/trans/extension/src/content/translationCache.ts)",
+      "Bash(sed -i '' \"s|from '../apis/cacheApi'|from '../apis/historyApi'|g\" /Volumes/Work/projects/trans/extension/src/popup/Popup.tsx /Volumes/Work/projects/trans/extension/src/content/translationCache.ts)",
+      "Bash(sed -i '' \"s|from '../../apis/cacheApi'|from '../../apis/historyApi'|g\" /Volumes/Work/projects/trans/extension/src/content/hooks/useTranslate.ts /Volumes/Work/projects/trans/extension/src/content/hooks/useBlockHistories.ts)",
+      "Bash(node -e \"console.log\\(require\\('/Volumes/Work/projects/trans/extension/node_modules/eslint-plugin-react/package.json'\\).version\\)\")"
     ]
   }
 }
