@@ -6,8 +6,17 @@ import { detectPlatform } from '../platforms';
 import type { PlatformAdapter } from '../platforms/types';
 import { useGlobalStore } from '../store/global';
 import { processBlocks } from './inject';
+import { mountModal } from './modal';
 import { mountSidebar } from './sidebar';
 import { mountToaster } from './toast';
+
+const initModalToggle = (): void => {
+  chrome.runtime.onMessage.addListener((message) => {
+    if (message.type === MessageTypeEnum.ToggleModal) {
+      useGlobalStore.getState().toggleModal();
+    }
+  });
+};
 
 const initDevLogs = (): void => {
   chrome.runtime.onMessage.addListener((message) => {
@@ -52,5 +61,10 @@ const init = (platform: PlatformAdapter): void => {
 
 useGlobalStore.getState().init();
 
+// Modal and its toggle listener are platform-independent — always mount
+initModalToggle();
+mountModal();
+
 const platform = detectPlatform(location.href);
+useGlobalStore.getState().setPlatformName(platform?.name ?? null);
 if (platform) init(platform);

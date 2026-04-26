@@ -100,6 +100,17 @@ export const translateSegments = async ({ segments, targetLanguage, provider, mo
 export const translateSegments = async (segments, targetLanguage, provider, model) => { ... }
 ```
 
+## Extension — Lint After Every Edit
+
+After every file edit session in the extension, run in order inside `extension/`:
+1. `yarn tsc` — fix all TypeScript errors first
+2. `yarn fix` — then fix lint/format errors
+
+```
+cd extension && yarn tsc && yarn fix
+```
+Read the output of each step. Fix all errors before finishing the task.
+
 ## Extension Version Bump
 
 After every code change to the extension, increment the patch version in `extension/public/manifest.json`:

@@ -7,6 +7,7 @@ import type { Block, PlatformAdapter } from '../types';
 import { getTaskEl, getTitleEl, githubQueries as q } from './queries';
 
 export const githubAdapter: PlatformAdapter = {
+  name: 'GitHub',
   pagePattern: q.pagePattern,
 
   getBlocks: (): Block[] => {

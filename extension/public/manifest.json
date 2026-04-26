@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Task Translator",
-  "version": "1.0.48",
+  "version": "1.0.52",
   "description": "AI-powered translator for issue trackers — translate tasks, comments, and titles in one click",
   "permissions": ["storage", "tabs"],
   "host_permissions": ["https://github.com/*", "http://localhost:*/*", "http://localhost:8000/*"],
@@ -23,7 +23,6 @@
     "128": "icons/icon128.png"
   },
   "action": {
-    "default_popup": "src/popup/index.html",
     "default_title": "Task Translator",
     "default_icon": {
       "16": "icons/icon16.png",

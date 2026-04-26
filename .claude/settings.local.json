@@ -16,7 +16,10 @@
       "Bash(sed -i '' 's/Api\\(key\\)/Api\\(id\\)/g' /Volumes/Work/projects/trans/extension/src/content/translationCache.ts)",
       "Bash(sed -i '' \"s|from '../apis/cacheApi'|from '../apis/historyApi'|g\" /Volumes/Work/projects/trans/extension/src/popup/Popup.tsx /Volumes/Work/projects/trans/extension/src/content/translationCache.ts)",
       "Bash(sed -i '' \"s|from '../../apis/cacheApi'|from '../../apis/historyApi'|g\" /Volumes/Work/projects/trans/extension/src/content/hooks/useTranslate.ts /Volumes/Work/projects/trans/extension/src/content/hooks/useBlockHistories.ts)",
-      "Bash(node -e \"console.log\\(require\\('/Volumes/Work/projects/trans/extension/node_modules/eslint-plugin-react/package.json'\\).version\\)\")"
+      "Bash(node -e \"console.log\\(require\\('/Volumes/Work/projects/trans/extension/node_modules/eslint-plugin-react/package.json'\\).version\\)\")",
+      "Skill(update-config)",
+      "Skill(update-config:*)",
+      "Bash(yarn fix *)"
     ]
   }
 }

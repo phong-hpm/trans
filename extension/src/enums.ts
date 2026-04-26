@@ -3,6 +3,7 @@
 export enum MessageTypeEnum {
   Translate = 'TRANSLATE',
   DevLog = 'DEV_LOG',
+  ToggleModal = 'TOGGLE_MODAL',
 }
 
 export enum LogTypeEnum {

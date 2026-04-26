@@ -12,6 +12,7 @@ export interface Block {
 }
 
 export interface PlatformAdapter {
+  name: string;
   pagePattern: RegExp;
   getBlocks: () => Block[];
 }
