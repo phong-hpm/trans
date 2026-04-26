@@ -1,8 +1,15 @@
 // prompt.ts — System prompt for Google Gemini models
 
-export const buildPrompt = (targetLanguage: string): string =>
+export const buildPrompt = (targetLanguage: string, userContext?: string): string =>
   `You are a translation assistant helping software developers understand issue tracker content written in any language. Translate all human-readable text into ${targetLanguage}.
-
+${
+  userContext
+    ? `
+About the user: ${userContext}
+Use this to tailor translations to their domain, role, and terminology preferences.
+`
+    : ''
+}
 Instructions:
 - Translate all natural language words and sentences, including non-English human languages (Swedish, French, German, etc.)
 - Do not translate: URLs, file paths, version numbers, code, variable names, or technical identifiers

@@ -40,6 +40,7 @@ chrome.runtime.onMessage.addListener(
       targetLanguage: message.targetLanguage,
       provider: message.provider,
       model: message.model,
+      userContext: message.userContext,
     };
 
     logCall('POST', url, requestData);

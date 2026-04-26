@@ -26,7 +26,8 @@ export const useTranslate = (
   getElement: () => HTMLElement,
   getContextBlocks?: () => ContextBlock[]
 ) => {
-  const { targetLanguage, provider, model, ready, alwaysShowTranslated } = useGlobalStore();
+  const { targetLanguage, provider, model, userContext, ready, alwaysShowTranslated } =
+    useGlobalStore();
   const [uiState, setUiState] = useState<TranslateState>(TranslateStateEnum.Idle);
   const [hasTranslation, setHasTranslation] = useState(false);
   const [history, setHistory] = useState<TranslationEntry[]>([]);
@@ -65,6 +66,7 @@ export const useTranslate = (
         backendUrl: ENV.backendUrl,
         provider,
         model,
+        userContext: userContext || undefined,
       });
 
       if (!result) throw new Error('No response from background worker');
@@ -76,7 +78,7 @@ export const useTranslate = (
           result.segments.find((r: { id: string }) => r.id === s.id)?.translatedText ?? s.text,
       }));
     },
-    [blockType, targetLanguage, provider, model, getContextBlocks]
+    [blockType, targetLanguage, provider, model, userContext, getContextBlocks]
   );
 
   const applyFromEntry = useCallback((entry: TranslationEntry, el: HTMLElement) => {

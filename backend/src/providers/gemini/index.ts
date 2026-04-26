@@ -5,12 +5,12 @@ import type { TranslationProvider } from '@/providers/types';
 import { buildPrompt } from './prompt';
 
 export const geminiProvider: TranslationProvider = {
-  async translate({ segments, contextBlocks, targetLanguage, model }) {
+  async translate({ segments, contextBlocks, targetLanguage, model, userContext }) {
     const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY ?? '');
 
     const instance = genAI.getGenerativeModel({
       model,
-      systemInstruction: buildPrompt(targetLanguage),
+      systemInstruction: buildPrompt(targetLanguage, userContext),
     });
 
     const userMessage = JSON.stringify({ context: contextBlocks ?? [], segments });

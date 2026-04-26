@@ -19,6 +19,7 @@ export interface TranslateRequest {
   targetLanguage: string;
   provider: 'openai' | 'gemini';
   model: string;
+  userContext?: string;
 }
 
 export interface TranslatedSegment {

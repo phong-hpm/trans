@@ -5,7 +5,7 @@ import type { TranslationProvider } from '@/providers/types';
 import { buildPrompt } from './prompt';
 
 export const openaiProvider: TranslationProvider = {
-  async translate({ segments, contextBlocks, targetLanguage, model }) {
+  async translate({ segments, contextBlocks, targetLanguage, model, userContext }) {
     const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
     const userMessage = JSON.stringify({ context: contextBlocks ?? [], segments });
@@ -13,7 +13,7 @@ export const openaiProvider: TranslationProvider = {
     const completion = await client.chat.completions.create({
       model,
       messages: [
-        { role: 'system', content: buildPrompt(targetLanguage) },
+        { role: 'system', content: buildPrompt(targetLanguage, userContext) },
         { role: 'user', content: userMessage },
       ],
     });

@@ -9,13 +9,14 @@ interface TranslateParams {
   targetLanguage: string;
   provider: string;
   model: string;
+  userContext?: string;
 }
 
-export const translateSegments = async ({ segments, contextBlocks, targetLanguage, provider, model }: TranslateParams): Promise<TranslatedSegment[]> => {
+export const translateSegments = async ({ segments, contextBlocks, targetLanguage, provider, model, userContext }: TranslateParams): Promise<TranslatedSegment[]> => {
   const textMap = new Map(segments.map((s) => [s.id, s.text]));
 
   const llmProvider = getProvider(provider);
-  const results = await llmProvider.translate({ segments, contextBlocks, targetLanguage, model });
+  const results = await llmProvider.translate({ segments, contextBlocks, targetLanguage, model, userContext });
 
   return results.map((r) => ({
     id: r.id,

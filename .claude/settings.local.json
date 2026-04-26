@@ -19,7 +19,8 @@
       "Bash(node -e \"console.log\\(require\\('/Volumes/Work/projects/trans/extension/node_modules/eslint-plugin-react/package.json'\\).version\\)\")",
       "Skill(update-config)",
       "Skill(update-config:*)",
-      "Bash(yarn fix *)"
+      "Bash(yarn fix *)",
+      "Bash(yarn tsc *)"
     ]
   }
 }

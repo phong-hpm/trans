@@ -7,6 +7,7 @@ export interface TranslateProviderParams {
   contextBlocks?: ContextBlock[];
   targetLanguage: string;
   model: string;
+  userContext?: string;
 }
 
 export interface TranslationProvider {
