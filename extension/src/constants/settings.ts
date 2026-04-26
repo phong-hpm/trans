@@ -7,6 +7,7 @@ export const DEFAULT_SETTINGS: ExtensionSettings = {
   targetLanguage: 'English',
   provider: ProviderEnum.OpenAI,
   model: ModelEnum.GPT4oMini,
+  userContext: '',
   alwaysShowTranslated: false,
   theme: ThemeEnum.Light,
   showSidebar: false,

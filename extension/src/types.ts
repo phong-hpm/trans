@@ -19,6 +19,7 @@ export interface TranslateRequest {
   targetLanguage: string;
   provider: string;
   model: string;
+  userContext?: string;
 }
 
 export interface TranslateResponse {
@@ -44,6 +45,7 @@ export interface ExtensionSettings {
   targetLanguage: string;
   provider: string;
   model: string;
+  userContext: string;
   alwaysShowTranslated: boolean;
   theme: ThemeEnum;
   showSidebar: boolean;

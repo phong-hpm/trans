@@ -67,6 +67,7 @@ trans/
         │   ├── Input.tsx                — Reusable labeled text input component
         │   ├── Modal.tsx                — Generic modal shell: backdrop + rounded card with header and body slot
         │   ├── Select.tsx               — Reusable labeled select component
+        │   ├── TextareaInput.tsx        — Reusable labeled textarea with optional help text
         │   ├── ThemeWrapper.tsx         — Wraps children with current theme class for dark mode support
         │   └── Toggle.tsx               — Reusable toggle switch component with label/sublabel
         ├── platforms/
@@ -94,6 +95,12 @@ trans/
         │   │   ├── TranslatePopup.tsx   — Mode-selection dropdown portalled into shadow root; uses ThemeWrapper
         │   │   ├── TranslateToolbar.tsx — Top-right toolbar for task/comment blocks: toggle + split translate + IconButton(retranslate) + Button(history); uses ThemeWrapper
         │   │   ├── translateOptions.ts  — COMMENT_OPTIONS, SIMPLE_OPTIONS, TranslateOption type shared between Popup and Toolbar
+        │   │   ├── ControlPanel/
+        │   │   │   ├── index.tsx        — Nav shell: Settings | Provider | Page | Storage
+        │   │   │   ├── SettingsPanel.tsx — Language select + display toggles
+        │   │   │   ├── ProviderPanel.tsx — Provider/model selects + user context textarea
+        │   │   │   ├── PagePanel.tsx    — Platform info + clear page history
+        │   │   │   └── StoragePanel.tsx — Storage usage bar + clear all history
         │   │   └── Sidebar/
         │   │       ├── index.tsx        — Main sidebar shell: drawer/page modes (isDrawerMode), updateSettings(); uses ThemeWrapper
         │   │       ├── Tabs.tsx         — Generic bottom-border tab bar component

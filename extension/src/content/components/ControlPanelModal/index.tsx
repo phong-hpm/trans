@@ -21,7 +21,7 @@ export const ControlPanelModal: React.FC = () => {
   );
 
   return (
-    <Modal open={showModal} onClose={toggleModal} title={title} backdrop="blur">
+    <Modal open={showModal} onClose={toggleModal} title={title} backdrop="none" size="xl">
       <ControlPanel pathname={location.pathname} />
     </Modal>
   );

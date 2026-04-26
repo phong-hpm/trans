@@ -6,7 +6,7 @@ import { logger } from '@/lib/logger';
 import type { TranslateRequest } from '@/types';
 
 export const translateController = async (req: Request, res: Response): Promise<void> => {
-  const { blockType, segments, contextBlocks, targetLanguage, provider, model } = req.body as Partial<TranslateRequest>;
+  const { blockType, segments, contextBlocks, targetLanguage, provider, model, userContext } = req.body as Partial<TranslateRequest>;
 
   // Model whitelist per provider — configured via env vars, falls back to built-in defaults
   const ALLOWED_MODELS: Record<string, string[]> = {
@@ -38,7 +38,7 @@ export const translateController = async (req: Request, res: Response): Promise<
   logger.request(req.method, req.path, req.body);
 
   try {
-    const translated = await translateSegments({ segments, contextBlocks, targetLanguage, provider, model });
+    const translated = await translateSegments({ segments, contextBlocks, targetLanguage, provider, model, userContext });
     logger.success(req.method, req.path, 200, { segments: translated });
     res.json({ segments: translated });
   } catch (err: unknown) {

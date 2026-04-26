@@ -8,13 +8,21 @@ import { useEffect } from 'react';
 import { ThemeWrapper } from './ThemeWrapper';
 
 export type ModalBackdrop = 'blur' | 'none';
+export type ModalSize = 'sm' | 'md' | 'lg' | 'xl';
+
+const SIZE_CLASS: Record<ModalSize, string> = {
+  sm: 'w-[320px]',
+  md: 'w-[480px]',
+  lg: 'w-[600px]',
+  xl: 'w-[760px]',
+};
 
 interface Props {
   open: boolean;
   onClose: () => void;
   title: React.ReactNode;
   backdrop?: ModalBackdrop;
-  width?: string;
+  size?: ModalSize;
   children: React.ReactNode;
 }
 
@@ -23,7 +31,7 @@ export const Modal: React.FC<Props> = ({
   onClose,
   title,
   backdrop = 'blur',
-  width = 'w-[420px]',
+  size = 'sm',
   children,
 }) => {
   useEffect(() => {
@@ -60,7 +68,7 @@ export const Modal: React.FC<Props> = ({
             'border border-gray-200 dark:border-gray-700',
             'shadow-[0_24px_64px_-12px_rgba(0,0,0,0.35),0_8px_24px_-4px_rgba(0,0,0,0.2)]',
             'max-h-[80vh]',
-            width
+            SIZE_CLASS[size]
           )}
         >
           {/* Header */}
