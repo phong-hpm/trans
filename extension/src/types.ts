@@ -47,6 +47,7 @@ export interface ExtensionSettings {
   model: string;
   userContext: string;
   alwaysShowTranslated: boolean;
+  syncToDb: boolean;
   theme: ThemeEnum;
   showSidebar: boolean;
   sidebarMode: SidebarModeEnum;

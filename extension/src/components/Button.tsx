@@ -85,6 +85,7 @@ interface ConfirmButtonProps extends Omit<
 export const ConfirmButton: React.FC<ConfirmButtonProps> = ({
   onConfirm,
   confirmMessage,
+  fullWidth,
   children,
   ...rest
 }) => {
@@ -92,7 +93,7 @@ export const ConfirmButton: React.FC<ConfirmButtonProps> = ({
 
   if (pending) {
     return (
-      <div className="space-y-1.5">
+      <div className={clsx('space-y-1.5', fullWidth && 'w-full')}>
         {confirmMessage && (
           <p className="text-xs text-amber-600 dark:text-amber-400">{confirmMessage}</p>
         )}

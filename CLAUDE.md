@@ -141,14 +141,6 @@ Tasks are tracked in `working-tasks/`. Numbered `.md` files (e.g. `01-feature.md
 
 ---
 
-### Command: "continue task"
-
-1. Read the first line of `_progress.md` — it has the form `DONE [x/y]`
-2. If `x === y`: report that all tasks are already done and **stop**
-3. If `x < y`: proceed to implement the next pending `- [ ]` task
-
----
-
 ### Command: "do task"
 
 1. Read `_progress.md` only — ignore all numbered `.md` files

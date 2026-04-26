@@ -146,3 +146,116 @@ Content-Type: application/json
 → 400 { "error": "..." }
 → 500 { "error": "..." }
 ```
+
+---
+
+## History API (Backend)
+
+```
+GET    /api/v1/history/:pageId/:blockId   → 200 BlockHistory | 404
+PUT    /api/v1/history/:pageId/:blockId   body: { entries } → 200
+DELETE /api/v1/history/:pageId/:blockId   → 200
+GET    /api/v1/history/:pageId            → 200 BlockHistory[]
+DELETE /api/v1/history/:pageId            → 200
+GET    /api/v1/history                    → 200 BlockHistory[]
+DELETE /api/v1/history                    → 200
+```
+
+`pageId` and `blockId` are URL-encoded in the path (pageId is a URL pathname like `/owner/repo/issues/1`).
+
+Backend stores data in `backend/src/db/db.json` as a mock MongoDB collection.
+Swap `backend/src/db/index.ts` read/write functions to connect to real MongoDB.
+
+---
+
+## chrome.storage.local — Data Flow
+
+Translation history is stored in `chrome.storage.local` with the key format:
+
+```
+trans:{pageId}:{blockId}
+```
+
+Where `pageId = location.pathname` (e.g. `/owner/repo/issues/42`) and `blockId` is a stable DOM identifier assigned per block.
+
+### Storage key internals
+
+Storage keys are private to `historyApi.ts` — no other file constructs or parses them.
+All reads/writes go through the API functions:
+
+| Function | Storage op | Description |
+|---|---|---|
+| `getBlockHistoryApi(blockId, pageId)` | `storage.local.get` | Load one block's history |
+| `saveBlockHistoryApi(history)` | `storage.local.set` | Persist updated history |
+| `deleteBlockHistoryApi(blockId, pageId)` | `storage.local.remove` | Remove a block's history |
+| `getAllHistoriesApi(pageId)` | `storage.local.get(null)` | Load all blocks for a page |
+| `clearPageHistoriesApi(pageId)` | `storage.local.remove` (batch) | Delete all blocks for a page |
+| `clearAllHistoriesApi()` | `storage.local.clear` | Wipe everything |
+| `subscribeHistoryChangesApi(listener)` | `storage.onChanged` | Live-update on any change |
+
+### Action-by-action data flow
+
+**1. User clicks Translate**
+```
+useTranslate.translate()
+  → extractSegments(el)              reads DOM text nodes
+  → getSelectedEntry(blockId)        reads chrome.storage.local
+    hit  → applyFromEntry()          applies saved translation to DOM
+    miss → callApi()                 POSTs to backend via background worker
+         → addTranslationEntry()     [translationSync.ts]
+           → translationHistory.ts   saves to chrome.storage.local
+           → dbHistoryApi.ts         (if syncToDb ON) PUTs to backend REST API
+```
+
+**2. User clicks Retranslate**
+```
+useTranslate.retranslate()
+  → callApi()                        always hits backend (bypasses saved history)
+  → addTranslationEntry()            saves new entry to local + optionally DB
+```
+
+**3. User selects a history entry (Sidebar)**
+```
+BlockCollapse → selectEntry(blockId, entryId)   [translationSync.ts]
+  → translationHistory.selectEntry()            flips `selected` flag in local storage
+  → subscribeHistoryChangesApi listener fires   in useTranslate
+    → applyFromEntry(selected)                  re-applies the chosen translation to DOM
+  → dbHistoryApi.saveBlockHistoryDbApi()        (if syncToDb ON) syncs to backend
+```
+
+**4. User deletes a history entry**
+```
+BlockCollapse → deleteEntry(blockId, entryId)   [translationSync.ts]
+  → translationHistory.deleteEntry()            removes entry, auto-selects newest remaining
+    entries remain → saveBlockHistoryApi()      updates local storage
+    no entries left → deleteBlockHistoryApi()   removes the key from local storage
+  → subscribeHistoryChangesApi listener fires
+    no entries → restore DOM to original text
+  → dbHistoryApi (if syncToDb ON)               saves or deletes from backend
+```
+
+**5. Clear page / Clear all (Control Panel)**
+```
+PagePanel → clearPageHistoriesApi(pathname)     removes all keys matching trans:{pageId}:*
+StoragePanel → clearAllHistoriesApi()           chrome.storage.local.clear()
+  → subscribeHistoryChangesApi listener fires for each removed key
+    → useTranslate restores DOM for each affected block
+```
+
+**6. Live sync across tabs (same page open in multiple tabs)**
+```
+Tab A: saves a new entry → chrome.storage.local.set
+Tab B: subscribeHistoryChangesApi fires automatically (chrome.storage.onChanged is cross-tab)
+     → useTranslate in Tab B re-applies the latest selected entry
+```
+
+### DB sync layer (translationSync.ts)
+
+When `syncToDb` is ON in settings, `translationSync.ts` fires DB API calls **after** every successful local write. DB failures are silent and non-fatal — `chrome.storage.local` remains the source of truth at all times.
+
+```
+translationSync.ts
+  ├── reads from  → translationHistory.ts → historyApi.ts → chrome.storage.local
+  └── writes to   → translationHistory.ts (always)
+                  → dbHistoryApi.ts       (only when syncToDb = true)
+```

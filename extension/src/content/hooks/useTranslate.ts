@@ -16,7 +16,7 @@ import {
   getBlockHistory,
   getSelectedEntry,
   selectEntry,
-} from '../translationHistory';
+} from '../translationSync';
 
 type TranslateState = TranslateStateEnum;
 
