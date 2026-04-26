@@ -1,6 +1,7 @@
 // domSegments.ts — Extract, apply, and restore text segments from a live DOM element
 
 import { nanoid } from 'nanoid';
+
 import type { TranslateSegment } from '../types';
 
 export interface TranslatedSegment extends TranslateSegment {
@@ -66,5 +67,7 @@ export const getSegmentText = (el: HTMLElement): string => {
       .map((s) => s.getAttribute('data-original') ?? s.textContent ?? '')
       .join(' ');
   }
-  return extractSegments(el).map((s) => s.text).join(' ');
+  return extractSegments(el)
+    .map((s) => s.text)
+    .join(' ');
 };

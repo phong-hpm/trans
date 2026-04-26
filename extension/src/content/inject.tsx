@@ -1,8 +1,10 @@
 // inject.tsx — Generic Shadow DOM injection engine: mounts translate UI onto platform blocks
 
 import { createRoot } from 'react-dom/client';
+
+import { BlockTypeEnum } from '../enums';
 import type { Block } from '../platforms/types';
-import type { BlockType, ContextBlock } from '../types';
+import type { ContextBlock } from '../types';
 import { TranslateButton } from './components/TranslateButton';
 import { TranslateToolbar } from './components/TranslateToolbar';
 import shadowStyles from './shadow.css?inline';
@@ -14,7 +16,7 @@ const mountUI = (
   anchor: HTMLElement,
   contentEl: HTMLElement,
   blockId: string,
-  blockType: BlockType,
+  blockType: BlockTypeEnum,
   getContextBlocks?: () => ContextBlock[]
 ): void => {
   if (anchor.querySelector(`[data-trans-id="${blockId}"]`)) return;
@@ -38,7 +40,12 @@ const mountUI = (
   };
 
   // Title uses the small circle button; all other block types use the toolbar
-  const ui = blockType === 'title' ? <TranslateButton {...props} /> : <TranslateToolbar {...props} />;
+  const ui =
+    blockType === BlockTypeEnum.Title ? (
+      <TranslateButton {...props} />
+    ) : (
+      <TranslateToolbar {...props} />
+    );
 
   createRoot(mount).render(ui);
   anchor.appendChild(host);
@@ -71,7 +78,7 @@ const makeBlockAnchor = (contentEl: HTMLElement, blockId: string): HTMLElement |
 export const processBlocks = (blocks: Block[]): void => {
   for (const block of blocks) {
     const anchor =
-      block.blockType === 'title'
+      block.blockType === BlockTypeEnum.Title
         ? makeTitleAnchor(block.containerEl, block.blockId)
         : makeBlockAnchor(block.contentEl, block.blockId);
 

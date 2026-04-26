@@ -44,23 +44,29 @@ trans/
     ├── tailwind.config.js   — Tailwind v3 JIT config, scans src/**
     ├── tsconfig.json        — Modern config: moduleResolution Bundler, isolatedModules, noEmit
     ├── vite.config.ts       — Vite + @crxjs/vite-plugin; publicDir disabled to avoid manifest conflict
-    ├── biome.json           — Biome lint + format config (replaces ESLint + Prettier)
+    ├── eslint.config.mjs    — ESLint flat config with TypeScript + React plugins
+    ├── .prettierrc          — Prettier formatting config (singleQuote, trailingComma, printWidth 100)
     ├── public/
     │   └── manifest.json    — Chrome MV3 manifest; src paths resolved by crxjs at build time
     └── src/
         ├── declarations.d.ts            — Vite + Chrome type references
-        ├── types.ts                     — Shared types: ExtensionSettings, TranslateRequest/Response, BlockHistory, TranslationEntry, SidebarModeEnum, SidebarTabEnum
+        ├── enums.ts                     — All enum definitions: MessageTypeEnum, LogTypeEnum, BlockTypeEnum, ThemeEnum, SidebarModeEnum, SidebarTabEnum, TranslateStateEnum, ProviderEnum, ModelEnum
+        ├── types.ts                     — Shared interfaces: ExtensionSettings, TranslateRequest/Response, BlockHistory, TranslationEntry
+        ├── apis/
+        │   ├── cacheApi.ts              — Abstraction over chrome.storage.local (fetchCacheItemApi, saveCacheItemApi, deleteCacheItemApi, fetchAllCacheItemsApi, fetchCacheUsageApi, getCacheQuotaApi, onCacheChangedApi)
+        │   └── syncApi.ts               — Abstraction over chrome.storage.sync (fetchSettingsApi, saveSettingsApi, onSettingsChangedApi)
         ├── constants/
         │   ├── env.ts                   — ENV default export: { isDev, backendUrl } derived from import.meta.env
         │   ├── languages.ts             — LANGUAGES constant: supported target languages
         │   ├── providers.ts             — PROVIDERS list and MODELS map (provider → model options)
         │   └── settings.ts              — DEFAULT_SETTINGS; backendUrl, alwaysShowTranslated defaults
         ├── components/
-        │   ├── Button.tsx               — Reusable button with primary, danger, and ghost variants
+        │   ├── Button.tsx               — Reusable button (variant: contain|outline, color: primary|danger|ghost); also exports ConfirmButton (two-step confirm flow)
         │   ├── Confirm.tsx              — Shared inline Confirm / Cancel action row
-        │   ├── IconButton.tsx           — Small square icon-only button with hover state
+        │   ├── IconButton.tsx           — Icon-only button (variant: contain|outline, color: primary|danger|ghost); also exports ConfirmIconButton (X/Check two-step confirm)
         │   ├── Input.tsx                — Reusable labeled text input component
         │   ├── Select.tsx               — Reusable labeled select component
+        │   ├── ThemeWrapper.tsx         — Wraps children with current theme class for dark mode support
         │   └── Toggle.tsx               — Reusable toggle switch component with label/sublabel
         ├── platforms/
         │   ├── types.ts                 — Block + PlatformAdapter interfaces
@@ -72,7 +78,7 @@ trans/
         │   ├── background.ts            — Service worker CORS proxy: relays /translate requests
         │   └── logger.ts               — Grouped request logger; relays to page DevTools in DEV mode
         ├── store/
-        │   └── global.ts                — Zustand global store: flat settings + ready flag + sidebar state, init(), updateSettings(), patchSettings(), saveSettings(), openSidebarToBlock(), clearFocusedBlock()
+        │   └── global.ts                — Zustand global store: flat settings + ready flag + sidebar state, init(), updateSettings() (auto-saves), openSidebarToBlock(), clearFocusedBlock()
         ├── content/
         │   ├── main.tsx                 — Entry: detectPlatform, init, MutationObserver, DEV logs
         │   ├── inject.tsx               — Generic injection engine: mounts TranslateButton per Block
@@ -82,14 +88,15 @@ trans/
         │   ├── translationCache.ts      — BlockHistory CRUD in chrome.storage.local (addTranslationEntry, selectEntry, deleteEntry, cacheKey)
         │   ├── shadow.css               — Tailwind directives; imported via ?inline → injected into shadow roots
         │   ├── components/
-        │   │   ├── TranslateButton.tsx  — Circle icon button used for title blocks
-        │   │   ├── TranslatePopup.tsx   — Mode-selection dropdown (exports options + TranslateOption type)
-        │   │   ├── TranslateToolbar.tsx — Top-right toolbar for task/comment blocks: toggle + split translate + retranslate + history buttons
+        │   │   ├── TranslateButton.tsx  — Circle icon button used for title blocks; uses BlockTypeEnum
+        │   │   ├── TranslatePopup.tsx   — Mode-selection dropdown portalled into shadow root; uses ThemeWrapper
+        │   │   ├── TranslateToolbar.tsx — Top-right toolbar for task/comment blocks: toggle + split translate + IconButton(retranslate) + Button(history); uses ThemeWrapper
+        │   │   ├── translateOptions.ts  — COMMENT_OPTIONS, SIMPLE_OPTIONS, TranslateOption type shared between Popup and Toolbar
         │   │   └── Sidebar/
-        │   │       ├── index.tsx        — Main sidebar shell: drawer/page modes, header, tabs
+        │   │       ├── index.tsx        — Main sidebar shell: drawer/page modes (isDrawerMode), updateSettings(); uses ThemeWrapper
         │   │       ├── Tabs.tsx         — Generic bottom-border tab bar component
         │   │       ├── HistoryTab.tsx   — History tab: lists all block histories, focuses on openSidebarToBlock target
-        │   │       └── BlockCollapse.tsx — Collapsible block entry with translation entries, select + delete actions
+        │   │       └── BlockCollapse.tsx — Collapsible block entry with translation entries, select + ConfirmIconButton delete
         │   └── hooks/
         │       ├── useTranslate.ts      — Translation state machine with history-aware cache, retranslate, selectHistoryEntry, deleteHistoryEntry
         │       └── useBlockHistories.ts — Load and subscribe to all block histories for current page
@@ -97,7 +104,7 @@ trans/
             ├── index.html              — Popup HTML entry (crxjs resolves this from manifest action.default_popup)
             ├── index.tsx               — Popup entry point
             ├── popup.css              — Tailwind directives for popup UI
-            └── Popup.tsx              — Settings form (target language, provider, model, toggles)
+            └── Popup.tsx              — Settings form (language, provider, model, toggles, ConfirmButton for history clear); uses ThemeWrapper + updateSettings()
 ```
 
 # To delete: rm extension/src/constants/github-query.ts

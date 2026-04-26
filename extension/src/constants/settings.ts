@@ -1,14 +1,14 @@
 // settings.ts — Default extension settings
 
+import { ModelEnum, ProviderEnum, SidebarModeEnum, ThemeEnum } from '../enums';
 import type { ExtensionSettings } from '../types';
-import { SidebarModeEnum, Theme } from '../types';
 
 export const DEFAULT_SETTINGS: ExtensionSettings = {
   targetLanguage: 'English',
-  provider: 'openai',
-  model: 'gpt-4o-mini',
+  provider: ProviderEnum.OpenAI,
+  model: ModelEnum.GPT4oMini,
   alwaysShowTranslated: false,
-  theme: Theme.Light,
+  theme: ThemeEnum.Light,
   showSidebar: false,
   sidebarMode: SidebarModeEnum.Drawer,
 };

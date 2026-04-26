@@ -53,21 +53,26 @@ structure before finishing the task. This keeps the project map accurate for fut
 
 ## Git Workflow
 
+### Commits
+Only commit when explicitly asked. Never auto-commit after finishing a task.
+The user reviews code before committing.
+
 ### Starting a feature
 When the user's message is prefixed with `[feature]`, `[fix]`, or `[chore]`:
 1. Checkout `main` and pull latest
 2. Create a branch: `feat/...`, `fix/...`, or `chore/...`
-3. Implement with local commits only — do not push until told
+3. Implement — do not commit or push until told
 
 ### Pushing
 Push when the user's intent is clearly to publish — e.g. "push", "push it", "push code",
 "đẩy lên", "ship it". Use intent, not exact wording.
 
 ### Creating a PR
-When the user signals they want a PR — e.g. "tạo PR", "open PR", "make a PR", "PR đi":
+Only create a PR when explicitly asked — e.g. "tạo PR", "open PR", "make a PR", "PR đi".
+Never create a PR automatically after finishing a task.
+Steps:
 1. Push the branch
-2. Show the draft title + body for review
-3. Wait for explicit confirmation before creating
+2. Create the PR immediately (no re-confirmation needed)
 
 ## Backend — Import Aliases
 
@@ -107,3 +112,63 @@ Do this as the last step before finishing the task.
 
 Read `TREE.md` + `ARCHITECTURE.md` before making changes — they describe the full structure
 and working flow so you can identify the correct file without scanning the whole codebase.
+
+## Task Tracking Workflow
+
+Tasks are tracked in `working-tasks/`. Numbered `.md` files (e.g. `01-feature.md`) are written by the user. Claude's working file is prefixed with `_` so it sorts to the top.
+
+**Claude's working file:** `working-tasks/_progress.md`
+
+---
+
+### Command: "check task"
+
+1. Read the first line of `_progress.md` — it has the form `DONE [x/y]`
+2. If `x < y` (unfinished tasks remain): report which tasks are incomplete and **stop** — do not overwrite
+3. If `x === y` (all done, or file is empty/missing): proceed to capture new tasks:
+   - Read all `.md` files in `working-tasks/` (excluding `_progress.md`)
+   - Overwrite `_progress.md` with all tasks consolidated — do not rephrase or summarize
+   - First line must be `DONE [0/y]` where `y` = total number of task items
+4. Reply with a brief summary of what was captured
+
+---
+
+### Command: "continue task"
+
+1. Read the first line of `_progress.md` — it has the form `DONE [x/y]`
+2. If `x === y`: report that all tasks are already done and **stop**
+3. If `x < y`: proceed to implement the next pending `- [ ]` task
+
+---
+
+### Command: "do task"
+
+1. Read `_progress.md` only — ignore all numbered `.md` files
+2. Implement **all** pending `- [ ]` items one by one, in order
+3. After completing each task:
+   - Mark done: `- [x] ~~Task title~~`
+   - Update the header: increment `x` in `DONE [x/y]`
+4. Continue until all tasks are done or a blocker is hit
+5. Do not modify the original numbered files
+
+---
+
+### Format of `_progress.md`
+```md
+DONE [2/5]
+
+## 1.md
+
+- [x] ~~Point that is done~~
+- [x] ~~Another done point~~
+- [ ] Point still pending
+- [ ] Point still pending
+- [ ] Point still pending
+```
+
+---
+
+### Rules
+- Never modify the original numbered task files
+- `DONE [x/y]` on line 1 is always kept in sync: `x` = completed count, `y` = total count
+- Tasks are copied verbatim from source files — do not rephrase or summarize

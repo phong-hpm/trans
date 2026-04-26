@@ -1,20 +1,9 @@
-// types.ts — Shared TypeScript types and enums across extension bundles
+// types.ts — Shared TypeScript interfaces across extension bundles
 
-export enum MessageType {
-  Translate = 'TRANSLATE',
-  DevLog = 'DEV_LOG',
-}
-
-export enum LogType {
-  Call = 'call',
-  Response = 'response',
-  Error = 'error',
-}
-
-export type BlockType = 'title' | 'task' | 'comment';
+import type { BlockTypeEnum, SidebarModeEnum, ThemeEnum } from './enums';
 
 export interface ContextBlock {
-  type: BlockType;
+  type: BlockTypeEnum;
   text: string;
 }
 
@@ -24,7 +13,7 @@ export interface TranslateSegment {
 }
 
 export interface TranslateRequest {
-  blockType: BlockType;
+  blockType: BlockTypeEnum;
   segments: TranslateSegment[];
   contextBlocks?: ContextBlock[];
   targetLanguage: string;
@@ -36,29 +25,19 @@ export interface TranslateResponse {
   segments: { id: string; text: string; translatedText: string }[];
 }
 
-export enum Theme {
-  Light = 'light',
-  Dark = 'dark',
-}
-
 export interface TranslationEntry {
   id: string;
+  blockId: string;
+  pageId: string;
   segments: { text: string; translatedText: string }[];
   createdAt: number;
   selected: boolean;
 }
 
 export interface BlockHistory {
+  blockId: string;
+  pageId: string;
   entries: TranslationEntry[];
-}
-
-export enum SidebarModeEnum {
-  Drawer = 'drawer',
-  Page = 'page',
-}
-
-export enum SidebarTabEnum {
-  History = 'history',
 }
 
 export interface ExtensionSettings {
@@ -66,7 +45,7 @@ export interface ExtensionSettings {
   provider: string;
   model: string;
   alwaysShowTranslated: boolean;
-  theme: Theme;
+  theme: ThemeEnum;
   showSidebar: boolean;
   sidebarMode: SidebarModeEnum;
 }

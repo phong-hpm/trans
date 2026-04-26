@@ -1,118 +1,91 @@
-// translationCache.ts — Persist block translation histories in chrome.storage.local keyed by URL + blockId
+// translationCache.ts — Block translation history operations for the current page
 
 import { nanoid } from 'nanoid';
+
+import { deleteBlockHistoryApi, getBlockHistoryApi, saveBlockHistoryApi } from '../apis/historyApi';
 import type { BlockHistory, TranslationEntry } from '../types';
 import type { TranslatedSegment } from './domSegments';
 
-export const cacheKey = (blockId: string): string => `trans:${location.pathname}:${blockId}`;
+// Internal: page identity for all operations in this content script
+const currentPageId = (): string => location.pathname;
 
-// Get full history for a block, returns null if not found or in old format
+// Get full history for a block on the current page
 export const getBlockHistory = (blockId: string): Promise<BlockHistory | null> =>
-  new Promise((resolve) => {
-    const key = cacheKey(blockId);
-    chrome.storage.local.get(key, (result) => {
-      const value = result[key];
-      // Gracefully handle old cache format (no .entries array)
-      if (!value || !Array.isArray(value.entries)) {
-        resolve(null);
-        return;
-      }
-      resolve(value as BlockHistory);
-    });
-  });
+  getBlockHistoryApi(blockId, currentPageId());
 
 // Add a new translation entry (auto-selected, others deselected). Returns updated history.
-export const addTranslationEntry = (blockId: string, segments: TranslatedSegment[]): Promise<BlockHistory> =>
-  new Promise((resolve) => {
-    const key = cacheKey(blockId);
-    chrome.storage.local.get(key, (result) => {
-      const value = result[key];
-      const existing: TranslationEntry[] =
-        value && Array.isArray(value.entries) ? value.entries : [];
+export const addTranslationEntry = async (
+  blockId: string,
+  segments: TranslatedSegment[]
+): Promise<BlockHistory> => {
+  const pageId = currentPageId();
+  const existing = await getBlockHistoryApi(blockId, pageId);
+  const prevEntries: TranslationEntry[] =
+    existing && Array.isArray(existing.entries) ? existing.entries : [];
 
-      const newEntry: TranslationEntry = {
-        id: nanoid(8),
-        segments: segments.map(({ text, translatedText }) => ({ text, translatedText })),
-        createdAt: Date.now(),
-        selected: true,
-      };
+  const newEntry: TranslationEntry = {
+    id: nanoid(8),
+    blockId,
+    pageId,
+    segments: segments.map(({ text, translatedText }) => ({ text, translatedText })),
+    createdAt: Date.now(),
+    selected: true,
+  };
 
-      // Deselect all existing entries
-      const updated: TranslationEntry[] = existing.map((e) => ({ ...e, selected: false }));
-      updated.unshift(newEntry);
+  const updated: TranslationEntry[] = prevEntries.map((e) => ({ ...e, selected: false }));
+  updated.unshift(newEntry);
 
-      const history: BlockHistory = { entries: updated };
-      chrome.storage.local.set({ [key]: history }, () => resolve(history));
-    });
-  });
+  const history: BlockHistory = { blockId, pageId, entries: updated };
+  await saveBlockHistoryApi(history);
+  return history;
+};
 
 // Select a specific entry (deselect others). Returns updated history or null if not found.
-export const selectEntry = (blockId: string, entryId: string): Promise<BlockHistory | null> =>
-  new Promise((resolve) => {
-    const key = cacheKey(blockId);
-    chrome.storage.local.get(key, (result) => {
-      const value = result[key];
-      if (!value || !Array.isArray(value.entries)) {
-        resolve(null);
-        return;
-      }
+export const selectEntry = async (
+  blockId: string,
+  entryId: string
+): Promise<BlockHistory | null> => {
+  const pageId = currentPageId();
+  const existing = await getBlockHistoryApi(blockId, pageId);
+  if (!existing || !Array.isArray(existing.entries)) return null;
 
-      const entries: TranslationEntry[] = (value as BlockHistory).entries.map((e) => ({
-        ...e,
-        selected: e.id === entryId,
-      }));
-
-      const history: BlockHistory = { entries };
-      chrome.storage.local.set({ [key]: history }, () => resolve(history));
-    });
-  });
+  const entries = existing.entries.map((e) => ({ ...e, selected: e.id === entryId }));
+  const history: BlockHistory = { ...existing, entries };
+  await saveBlockHistoryApi(history);
+  return history;
+};
 
 // Delete an entry. If it was selected, auto-select newest remaining. Returns updated history (null if empty).
-export const deleteEntry = (blockId: string, entryId: string): Promise<BlockHistory | null> =>
-  new Promise((resolve) => {
-    const key = cacheKey(blockId);
-    chrome.storage.local.get(key, (result) => {
-      const value = result[key];
-      if (!value || !Array.isArray(value.entries)) {
-        resolve(null);
-        return;
-      }
+export const deleteEntry = async (
+  blockId: string,
+  entryId: string
+): Promise<BlockHistory | null> => {
+  const pageId = currentPageId();
+  const existing = await getBlockHistoryApi(blockId, pageId);
+  if (!existing || !Array.isArray(existing.entries)) return null;
 
-      const existing: TranslationEntry[] = (value as BlockHistory).entries;
-      const removed = existing.find((e) => e.id === entryId);
-      const remaining = existing.filter((e) => e.id !== entryId);
+  const removed = existing.entries.find((e) => e.id === entryId);
+  const remaining = existing.entries.filter((e) => e.id !== entryId);
 
-      if (!remaining.length) {
-        chrome.storage.local.remove(key, () => resolve(null));
-        return;
-      }
+  if (!remaining.length) {
+    await deleteBlockHistoryApi(blockId, pageId);
+    return null;
+  }
 
-      // If removed entry was selected, auto-select the newest remaining entry
-      let entries = remaining;
-      if (removed?.selected) {
-        const newestIdx = entries.reduce(
-          (bestIdx, e, idx) => (e.createdAt > entries[bestIdx].createdAt ? idx : bestIdx),
-          0,
-        );
-        entries = entries.map((e, idx) => ({ ...e, selected: idx === newestIdx }));
-      }
+  let entries = remaining;
+  if (removed?.selected) {
+    const newestIdx = entries.reduce(
+      (bestIdx, e, idx) => (e.createdAt > entries[bestIdx].createdAt ? idx : bestIdx),
+      0
+    );
+    entries = entries.map((e, idx) => ({ ...e, selected: idx === newestIdx }));
+  }
 
-      const history: BlockHistory = { entries };
-      chrome.storage.local.set({ [key]: history }, () => resolve(history));
-    });
-  });
+  const history: BlockHistory = { ...existing, entries };
+  await saveBlockHistoryApi(history);
+  return history;
+};
 
-// Get the currently selected entry for a block
+// Get the currently selected entry for a block on the current page
 export const getSelectedEntry = (blockId: string): Promise<TranslationEntry | null> =>
   getBlockHistory(blockId).then((hist) => hist?.entries.find((e) => e.selected) ?? null);
-
-// Remove all cached translations for a given pathname (used by popup)
-export const clearPageCache = (pathname: string): Promise<void> =>
-  new Promise((resolve) => {
-    const prefix = `trans:${pathname}:`;
-    chrome.storage.local.get(null, (all) => {
-      const keys = Object.keys(all).filter((k) => k.startsWith(prefix));
-      if (!keys.length) return resolve();
-      chrome.storage.local.remove(keys, resolve);
-    });
-  });

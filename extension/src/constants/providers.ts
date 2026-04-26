@@ -1,17 +1,19 @@
 // providers.ts — Available LLM providers and their supported models
 
-export const PROVIDERS: { value: string; label: string }[] = [
-  { value: 'openai', label: 'OpenAI' },
-  { value: 'gemini', label: 'Google Gemini' },
+import { ModelEnum, ProviderEnum } from '../enums';
+
+export const PROVIDERS: { value: ProviderEnum; label: string }[] = [
+  { value: ProviderEnum.OpenAI, label: 'OpenAI' },
+  { value: ProviderEnum.Gemini, label: 'Google Gemini' },
 ];
 
-export const MODELS: Record<string, { value: string; label: string }[]> = {
-  openai: [
-    { value: 'gpt-4o-mini', label: 'GPT-4o Mini' },
-    { value: 'gpt-4o', label: 'GPT-4o' },
+export const MODELS: Record<ProviderEnum, { value: ModelEnum; label: string }[]> = {
+  [ProviderEnum.OpenAI]: [
+    { value: ModelEnum.GPT4oMini, label: 'GPT-4o Mini' },
+    { value: ModelEnum.GPT4o, label: 'GPT-4o' },
   ],
-  gemini: [
-    { value: 'gemini-2.5-flash', label: 'Gemini 2.5 Flash' },
-    { value: 'gemini-2.0-flash', label: 'Gemini 2.0 Flash' },
+  [ProviderEnum.Gemini]: [
+    { value: ModelEnum.Gemini25Flash, label: 'Gemini 2.5 Flash' },
+    { value: ModelEnum.Gemini20Flash, label: 'Gemini 2.0 Flash' },
   ],
 };
