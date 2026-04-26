@@ -6,6 +6,7 @@ import { useGlobalStore } from '../store/global';
 import type { PlatformAdapter } from '../platforms/types';
 import { LogType, MessageType } from '../types';
 import { processBlocks } from './inject';
+import { mountSidebar } from './sidebar';
 import { mountToaster } from './toast';
 
 const initDevLogs = (): void => {
@@ -33,6 +34,7 @@ const init = (platform: PlatformAdapter): void => {
   if (ENV.isDev) initDevLogs();
 
   mountToaster();
+  mountSidebar();
 
   // Retry on init — some platforms render content asynchronously
   let attempts = 0;

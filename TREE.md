@@ -49,7 +49,7 @@ trans/
     │   └── manifest.json    — Chrome MV3 manifest; src paths resolved by crxjs at build time
     └── src/
         ├── declarations.d.ts            — Vite + Chrome type references
-        ├── types.ts                     — Shared types: ExtensionSettings, TranslateRequest/Response
+        ├── types.ts                     — Shared types: ExtensionSettings, TranslateRequest/Response, BlockHistory, TranslationEntry, SidebarModeEnum, SidebarTabEnum
         ├── constants/
         │   ├── env.ts                   — ENV default export: { isDev, backendUrl } derived from import.meta.env
         │   ├── languages.ts             — LANGUAGES constant: supported target languages
@@ -57,6 +57,8 @@ trans/
         │   └── settings.ts              — DEFAULT_SETTINGS; backendUrl, alwaysShowTranslated defaults
         ├── components/
         │   ├── Button.tsx               — Reusable button with primary, danger, and ghost variants
+        │   ├── Confirm.tsx              — Shared inline Confirm / Cancel action row
+        │   ├── IconButton.tsx           — Small square icon-only button with hover state
         │   ├── Input.tsx                — Reusable labeled text input component
         │   ├── Select.tsx               — Reusable labeled select component
         │   └── Toggle.tsx               — Reusable toggle switch component with label/sublabel
@@ -70,20 +72,27 @@ trans/
         │   ├── background.ts            — Service worker CORS proxy: relays /translate requests
         │   └── logger.ts               — Grouped request logger; relays to page DevTools in DEV mode
         ├── store/
-        │   └── global.ts                — Zustand global store: flat settings + ready flag, init(), updateSettings(), patchSettings(), saveSettings()
+        │   └── global.ts                — Zustand global store: flat settings + ready flag + sidebar state, init(), updateSettings(), patchSettings(), saveSettings(), openSidebarToBlock(), clearFocusedBlock()
         ├── content/
         │   ├── main.tsx                 — Entry: detectPlatform, init, MutationObserver, DEV logs
         │   ├── inject.tsx               — Generic injection engine: mounts TranslateButton per Block
         │   ├── toast.tsx                — Mounts Sonner <Toaster> into document.body
+        │   ├── sidebar.tsx              — Mounts Sidebar into document.body via shadow DOM
         │   ├── domSegments.ts           — Extract/apply/restore/getSegmentText for DOM text segments
-        │   ├── translationCache.ts      — chrome.storage.local cache keyed by pathname:blockId
+        │   ├── translationCache.ts      — BlockHistory CRUD in chrome.storage.local (addTranslationEntry, selectEntry, deleteEntry, cacheKey)
         │   ├── shadow.css               — Tailwind directives; imported via ?inline → injected into shadow roots
         │   ├── components/
         │   │   ├── TranslateButton.tsx  — Circle icon button used for title blocks
         │   │   ├── TranslatePopup.tsx   — Mode-selection dropdown (exports options + TranslateOption type)
-        │   │   └── TranslateToolbar.tsx — Top-right toolbar for task/comment blocks: toggle + split translate button
+        │   │   ├── TranslateToolbar.tsx — Top-right toolbar for task/comment blocks: toggle + split translate + retranslate + history buttons
+        │   │   └── Sidebar/
+        │   │       ├── index.tsx        — Main sidebar shell: drawer/page modes, header, tabs
+        │   │       ├── Tabs.tsx         — Generic bottom-border tab bar component
+        │   │       ├── HistoryTab.tsx   — History tab: lists all block histories, focuses on openSidebarToBlock target
+        │   │       └── BlockCollapse.tsx — Collapsible block entry with translation entries, select + delete actions
         │   └── hooks/
-        │       └── useTranslate.ts      — Translation state machine with cache lookup and useRef toggle
+        │       ├── useTranslate.ts      — Translation state machine with history-aware cache, retranslate, selectHistoryEntry, deleteHistoryEntry
+        │       └── useBlockHistories.ts — Load and subscribe to all block histories for current page
         └── popup/
             ├── index.html              — Popup HTML entry (crxjs resolves this from manifest action.default_popup)
             ├── index.tsx               — Popup entry point
@@ -104,6 +113,8 @@ trans/
 | Change which elements get a button (GitHub) | `platforms/github/index.ts` — `getBlocks` |
 | Change button appearance / states | `content/components/TranslateButton.tsx` |
 | Change translation logic / error handling | `content/hooks/useTranslate.ts` |
+| Change sidebar appearance / layout | `content/components/Sidebar/index.tsx` |
+| Change history entry display | `content/components/Sidebar/BlockCollapse.tsx` |
 | Add new language options | `constants/languages.ts` |
 | Change AI model or system prompt | `backend/src/providers/openai/` or `gemini/` |
 | Add a new LLM provider | `backend/src/providers/` — implement `TranslationProvider`, register in `index.ts` |
