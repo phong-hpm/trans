@@ -21,6 +21,13 @@ interface TranslateError {
 
 type MessageResult = TranslateResult | TranslateError;
 
+// Forward icon click to the active content script as a ToggleModal message
+// Silently ignore tabs where the content script is not running (non-GitHub pages, chrome://, etc.)
+chrome.action.onClicked.addListener((tab) => {
+  if (!tab.id) return;
+  chrome.tabs.sendMessage(tab.id, { type: MessageTypeEnum.ToggleModal }).catch(() => {});
+});
+
 chrome.runtime.onMessage.addListener(
   (message: TranslateMessage, _sender, sendResponse: (result: MessageResult) => void) => {
     if (message.type !== MessageTypeEnum.Translate) return;

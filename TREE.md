@@ -65,6 +65,7 @@ trans/
         │   ├── Confirm.tsx              — Shared inline Confirm / Cancel action row
         │   ├── IconButton.tsx           — Icon-only button (variant: contain|outline, color: primary|danger|ghost); also exports ConfirmIconButton (X/Check two-step confirm)
         │   ├── Input.tsx                — Reusable labeled text input component
+        │   ├── Modal.tsx                — Generic modal shell: backdrop + rounded card with header and body slot
         │   ├── Select.tsx               — Reusable labeled select component
         │   ├── ThemeWrapper.tsx         — Wraps children with current theme class for dark mode support
         │   └── Toggle.tsx               — Reusable toggle switch component with label/sublabel
@@ -84,8 +85,9 @@ trans/
         │   ├── inject.tsx               — Generic injection engine: mounts TranslateButton per Block
         │   ├── toast.tsx                — Mounts Sonner <Toaster> into document.body
         │   ├── sidebar.tsx              — Mounts Sidebar into document.body via shadow DOM
+        │   ├── modal.tsx                — Mounts Modal into document.body via shadow DOM
         │   ├── domSegments.ts           — Extract/apply/restore/getSegmentText for DOM text segments
-        │   ├── translationCache.ts      — BlockHistory CRUD in chrome.storage.local (addTranslationEntry, selectEntry, deleteEntry, cacheKey)
+        │   ├── translationCache.ts      — BlockHistory CRUD in chrome.storage.local (addTranslationEntry, selectEntry, deleteEntry)
         │   ├── shadow.css               — Tailwind directives; imported via ?inline → injected into shadow roots
         │   ├── components/
         │   │   ├── TranslateButton.tsx  — Circle icon button used for title blocks; uses BlockTypeEnum
@@ -107,6 +109,7 @@ trans/
             └── Popup.tsx              — Settings form (language, provider, model, toggles, ConfirmButton for history clear); uses ThemeWrapper + updateSettings()
 ```
 
+# To delete: rm -rf extension/src/content/components/Modal
 # To delete: rm extension/src/constants/github-query.ts
 # To delete: rm extension/src/content/settings.ts
 # To delete: rm extension/src/content/hooks/useTheme.ts

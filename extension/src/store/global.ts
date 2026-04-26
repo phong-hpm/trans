@@ -9,6 +9,8 @@ import type { ExtensionSettings } from '../types';
 interface GlobalStore extends ExtensionSettings {
   ready: boolean;
   focusedBlockId: string | null;
+  showModal: boolean;
+  platformName: string | null;
   // Load from storage + subscribe to live changes — call once per context
   init: () => void;
   // Update local state + immediately persist to storage
@@ -17,12 +19,18 @@ interface GlobalStore extends ExtensionSettings {
   openSidebarToBlock: (blockId: string) => void;
   // Clear focused block after sidebar has scrolled to it
   clearFocusedBlock: () => void;
+  // Toggle the settings modal open/closed
+  toggleModal: () => void;
+  // Set detected platform name (null = unsupported page)
+  setPlatformName: (name: string | null) => void;
 }
 
 export const useGlobalStore = create<GlobalStore>((set) => ({
   ...DEFAULT_SETTINGS,
   ready: false,
   focusedBlockId: null,
+  showModal: false,
+  platformName: null,
 
   init: () => {
     getSettingsApi(DEFAULT_SETTINGS).then((items) => {
@@ -50,4 +58,6 @@ export const useGlobalStore = create<GlobalStore>((set) => ({
   },
 
   clearFocusedBlock: () => set({ focusedBlockId: null }),
+  toggleModal: () => set((s) => ({ showModal: !s.showModal })),
+  setPlatformName: (name) => set({ platformName: name }),
 }));
