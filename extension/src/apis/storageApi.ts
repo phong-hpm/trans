@@ -5,4 +5,5 @@ export const getStorageUsageApi = (): Promise<number> =>
     chrome.storage.local.getBytesInUse(null, resolve);
   });
 
-export const getStorageQuotaApi = (): number => chrome.storage.local.QUOTA_BYTES;
+export const getStorageQuotaApi = (): Promise<number> =>
+  Promise.resolve(chrome.storage.local.QUOTA_BYTES);

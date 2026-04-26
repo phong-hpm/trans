@@ -11,10 +11,11 @@ const toMB = (bytes: number) => (bytes / (1024 * 1024)).toFixed(2);
 
 export const StoragePanel: React.FC = () => {
   const [usedBytes, setUsedBytes] = useState(0);
-  const limitBytes = getStorageQuotaApi();
+  const [limitBytes, setLimitBytes] = useState(0);
 
   useEffect(() => {
     getStorageUsageApi().then(setUsedBytes);
+    getStorageQuotaApi().then(setLimitBytes);
   }, []);
 
   const usedPct = Math.min((usedBytes / limitBytes) * 100, 100);

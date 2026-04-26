@@ -3,28 +3,24 @@
 import { Router } from 'express';
 
 import {
-  clearAllHistories,
-  clearPageHistories,
-  deleteBlockHistory,
-  getAllHistories,
-  getBlockHistory,
-  getPageHistories,
+  deleteHistories,
+  getHistories,
   saveBlockHistory,
 } from '@/controllers/history.controller';
 
 const router = Router();
 
-// Block-level operations
-router.get('/:pageId/:blockId', getBlockHistory);
-router.put('/:pageId/:blockId', saveBlockHistory);
-router.delete('/:pageId/:blockId', deleteBlockHistory);
+// GET    /history                       — all histories
+// GET    /history?pageId=X              — all blocks for a page
+// GET    /history?pageId=X&blockId=Y   — single block (returns array of 0 or 1)
+router.get('/', getHistories);
 
-// Page-level operations
-router.get('/:pageId', getPageHistories);
-router.delete('/:pageId', clearPageHistories);
+// PUT    /history                       — upsert a block history (pageId, blockId, entries in body)
+router.put('/', saveBlockHistory);
 
-// Global operations
-router.get('/', getAllHistories);
-router.delete('/', clearAllHistories);
+// DELETE /history                       — delete all
+// DELETE /history?pageId=X              — delete all blocks for a page
+// DELETE /history?pageId=X&blockId=Y   — delete a specific block
+router.delete('/', deleteHistories);
 
 export default router;

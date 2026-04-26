@@ -37,11 +37,11 @@ export const Popup: React.FC = () => {
   const [pagePathname, setPagePathname] = useState('');
   const [pageCount, setPageCount] = useState(0);
   const [usedBytes, setUsedBytes] = useState(0);
-
-  const limitBytes = getStorageQuotaApi();
+  const [limitBytes, setLimitBytes] = useState(0);
 
   const refreshUsage = () => {
     getStorageUsageApi().then(setUsedBytes);
+    getStorageQuotaApi().then(setLimitBytes);
   };
 
   const refreshPageCount = (pathname: string) => {

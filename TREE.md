@@ -68,6 +68,8 @@ trans/
         │   ├── Modal.tsx                — Generic modal shell: backdrop + rounded card with header and body slot
         │   ├── Select.tsx               — Reusable labeled select component
         │   ├── TextareaInput.tsx        — Reusable labeled textarea with optional help text
+        ├── utils/
+        │   └── api.ts                   — buildUrlApi: builds backend URLs with optional query params
         ├── apis/
         │   ├── historyApi.ts            — chrome.storage.local CRUD for BlockHistory
         │   ├── storageApi.ts            — chrome.storage quota/usage helpers
