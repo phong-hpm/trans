@@ -4,16 +4,18 @@ import clsx from 'clsx';
 import type React from 'react';
 import { useEffect, useState } from 'react';
 import { Button } from '../components/Button';
+import { Confirm } from '../components/Confirm';
 import { Select } from '../components/Select';
 import { Toggle } from '../components/Toggle';
 import { LANGUAGES } from '../constants/languages';
 import { MODELS, PROVIDERS } from '../constants/providers';
+import { Theme } from '../types';
 import { useGlobalStore } from '../store/global';
 
 const toMB = (bytes: number) => (bytes / (1024 * 1024)).toFixed(2);
 
 export const Popup: React.FC = () => {
-  const { ready, theme, targetLanguage, provider, model, alwaysShowTranslated, updateSettings, patchSettings, saveSettings } = useGlobalStore();
+  const { ready, theme, targetLanguage, provider, model, alwaysShowTranslated, showSidebar, updateSettings, patchSettings, saveSettings } = useGlobalStore();
 
   const [saved, setSaved] = useState(false);
   const [pagePathname, setPagePathname] = useState('');
@@ -84,11 +86,10 @@ export const Popup: React.FC = () => {
 
   if (!ready) return null;
 
-  const isDark = theme === 'dark';
   const usedPct = Math.min((usedBytes / limitBytes) * 100, 100);
 
   return (
-    <div className={isDark ? 'dark' : ''}>
+    <div className={theme.themeClass}>
       <div className='w-72 bg-white dark:bg-gray-950' style={{ fontFamily: 'system-ui, sans-serif' }}>
 
         {/* Header */}
@@ -118,10 +119,7 @@ export const Popup: React.FC = () => {
                 <p className='text-xs text-amber-600 dark:text-amber-400'>
                   This will remove all saved translations for this page.
                 </p>
-                <div className='flex gap-2'>
-                  <Button variant='danger' className='flex-1' onClick={handleClearPage}>Confirm</Button>
-                  <Button variant='ghost' className='flex-1' onClick={() => setPendingClear(null)}>Cancel</Button>
-                </div>
+                <Confirm onConfirm={handleClearPage} onCancel={() => setPendingClear(null)} />
               </div>
             ) : (
               <Button variant='danger' size='md' fullWidth onClick={() => setPendingClear('page')}>
@@ -151,8 +149,14 @@ export const Popup: React.FC = () => {
 
             <Toggle
               label='Dark mode'
-              checked={isDark}
-              onChange={(value) => patchSettings({ theme: value ? 'dark' : 'light' })}
+              checked={theme.isDark}
+              onChange={(value) => patchSettings({ theme: value ? Theme.Dark : Theme.Light })}
+            />
+
+            <Toggle
+              label='Show sidebar'
+              checked={showSidebar}
+              onChange={(value) => patchSettings({ showSidebar: value })}
             />
 
             <Select
@@ -209,10 +213,7 @@ export const Popup: React.FC = () => {
                 <p className='text-xs text-amber-600 dark:text-amber-400'>
                   This will permanently delete all saved translations across all pages.
                 </p>
-                <div className='flex gap-2'>
-                  <Button variant='danger' className='flex-1' onClick={handleClearAll}>Confirm</Button>
-                  <Button variant='ghost' className='flex-1' onClick={() => setPendingClear(null)}>Cancel</Button>
-                </div>
+                <Confirm onConfirm={handleClearAll} onCancel={() => setPendingClear(null)} />
               </div>
             ) : (
               <Button variant='danger' size='md' fullWidth onClick={() => setPendingClear('all')}>

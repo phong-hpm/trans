@@ -85,7 +85,7 @@ export const TranslatePopup: React.FC<Props> = ({ blockType, anchorRef, onSelect
   }, [onClose]);
 
   return createPortal(
-    <div className={theme === 'dark' ? 'dark' : ''}>
+    <div className={theme.themeClass}>
       <div
         ref={ref}
         className={clsx(

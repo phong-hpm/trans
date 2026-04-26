@@ -1,7 +1,7 @@
-// TranslateToolbar.tsx — Toolbar above content blocks: toggle translated/raw + split translate button
+// TranslateToolbar.tsx — Toolbar above content blocks: toggle translated/raw + split translate button + history
 
 import clsx from 'clsx';
-import { ChevronDown, Loader2 } from 'lucide-react';
+import { ChevronDown, Clock, Loader2, RotateCcw } from 'lucide-react';
 import type React from 'react';
 import { useRef, useState } from 'react';
 import { Toggle } from '../../components/Toggle';
@@ -28,9 +28,9 @@ export const TranslateToolbar: React.FC<Props> = ({
   const [selectedOption, setSelectedOption] = useState<TranslateOption>(options[0]);
   const [popupOpen, setPopupOpen] = useState(false);
   const dropdownRef = useRef<HTMLButtonElement>(null);
-  const { theme } = useGlobalStore();
+  const { theme, openSidebarToBlock } = useGlobalStore();
 
-  const { state, translate, restore, hasTranslation } = useTranslate(
+  const { state, translate, retranslate, restore, hasTranslation, history } = useTranslate(
     blockId,
     blockType,
     getElement,
@@ -51,7 +51,7 @@ export const TranslateToolbar: React.FC<Props> = ({
   };
 
   return (
-    <div className={theme === 'dark' ? 'dark' : ''}>
+    <div className={theme.themeClass}>
       <div className='flex justify-start items-center gap-2' style={{ fontFamily: 'system-ui, sans-serif' }}>
         {/* Split button: [label] | [▼] */}
         <div
@@ -104,6 +104,40 @@ export const TranslateToolbar: React.FC<Props> = ({
             />
           </button>
         </div>
+
+        {/* Retranslate button — shown when there's a prior translation */}
+        {hasTranslation && (
+          <button
+            type='button'
+            onClick={retranslate}
+            disabled={isLoading}
+            title='Retranslate'
+            className={clsx(
+              'flex items-center justify-center w-6 h-6 rounded border transition-colors disabled:opacity-60',
+              'border-gray-200 bg-white text-gray-500 hover:bg-gray-50 hover:text-gray-700',
+              'dark:border-gray-600 dark:bg-gray-950 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-200',
+            )}
+          >
+            <RotateCcw className='w-3 h-3' />
+          </button>
+        )}
+
+        {/* History button — shown when there are history entries */}
+        {history.length > 0 && (
+          <button
+            type='button'
+            onClick={() => openSidebarToBlock(blockId)}
+            title='View translation history'
+            className={clsx(
+              'flex items-center gap-1 px-2 py-1 rounded border text-xs transition-colors',
+              'border-gray-200 bg-white text-gray-500 hover:bg-gray-50 hover:text-gray-700',
+              'dark:border-gray-600 dark:bg-gray-950 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-200',
+            )}
+          >
+            <Clock className='w-3 h-3 flex-shrink-0' />
+            <span>History</span>
+          </button>
+        )}
 
         {/* Toggle — appears after first translation to switch between translated/raw */}
         {hasTranslation && (

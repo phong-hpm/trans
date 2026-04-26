@@ -36,7 +36,30 @@ export interface TranslateResponse {
   segments: { id: string; text: string; translatedText: string }[];
 }
 
-export type Theme = 'light' | 'dark';
+export enum Theme {
+  Light = 'light',
+  Dark = 'dark',
+}
+
+export interface TranslationEntry {
+  id: string;
+  segments: { text: string; translatedText: string }[];
+  createdAt: number;
+  selected: boolean;
+}
+
+export interface BlockHistory {
+  entries: TranslationEntry[];
+}
+
+export enum SidebarModeEnum {
+  Drawer = 'drawer',
+  Page = 'page',
+}
+
+export enum SidebarTabEnum {
+  History = 'history',
+}
 
 export interface ExtensionSettings {
   targetLanguage: string;
@@ -44,4 +67,6 @@ export interface ExtensionSettings {
   model: string;
   alwaysShowTranslated: boolean;
   theme: Theme;
+  showSidebar: boolean;
+  sidebarMode: SidebarModeEnum;
 }
