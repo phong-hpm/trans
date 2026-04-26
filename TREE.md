@@ -88,7 +88,7 @@ trans/
         │   ├── sidebar.tsx              — Mounts Sidebar into document.body via shadow DOM
         │   ├── modal.tsx                — Mounts Modal into document.body via shadow DOM
         │   ├── domSegments.ts           — Extract/apply/restore/getSegmentText for DOM text segments
-        │   ├── translationCache.ts      — BlockHistory CRUD in chrome.storage.local (addTranslationEntry, selectEntry, deleteEntry)
+        │   ├── translationHistory.ts    — Block translation history CRUD: addTranslationEntry, selectEntry, deleteEntry
         │   ├── shadow.css               — Tailwind directives; imported via ?inline → injected into shadow roots
         │   ├── components/
         │   │   ├── TranslateButton.tsx  — Circle icon button used for title blocks; uses BlockTypeEnum

@@ -6,7 +6,7 @@ import type React from 'react';
 
 import { ConfirmIconButton } from '../../../components/IconButton';
 import type { BlockHistory } from '../../../types';
-import { deleteEntry, selectEntry } from '../../translationCache';
+import { deleteEntry, selectEntry } from '../../translationHistory';
 
 interface Props {
   blockId: string;

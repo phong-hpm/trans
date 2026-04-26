@@ -1,4 +1,4 @@
-// useTranslate.ts — Translation state machine with history-aware cache, DOM segment extraction
+// useTranslate.ts — Translation state machine with history tracking, DOM segment extraction
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
@@ -16,7 +16,7 @@ import {
   getBlockHistory,
   getSelectedEntry,
   selectEntry,
-} from '../translationCache';
+} from '../translationHistory';
 
 type TranslateState = TranslateStateEnum;
 
@@ -142,6 +142,11 @@ export const useTranslate = (
     }
   }, [blockId, getElement, setState, callApi, applyFromEntry]);
 
+  // Keep translateRef always pointing to the latest translate function
+  useEffect(() => {
+    translateRef.current = translate;
+  });
+
   const retranslate = useCallback(async () => {
     if (stateRef.current === TranslateStateEnum.Loading) return;
 
@@ -154,9 +159,6 @@ export const useTranslate = (
       rawSegments = extracted.map((s) => ({ ...s, translatedText: s.text }));
       segmentsRef.current = rawSegments;
     }
-
-    // Always keep translateRef current
-    translateRef.current = translate;
 
     setState(TranslateStateEnum.Loading);
 
@@ -181,7 +183,7 @@ export const useTranslate = (
       toast.error(msg);
       setState(TranslateStateEnum.Idle);
     }
-  }, [blockId, getElement, setState, callApi, translate]);
+  }, [blockId, getElement, setState, callApi]);
 
   const selectHistoryEntry = useCallback(
     (entryId: string) => {
@@ -199,7 +201,7 @@ export const useTranslate = (
     [blockId]
   );
 
-  // Initialize history and hasTranslation from cache on mount
+  // Initialize history and hasTranslation from storage on mount
   useEffect(() => {
     getBlockHistory(blockId).then((hist) => {
       if (hist?.entries.length) {
@@ -232,7 +234,7 @@ export const useTranslate = (
     });
   }, [blockId, getElement, applyFromEntry]);
 
-  // Auto-apply cached translation when store is ready and alwaysShowTranslated is enabled
+  // Auto-apply saved translation when store is ready and alwaysShowTranslated is enabled
   useEffect(() => {
     if (!ready || stateRef.current !== TranslateStateEnum.Idle || !alwaysShowTranslated) return;
     getBlockHistory(blockId).then((hist) => {

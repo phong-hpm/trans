@@ -8,9 +8,17 @@ import { MODELS, PROVIDERS } from '../../../constants/providers';
 import type { ProviderEnum } from '../../../enums';
 import { useGlobalStore } from '../../../store/global';
 
+const buildExample = (platform: string): string =>
+  [
+    `• I'm a frontend developer working on a React + TypeScript SaaS product`,
+    `• Our team tracks bugs and features in ${platform}`,
+    `• Prefer concise, technically accurate phrasing using standard developer terminology`,
+    `• Keep UI copy short — labels, button text, and error messages should be direct`,
+    `• Do not over-translate idioms; if a term is widely used in English (e.g. "debounce", "modal"), keep it`,
+  ].join('\n');
+
 export const ProviderPanel: React.FC = () => {
-  const { provider, model, userContext, platformName, targetLanguage, updateSettings } =
-    useGlobalStore();
+  const { provider, model, userContext, platformName, updateSettings } = useGlobalStore();
 
   const handleProviderChange = (newProvider: string) => {
     const p = newProvider as ProviderEnum;
@@ -18,8 +26,6 @@ export const ProviderPanel: React.FC = () => {
   };
 
   const platform = platformName ?? 'your issue tracker';
-  const language = targetLanguage ?? 'your target language';
-  const example = `e.g. I am a frontend developer working on a React + TypeScript SaaS product. My team writes ${platform} issues in a mix of ${language} and the original language. I prefer concise, technically accurate translations that use standard developer terminology.`;
 
   return (
     <div className="space-y-3">
@@ -38,7 +44,7 @@ export const ProviderPanel: React.FC = () => {
       />
       <TextareaInput
         label="About you"
-        rows={4}
+        rows={5}
         value={userContext}
         onChange={(e) => updateSettings({ userContext: e.target.value })}
         helpText={
@@ -46,7 +52,9 @@ export const ProviderPanel: React.FC = () => {
             Describe your role and context so the AI can tailor translations to your domain. This is
             sent with every translation request.
             <br />
-            <span className="text-gray-300 dark:text-gray-600">{example}</span>
+            <span className="text-gray-400 dark:text-gray-600 whitespace-pre-line">
+              {buildExample(platform)}
+            </span>
           </>
         }
       />
