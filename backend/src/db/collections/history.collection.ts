@@ -7,20 +7,30 @@ import type { HistoryDocument } from '@/models/history.model';
 type Filter = { blockId?: string; pageId?: string };
 
 export const historyCollection = {
-  // Find a single document matching blockId + pageId
+  /**
+   * Find a single document matching blockId + pageId
+   */
   findOne: ({ blockId, pageId }: Required<Filter>): HistoryDocument | null => {
     const db = read();
     return db.histories.find((h) => h.blockId === blockId && h.pageId === pageId) ?? null;
   },
 
-  // Find all documents, optionally filtered by pageId
+  /**
+   * Find all documents, optionally filtered by pageId
+   */
   find: ({ pageId }: Pick<Filter, 'pageId'> = {}): HistoryDocument[] => {
     const db = read();
     return pageId !== undefined ? db.histories.filter((h) => h.pageId === pageId) : db.histories;
   },
 
-  // Insert or replace a document (upsert)
-  replaceOne: (filter: Required<Filter>, doc: HistoryDocument, options?: { upsert?: boolean }): void => {
+  /**
+   * Insert or replace a document matching the filter (upsert)
+   */
+  replaceOne: (
+    filter: Required<Filter>,
+    doc: HistoryDocument,
+    options?: { upsert?: boolean }
+  ): void => {
     const db = read();
     const idx = db.histories.findIndex(
       (h) => h.blockId === filter.blockId && h.pageId === filter.pageId
@@ -35,7 +45,9 @@ export const historyCollection = {
     write(db);
   },
 
-  // Delete a single document
+  /**
+   * Delete the first document matching blockId + pageId
+   */
   deleteOne: ({ blockId, pageId }: Required<Filter>): void => {
     const db = read();
     db.histories = db.histories.filter(
@@ -44,7 +56,9 @@ export const historyCollection = {
     write(db);
   },
 
-  // Delete all documents matching filter; empty filter deletes everything
+  /**
+   * Delete all documents matching filter; empty filter deletes everything
+   */
   deleteMany: ({ pageId }: Pick<Filter, 'pageId'> = {}): void => {
     const db = read();
     db.histories =

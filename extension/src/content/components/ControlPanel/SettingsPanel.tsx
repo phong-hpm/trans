@@ -14,6 +14,12 @@ export const SettingsPanel: React.FC = () => {
 
   return (
     <div className="space-y-3">
+      <Toggle
+        label="Sync history to server"
+        sublabel="Saves translation history to the backend database"
+        checked={syncToDb}
+        onChange={(v) => updateSettings({ syncToDb: v })}
+      />
       <Select
         label="Your language"
         value={targetLanguage}
@@ -23,24 +29,20 @@ export const SettingsPanel: React.FC = () => {
       <div className="pt-1 space-y-2.5">
         <Toggle
           label="Auto-show translations"
+          sublabel="Display translations automatically without clicking translate"
           checked={alwaysShowTranslated}
           onChange={(v) => updateSettings({ alwaysShowTranslated: v })}
         />
         <Toggle
-          label="Sync history to server"
-          sublabel="Saves translation history to the backend database"
-          checked={syncToDb}
-          onChange={(v) => updateSettings({ syncToDb: v })}
+          label="Show sidebar"
+          sublabel="Display the translation history sidebar"
+          checked={showSidebar}
+          onChange={(v) => updateSettings({ showSidebar: v })}
         />
         <Toggle
           label="Dark mode"
           checked={theme === ThemeEnum.Dark}
           onChange={(v) => updateSettings({ theme: v ? ThemeEnum.Dark : ThemeEnum.Light })}
-        />
-        <Toggle
-          label="Show sidebar"
-          checked={showSidebar}
-          onChange={(v) => updateSettings({ showSidebar: v })}
         />
       </div>
     </div>

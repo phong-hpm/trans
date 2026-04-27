@@ -10,17 +10,19 @@ import {
 
 const router = Router();
 
-// GET    /history                       — all histories
-// GET    /history?pageId=X              — all blocks for a page
-// GET    /history?pageId=X&blockId=Y   — single block (returns array of 0 or 1)
+/**
+ * Returns { data: BlockHistory[] }, filterable by ?pageId and ?blockId
+ */
 router.get('/', getHistories);
 
-// PUT    /history                       — upsert a block history (pageId, blockId, entries in body)
-router.put('/', saveBlockHistory);
+/**
+ * Saves a block history. Body: { pageId, blockId, entries }
+ */
+router.post('/', saveBlockHistory);
 
-// DELETE /history                       — delete all
-// DELETE /history?pageId=X              — delete all blocks for a page
-// DELETE /history?pageId=X&blockId=Y   — delete a specific block
+/**
+ * Deletes histories, filterable by ?pageId and ?blockId
+ */
 router.delete('/', deleteHistories);
 
 export default router;

@@ -4,7 +4,9 @@
 import type { HistoryDocument } from '@/models/history.model';
 import * as repo from '@/repositories/history.repository';
 
-// BlockHistory is the shape the extension and API use directly
+/**
+ * BlockHistory is the shape the extension and API use directly
+ */
 export interface BlockHistory {
   blockId: string;
   pageId: string;
