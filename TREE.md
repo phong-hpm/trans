@@ -90,7 +90,7 @@ trans/
         │   ├── ThemeWrapper.tsx         — Wraps children with current theme class for dark mode support
         │   └── Toggle.tsx               — Reusable toggle switch component with label/sublabel
         ├── platforms/
-        │   ├── types.ts                 — Block + PlatformAdapter interfaces
+        │   ├── types.ts                 — Block + PlatformAdapter interfaces (getBlocks, getHeaderAnchor?)
         │   ├── index.ts                 — PLATFORMS registry + detectPlatform(url)
         │   └── github/
         │       ├── queries.ts           — GitHub DOM selectors + getTitleEl / getTaskEl helpers
@@ -107,10 +107,11 @@ trans/
         │   ├── dom/
         │   │   ├── injectDom.tsx        — Shadow DOM injection engine: processBlocksDom mounts translate UI per block
         │   │   ├── segmentsDom.ts       — Extract/apply/restore DOM text segments; TranslatedSegment type
-        │   │   ├── mountDom.tsx         — mountModalDom, mountSidebarDom, mountToasterDom (shared shadow helper)
+        │   │   ├── mountDom.tsx         — mountModalDom, mountSidebarDom, mountToasterDom, mountTranslateAllDom (shared shadow helper)
         │   │   └── observerDom.ts       — observePageDom (debounced body watcher), observeBlockDom (re-render detector)
         │   ├── shadow.css               — Tailwind directives; imported via ?inline → injected into shadow roots
         │   ├── components/
+        │   │   ├── TranslateAllButton.tsx — Header-level button that translates all blocks at once; dispatches trans:translate-all event; tracks done/total progress
         │   │   ├── TranslateButton.tsx  — Circle icon button used for title blocks; uses BlockTypeEnum
         │   │   ├── TranslatePopup.tsx   — Mode-selection dropdown portalled into shadow root; uses ThemeWrapper
         │   │   ├── TranslateToolbar.tsx — Top-right toolbar for task/comment blocks: toggle + split translate + IconButton(retranslate) + Button(history); uses ThemeWrapper

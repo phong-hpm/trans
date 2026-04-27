@@ -5,19 +5,19 @@ import type { Request, Response } from 'express';
 import * as historyService from '@/services/history.service';
 
 /**
- * Returns { data: BlockHistory[] }, filterable by ?pageId and ?blockId
+ * Returns { data: BlockHistory[] }, filterable by ?pageUrl and ?parsedContent
  */
 export const getHistories = (req: Request, res: Response): void => {
-  const { pageId, blockId } = req.query as { pageId?: string; blockId?: string };
+  const { pageUrl, parsedContent } = req.query as { pageUrl?: string; parsedContent?: string };
 
-  if (pageId && blockId) {
-    const history = historyService.getBlockHistory({ blockId, pageId });
+  if (pageUrl && parsedContent) {
+    const history = historyService.getBlockHistory({ parsedContent, pageUrl });
     res.json({ data: history ? [history] : [] });
     return;
   }
 
-  if (pageId) {
-    res.json({ data: historyService.getPageHistories({ pageId }) });
+  if (pageUrl) {
+    res.json({ data: historyService.getPageHistories({ pageUrl }) });
     return;
   }
 
@@ -25,17 +25,17 @@ export const getHistories = (req: Request, res: Response): void => {
 };
 
 /**
- * Saves a block history. Body: { pageId, blockId, entries }
+ * Saves a block history. Body: { pageUrl, parsedContent, entries }
  */
 export const saveBlockHistory = (req: Request, res: Response): void => {
-  const { pageId, blockId, entries } = req.body as {
-    pageId?: string;
-    blockId?: string;
+  const { pageUrl, parsedContent, entries } = req.body as {
+    pageUrl?: string;
+    parsedContent?: string;
     entries?: unknown[];
   };
 
-  if (!pageId || !blockId) {
-    res.status(400).json({ error: 'pageId and blockId are required' });
+  if (!pageUrl || !parsedContent) {
+    res.status(400).json({ error: 'pageUrl and parsedContent are required' });
     return;
   }
 
@@ -46,8 +46,8 @@ export const saveBlockHistory = (req: Request, res: Response): void => {
 
   historyService.saveBlockHistory({
     history: {
-      blockId,
-      pageId,
+      parsedContent,
+      pageUrl,
       entries: entries as historyService.BlockHistory['entries'],
     },
   });
@@ -56,19 +56,19 @@ export const saveBlockHistory = (req: Request, res: Response): void => {
 };
 
 /**
- * Deletes histories, filterable by ?pageId and ?blockId
+ * Deletes histories, filterable by ?pageUrl and ?parsedContent
  */
 export const deleteHistories = (req: Request, res: Response): void => {
-  const { pageId, blockId } = req.query as { pageId?: string; blockId?: string };
+  const { pageUrl, parsedContent } = req.query as { pageUrl?: string; parsedContent?: string };
 
-  if (pageId && blockId) {
-    historyService.deleteBlockHistory({ blockId, pageId });
+  if (pageUrl && parsedContent) {
+    historyService.deleteBlockHistory({ parsedContent, pageUrl });
     res.status(200).json({ data: null });
     return;
   }
 
-  if (pageId) {
-    historyService.clearPageHistories({ pageId });
+  if (pageUrl) {
+    historyService.clearPageHistories({ pageUrl });
     res.status(200).json({ data: null });
     return;
   }

@@ -7,14 +7,14 @@ import { buildUrlApi, callApi } from '../utils/api';
 type ApiResponse<T> = { data: T };
 
 /**
- * Returns the block history for the given blockId and pageId, or null if not found
+ * Returns the block history for the given parsedContent and pageUrl, or null if not found
  */
 export const getBlockHistoryDbApi = async (
-  blockId: string,
-  pageId: string
+  parsedContent: string,
+  pageUrl: string
 ): Promise<BlockHistory | null> => {
   const { data } = await callApi<ApiResponse<BlockHistory[]>>(
-    buildUrlApi('history', { pageId, blockId })
+    buildUrlApi('history', { pageUrl, parsedContent })
   );
   return data[0] ?? null;
 };
@@ -25,30 +25,37 @@ export const getBlockHistoryDbApi = async (
 export const saveBlockHistoryDbApi = async (history: BlockHistory): Promise<void> => {
   await callApi(buildUrlApi('history'), {
     method: 'POST',
-    body: { pageId: history.pageId, blockId: history.blockId, entries: history.entries },
+    body: {
+      pageUrl: history.pageUrl,
+      parsedContent: history.parsedContent,
+      entries: history.entries,
+    },
   });
 };
 
 /**
- * Deletes the history for the given blockId and pageId
+ * Deletes the history for the given parsedContent and pageUrl
  */
-export const deleteBlockHistoryDbApi = async (blockId: string, pageId: string): Promise<void> => {
-  await callApi(buildUrlApi('history', { pageId, blockId }), { method: 'DELETE' });
+export const deleteBlockHistoryDbApi = async (
+  parsedContent: string,
+  pageUrl: string
+): Promise<void> => {
+  await callApi(buildUrlApi('history', { pageUrl, parsedContent }), { method: 'DELETE' });
 };
 
 /**
- * Returns all block histories for the given pageId
+ * Returns all block histories for the given pageUrl
  */
-export const getAllHistoriesDbApi = async (pageId: string): Promise<BlockHistory[]> => {
-  const { data } = await callApi<ApiResponse<BlockHistory[]>>(buildUrlApi('history', { pageId }));
+export const getAllHistoriesDbApi = async (pageUrl: string): Promise<BlockHistory[]> => {
+  const { data } = await callApi<ApiResponse<BlockHistory[]>>(buildUrlApi('history', { pageUrl }));
   return data;
 };
 
 /**
- * Deletes all histories for the given pageId
+ * Deletes all histories for the given pageUrl
  */
-export const clearPageHistoriesDbApi = async (pageId: string): Promise<void> => {
-  await callApi(buildUrlApi('history', { pageId }), { method: 'DELETE' });
+export const clearPageHistoriesDbApi = async (pageUrl: string): Promise<void> => {
+  await callApi(buildUrlApi('history', { pageUrl }), { method: 'DELETE' });
 };
 
 /**

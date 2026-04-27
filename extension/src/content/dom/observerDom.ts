@@ -2,18 +2,28 @@
 
 /**
  * Observes direct children and subtree of document.body for structural changes.
+ * Ignores mutations that only affect our own translation attributes (data-trans-*).
  * Used in main.tsx to re-run block detection after page mutations (e.g. GitHub Turbo navigation).
  * Returns a cleanup function that disconnects the observer.
  */
 export const observePageDom = (onMutation: () => void): (() => void) => {
   let debounce: ReturnType<typeof setTimeout>;
 
-  const observer = new MutationObserver(() => {
+  const observer = new MutationObserver((mutations) => {
+    // Skip mutations that only affect our own translation attributes — they don't change page structure
+    const isOwnMutation = mutations.every(
+      (m) =>
+        m.type === 'attributes' &&
+        typeof m.attributeName === 'string' &&
+        m.attributeName.startsWith('data-trans-')
+    );
+    if (isOwnMutation) return;
+
     clearTimeout(debounce);
-    debounce = setTimeout(onMutation, 400);
+    debounce = setTimeout(onMutation, 200);
   });
 
-  observer.observe(document.body, { childList: true, subtree: true });
+  observer.observe(document.body, { childList: true, subtree: true, attributes: true });
   return () => observer.disconnect();
 };
 

@@ -8,10 +8,10 @@ export interface HistoryEntry {
 }
 
 export interface HistoryDocument {
-  _id: string;       // Composite key: `${pageId}:::${blockId}`
-  blockId: string;
-  pageId: string;
+  _id: string;         // Composite key: `${pageUrl}:::${parsedContent}`
+  parsedContent: string;
+  pageUrl: string;
   entries: HistoryEntry[];
-  createdAt: string; // ISO 8601
-  updatedAt: string; // ISO 8601
+  createdAt: string;   // ISO 8601
+  updatedAt: string;   // ISO 8601
 }

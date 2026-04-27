@@ -5,6 +5,7 @@ import { Toaster } from 'sonner';
 
 import { ControlPanelModal } from '../components/ControlPanelModal';
 import { Sidebar } from '../components/Sidebar';
+import { TranslateAllButton } from '../components/TranslateAllButton';
 import shadowStyles from '../shadow.css?inline';
 
 /**
@@ -49,6 +50,31 @@ export const mountSidebarDom = (): void =>
     'position:absolute;top:0;left:0;width:0;height:0;z-index:999998;pointer-events:none;',
     Sidebar
   );
+
+/**
+ * Mounts the Translate All button next to the page header anchor. Idempotent.
+ * anchor — the element to append the button host into.
+ * getBlockCount — called at click time to know how many blocks exist.
+ */
+export const mountTranslateAllDom = (anchor: HTMLElement, getBlockCount: () => number): void => {
+  if (anchor.querySelector('[data-trans-translate-all]')) return;
+
+  const host = document.createElement('div');
+  host.setAttribute('data-trans-translate-all', 'true');
+  host.style.cssText = 'display:inline-flex;align-items:center;';
+
+  const shadow = host.attachShadow({ mode: 'open' });
+
+  const style = document.createElement('style');
+  style.textContent = shadowStyles;
+  shadow.appendChild(style);
+
+  const mount = document.createElement('div');
+  shadow.appendChild(mount);
+
+  anchor.appendChild(host);
+  createRoot(mount).render(<TranslateAllButton getBlockCount={getBlockCount} />);
+};
 
 /**
  * Mounts the Sonner Toaster into document.body. Idempotent.

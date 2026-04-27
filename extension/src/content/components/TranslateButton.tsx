@@ -12,14 +12,14 @@ import { useTranslate } from '../hooks/useTranslate';
 import { TranslatePopup } from './TranslatePopup';
 
 interface Props {
-  blockId: string;
+  parsedContent: string;
   blockType: BlockTypeEnum;
   getElement: () => HTMLElement;
   getContextBlocks?: () => ContextBlock[];
 }
 
 export const TranslateButton: React.FC<Props> = ({
-  blockId,
+  parsedContent,
   blockType,
   getElement,
   getContextBlocks,
@@ -27,7 +27,7 @@ export const TranslateButton: React.FC<Props> = ({
   const [popupOpen, setPopupOpen] = useState(false);
   const buttonRef = useRef<HTMLButtonElement>(null);
   const { state, translate, restore } = useTranslate(
-    blockId,
+    parsedContent,
     blockType,
     getElement,
     getContextBlocks

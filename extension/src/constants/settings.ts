@@ -9,6 +9,8 @@ export const DEFAULT_SETTINGS: ExtensionSettings = {
   model: ModelEnum.GPT4oMini,
   userContext: '',
   alwaysShowTranslated: false,
+  autoTranslateTask: false,
+  autoTranslateAll: false,
   syncToDb: false,
   theme: ThemeEnum.Light,
   showSidebar: false,

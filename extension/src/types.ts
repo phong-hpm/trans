@@ -28,16 +28,15 @@ export interface TranslateResponse {
 
 export interface TranslationEntry {
   id: string;
-  blockId: string;
-  pageId: string;
   segments: { text: string; translatedText: string }[];
   createdAt: number;
   selected: boolean;
 }
 
 export interface BlockHistory {
-  blockId: string;
-  pageId: string;
+  id: string;
+  pageUrl: string;
+  parsedContent: string;
   entries: TranslationEntry[];
 }
 
@@ -47,6 +46,8 @@ export interface ExtensionSettings {
   model: string;
   userContext: string;
   alwaysShowTranslated: boolean;
+  autoTranslateTask: boolean;
+  autoTranslateAll: boolean;
   syncToDb: boolean;
   theme: ThemeEnum;
   showSidebar: boolean;

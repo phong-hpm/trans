@@ -9,20 +9,23 @@ import { useBlockHistories } from '../../hooks/useBlockHistories';
 import { BlockCollapse } from './BlockCollapse';
 
 export const HistoryTab: React.FC = () => {
-  const { focusedBlockId, clearFocusedBlock } = useGlobalStore();
+  const { focusedParsedContent, clearFocusedBlock } = useGlobalStore();
   const histories = useBlockHistories();
   const [openBlocks, setOpenBlocks] = useState<Record<string, boolean>>({});
   const itemRefs = useRef<Record<string, HTMLElement | null>>({});
 
-  // When focusedBlockId changes, open that block and scroll to it
+  // When focusedParsedContent changes, open that block and scroll to it
   useEffect(() => {
-    if (!focusedBlockId) return;
-    setOpenBlocks((prev) => ({ ...prev, [focusedBlockId]: true }));
+    if (!focusedParsedContent) return;
+    setOpenBlocks((prev) => ({ ...prev, [focusedParsedContent]: true }));
     requestAnimationFrame(() => {
-      itemRefs.current[focusedBlockId]?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      itemRefs.current[focusedParsedContent]?.scrollIntoView({
+        behavior: 'smooth',
+        block: 'start',
+      });
       clearFocusedBlock();
     });
-  }, [focusedBlockId, clearFocusedBlock]);
+  }, [focusedParsedContent, clearFocusedBlock]);
 
   if (!histories.length) {
     return (
@@ -43,16 +46,16 @@ export const HistoryTab: React.FC = () => {
     <div className="py-1">
       {histories.map((item) => (
         <BlockCollapse
-          key={item.blockId}
-          blockId={item.blockId}
+          key={item.parsedContent}
+          parsedContent={item.parsedContent}
           history={item.history}
           preview={item.preview}
-          isOpen={!!openBlocks[item.blockId]}
+          isOpen={!!openBlocks[item.parsedContent]}
           onToggle={() =>
-            setOpenBlocks((prev) => ({ ...prev, [item.blockId]: !prev[item.blockId] }))
+            setOpenBlocks((prev) => ({ ...prev, [item.parsedContent]: !prev[item.parsedContent] }))
           }
           refCallback={(el) => {
-            itemRefs.current[item.blockId] = el;
+            itemRefs.current[item.parsedContent] = el;
           }}
         />
       ))}

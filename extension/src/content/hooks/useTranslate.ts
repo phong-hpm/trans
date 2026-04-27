@@ -16,13 +16,20 @@ import { addTranslationEntry, deleteEntry, selectEntry } from '../translationSyn
 type TranslateState = TranslateStateEnum;
 
 export const useTranslate = (
-  blockId: string,
+  parsedContent: string,
   blockType: BlockTypeEnum,
   getElement: () => HTMLElement,
   getContextBlocks?: () => ContextBlock[]
 ) => {
-  const { targetLanguage, provider, model, userContext, ready, alwaysShowTranslated } =
-    useGlobalStore();
+  const {
+    targetLanguage,
+    provider,
+    model,
+    userContext,
+    ready,
+    alwaysShowTranslated,
+    autoTranslateTask,
+  } = useGlobalStore();
   const [uiState, setUiState] = useState<TranslateState>(TranslateStateEnum.Idle);
   const [hasTranslation, setHasTranslation] = useState(false);
   const [history, setHistory] = useState<TranslationEntry[]>([]);
@@ -111,7 +118,7 @@ export const useTranslate = (
       segmentsRef.current = rawSegments.map((s) => ({ ...s, translatedText: s.text }));
 
       // Check for a selected history entry
-      const selectedEntry = useHistoryStore.getState().getSelectedEntry(blockId);
+      const selectedEntry = useHistoryStore.getState().getSelectedEntry(parsedContent);
 
       if (selectedEntry) {
         applyFromEntry(selectedEntry, el);
@@ -123,7 +130,7 @@ export const useTranslate = (
       const translated = await callApi(segmentsRef.current);
       segmentsRef.current = translated;
 
-      const updatedHistory = await addTranslationEntry(blockId, translated);
+      const updatedHistory = await addTranslationEntry(parsedContent, translated);
       setHistory(updatedHistory.entries);
       setHasTranslation(true);
 
@@ -134,7 +141,7 @@ export const useTranslate = (
       toast.error(msg);
       setState(TranslateStateEnum.Idle);
     }
-  }, [blockId, getElement, setState, callApi, applyFromEntry]);
+  }, [parsedContent, getElement, setState, callApi, applyFromEntry]);
 
   useEffect(() => {
     translateRef.current = translate;
@@ -163,7 +170,7 @@ export const useTranslate = (
       const translated = await callApi(toTranslate);
       segmentsRef.current = translated;
 
-      const updatedHistory = await addTranslationEntry(blockId, translated);
+      const updatedHistory = await addTranslationEntry(parsedContent, translated);
       setHistory(updatedHistory.entries);
       setHasTranslation(true);
 
@@ -174,35 +181,35 @@ export const useTranslate = (
       toast.error(msg);
       setState(TranslateStateEnum.Idle);
     }
-  }, [blockId, getElement, setState, callApi]);
+  }, [parsedContent, getElement, setState, callApi]);
 
   const selectHistoryEntry = useCallback(
     (entryId: string) => {
-      selectEntry(blockId, entryId);
+      selectEntry(parsedContent, entryId);
     },
-    [blockId]
+    [parsedContent]
   );
 
   const deleteHistoryEntry = useCallback(
     (entryId: string) => {
-      deleteEntry(blockId, entryId);
+      deleteEntry(parsedContent, entryId);
     },
-    [blockId]
+    [parsedContent]
   );
 
   // Initialize history and hasTranslation from store on mount
   useEffect(() => {
-    const hist = useHistoryStore.getState().getBlockHistory(blockId);
+    const hist = useHistoryStore.getState().getBlockHistory(parsedContent);
     if (hist?.entries.length) {
       setHistory(hist.entries);
       setHasTranslation(true);
     }
-  }, [blockId]);
+  }, [parsedContent]);
 
   // React to store changes (sidebar operations, other tabs via storage subscription)
   useEffect(() => {
     return useHistoryStore.subscribe((state) => {
-      const hist = state.histories.find((h) => h.blockId === blockId);
+      const hist = state.histories.find((h) => h.parsedContent === parsedContent);
 
       if (!hist?.entries?.length) {
         setHistory([]);
@@ -220,14 +227,21 @@ export const useTranslate = (
         applyFromEntry(selected, getElement());
       }
     });
-  }, [blockId, getElement, applyFromEntry]);
+  }, [parsedContent, getElement, applyFromEntry]);
 
   // Auto-apply saved translation when store is ready and alwaysShowTranslated is enabled
   useEffect(() => {
     if (!ready || stateRef.current !== TranslateStateEnum.Idle || !alwaysShowTranslated) return;
-    const hist = useHistoryStore.getState().getBlockHistory(blockId);
+    const hist = useHistoryStore.getState().getBlockHistory(parsedContent);
     if (hist?.entries.length) translateRef.current();
-  }, [blockId, ready, alwaysShowTranslated]);
+  }, [parsedContent, ready, alwaysShowTranslated]);
+
+  // Auto-translate this block on load if autoTranslateTask is enabled:
+  // applies from history if available, otherwise calls the API
+  useEffect(() => {
+    if (!ready || stateRef.current !== TranslateStateEnum.Idle || !autoTranslateTask) return;
+    translateRef.current();
+  }, [parsedContent, ready, autoTranslateTask]);
 
   // Watch for re-rendering the block and re-apply translation after framework re-renders
   useEffect(() => {
@@ -236,7 +250,12 @@ export const useTranslate = (
       if (!segmentsRef.current?.length) return;
 
       const liveEl = getElement();
-      if (!liveEl.isConnected) return;
+      if (!liveEl.isConnected) {
+        // Element temporarily detached — reconnect observer to body so next mutation is caught
+        observer.disconnect();
+        observer.observe(document.body, { childList: true, subtree: true });
+        return;
+      }
 
       const firstId = segmentsRef.current[0].id;
       if (liveEl.querySelector(`[data-trans-id="${firstId}"]`)) return;
@@ -262,21 +281,55 @@ export const useTranslate = (
     });
   }, [getElement]);
 
-  // React to alwaysShowTranslated changes
+  // Handle translate-all event: run translate() and signal completion when done
+  useEffect(() => {
+    const handler = async () => {
+      if (stateRef.current === TranslateStateEnum.Loading) {
+        // Already translating — signal done so the progress counter doesn't stall
+        document.dispatchEvent(new CustomEvent('trans:translate-done'));
+        return;
+      }
+      try {
+        await translateRef.current();
+      } finally {
+        document.dispatchEvent(new CustomEvent('trans:translate-done'));
+      }
+    };
+    document.addEventListener('trans:translate-all', handler);
+    return () => document.removeEventListener('trans:translate-all', handler);
+  }, []);
+
+  // React to alwaysShowTranslated / autoTranslateTask changes at runtime
   useEffect(() => {
     return useGlobalStore.subscribe((state, prev) => {
-      if (state.alwaysShowTranslated === prev.alwaysShowTranslated) return;
-      if (state.alwaysShowTranslated && stateRef.current === TranslateStateEnum.Idle) {
-        const hist = useHistoryStore.getState().getBlockHistory(blockId);
-        if (hist?.entries.length) translateRef.current();
-      } else if (
-        !state.alwaysShowTranslated &&
-        stateRef.current === TranslateStateEnum.Translated
-      ) {
-        restoreRef.current();
+      // alwaysShowTranslated toggled on → apply from history; toggled off → restore
+      if (state.alwaysShowTranslated !== prev.alwaysShowTranslated) {
+        if (state.alwaysShowTranslated && stateRef.current === TranslateStateEnum.Idle) {
+          const hist = useHistoryStore.getState().getBlockHistory(parsedContent);
+          if (hist?.entries.length) translateRef.current();
+        } else if (
+          !state.alwaysShowTranslated &&
+          !state.autoTranslateTask &&
+          stateRef.current === TranslateStateEnum.Translated
+        ) {
+          restoreRef.current();
+        }
+      }
+
+      // autoTranslateTask toggled on → translate (API if needed); toggled off → restore
+      if (state.autoTranslateTask !== prev.autoTranslateTask) {
+        if (state.autoTranslateTask && stateRef.current === TranslateStateEnum.Idle) {
+          translateRef.current();
+        } else if (
+          !state.autoTranslateTask &&
+          !state.alwaysShowTranslated &&
+          stateRef.current === TranslateStateEnum.Translated
+        ) {
+          restoreRef.current();
+        }
       }
     });
-  }, [blockId]);
+  }, [parsedContent]);
 
   return {
     state: uiState,

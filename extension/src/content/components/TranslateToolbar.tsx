@@ -18,14 +18,14 @@ import { COMMENT_OPTIONS, SIMPLE_OPTIONS } from './translateOptions';
 import { TranslatePopup } from './TranslatePopup';
 
 interface Props {
-  blockId: string;
+  parsedContent: string;
   blockType: BlockTypeEnum;
   getElement: () => HTMLElement;
   getContextBlocks?: () => ContextBlock[];
 }
 
 export const TranslateToolbar: React.FC<Props> = ({
-  blockId,
+  parsedContent,
   blockType,
   getElement,
   getContextBlocks,
@@ -37,7 +37,7 @@ export const TranslateToolbar: React.FC<Props> = ({
   const { openSidebarToBlock } = useGlobalStore();
 
   const { state, translate, retranslate, restore, hasTranslation, history } = useTranslate(
-    blockId,
+    parsedContent,
     blockType,
     getElement,
     getContextBlocks
@@ -121,7 +121,7 @@ export const TranslateToolbar: React.FC<Props> = ({
             variant="outline"
             color="ghost"
             size="sm"
-            onClick={() => openSidebarToBlock(blockId)}
+            onClick={() => openSidebarToBlock(parsedContent)}
             title="View translation history"
           >
             <Clock className="w-3 h-3 flex-shrink-0" />
