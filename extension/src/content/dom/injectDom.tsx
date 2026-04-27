@@ -13,20 +13,35 @@ import shadowStyles from '../shadow.css?inline';
 const TITLE_ANCHOR_STYLE = 'position:absolute;top:8px;right:-32px;z-index:9999;';
 
 /**
+ * Extracts and joins all visible text nodes from an element, separated by newlines.
+ * Used as parsedContent — the stable content-based identity for a block.
+ */
+export const getParsedContentDom = (el: HTMLElement): string => {
+  const parts: string[] = [];
+  const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
+  let node: Node | null;
+  while ((node = walker.nextNode())) {
+    const text = node.textContent?.trim();
+    if (text) parts.push(text);
+  }
+  return parts.join('\n');
+};
+
+/**
  * Creates a shadow root host with Tailwind styles and mounts the translate UI into it.
  */
 const mountShadowDom = (
   anchor: HTMLElement,
   contentEl: HTMLElement,
-  blockId: string,
+  parsedContent: string,
   blockType: BlockTypeEnum,
   getLiveElement: (() => HTMLElement | null) | undefined,
   getContextBlocks?: () => ContextBlock[]
 ): void => {
-  if (anchor.querySelector(`[data-trans-id="${blockId}"]`)) return;
+  if (anchor.querySelector(`[data-trans-block]`)) return;
 
   const host = document.createElement('div');
-  host.setAttribute('data-trans-id', blockId);
+  host.setAttribute('data-trans-block', parsedContent.slice(0, 40));
 
   const shadow = host.attachShadow({ mode: 'open' });
   const style = document.createElement('style');
@@ -40,7 +55,7 @@ const mountShadowDom = (
   // so getElement() never returns a stale node after GitHub re-renders the block.
   const getElement = (): HTMLElement => getLiveElement?.() ?? contentEl;
 
-  const props = { blockId, blockType, getElement, getContextBlocks };
+  const props = { parsedContent, blockType, getElement, getContextBlocks };
   const ui =
     blockType === BlockTypeEnum.Title ? (
       <TranslateButton {...props} />
@@ -56,8 +71,8 @@ const mountShadowDom = (
  * Creates an absolutely-positioned anchor for the title block's circle button.
  * Returns null if the anchor already exists.
  */
-const createTitleAnchorDom = (containerEl: HTMLElement, blockId: string): HTMLElement | null => {
-  if (containerEl.querySelector(`[data-trans-id="${blockId}"]`)) return null;
+const createTitleAnchorDom = (containerEl: HTMLElement): HTMLElement | null => {
+  if (containerEl.querySelector(`[data-trans-block]`)) return null;
 
   if (window.getComputedStyle(containerEl).position === 'static') {
     containerEl.style.position = 'relative';
@@ -73,10 +88,10 @@ const createTitleAnchorDom = (containerEl: HTMLElement, blockId: string): HTMLEl
  * Creates a flow anchor prepended above the content element (toolbar sits above content).
  * Returns null if the anchor already exists.
  */
-const createBlockAnchorDom = (contentEl: HTMLElement, blockId: string): HTMLElement | null => {
+const createBlockAnchorDom = (contentEl: HTMLElement): HTMLElement | null => {
   const contentParent = contentEl.parentElement;
   if (!contentParent) return null;
-  if (contentParent.querySelector(`[data-trans-id="${blockId}"]`)) return null;
+  if (contentParent.querySelector(`[data-trans-block]`)) return null;
 
   const anchor = document.createElement('div');
   contentParent.prepend(anchor);
@@ -90,14 +105,18 @@ export const processBlocksDom = (blocks: Block[]): void => {
   for (const block of blocks) {
     const anchor =
       block.blockType === BlockTypeEnum.Title
-        ? createTitleAnchorDom(block.containerEl, block.blockId)
-        : createBlockAnchorDom(block.contentEl, block.blockId);
+        ? createTitleAnchorDom(block.containerEl)
+        : createBlockAnchorDom(block.contentEl);
 
     if (!anchor) continue;
+
+    const parsedContent = getParsedContentDom(block.contentEl);
+    if (!parsedContent) continue;
+
     mountShadowDom(
       anchor,
       block.contentEl,
-      block.blockId,
+      parsedContent,
       block.blockType,
       block.getLiveElement,
       block.getContextBlocks

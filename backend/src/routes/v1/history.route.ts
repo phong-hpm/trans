@@ -11,17 +11,17 @@ import {
 const router = Router();
 
 /**
- * Returns { data: BlockHistory[] }, filterable by ?pageId and ?blockId
+ * Returns { data: BlockHistory[] }, filterable by ?pageUrl and ?parsedContent
  */
 router.get('/', getHistories);
 
 /**
- * Saves a block history. Body: { pageId, blockId, entries }
+ * Saves a block history. Body: { pageUrl, parsedContent, entries }
  */
 router.post('/', saveBlockHistory);
 
 /**
- * Deletes histories, filterable by ?pageId and ?blockId
+ * Deletes histories, filterable by ?pageUrl and ?parsedContent
  */
 router.delete('/', deleteHistories);
 

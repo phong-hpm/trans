@@ -4,7 +4,7 @@ import { useHistoryStore } from '../../store/history';
 import type { BlockHistory } from '../../types';
 
 export interface BlockHistoryItem {
-  blockId: string;
+  parsedContent: string;
   history: BlockHistory;
   preview: string;
   lastTranslatedAt: number;
@@ -19,7 +19,7 @@ const buildItems = (histories: BlockHistory[]): BlockHistoryItem[] =>
         h.entries[0]
       );
       return {
-        blockId: h.blockId,
+        parsedContent: h.parsedContent,
         history: h,
         preview: mostRecent.segments.map((s) => s.text).join(' '),
         lastTranslatedAt: mostRecent.createdAt,

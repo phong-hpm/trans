@@ -14,31 +14,31 @@ const syncSave = (history: BlockHistory): void => {
   saveBlockHistoryDbApi(history).catch(() => {});
 };
 
-const syncDelete = (blockId: string, pageId: string): void => {
+const syncDelete = (parsedContent: string, pageUrl: string): void => {
   if (!isSyncEnabled()) return;
-  deleteBlockHistoryDbApi(blockId, pageId).catch(() => {});
+  deleteBlockHistoryDbApi(parsedContent, pageUrl).catch(() => {});
 };
 
 /**
  * Returns the history for a block on the current page, or null.
  */
-export const getBlockHistory = (blockId: string) =>
-  useHistoryStore.getState().getBlockHistory(blockId);
+export const getBlockHistory = (parsedContent: string) =>
+  useHistoryStore.getState().getBlockHistory(parsedContent);
 
 /**
  * Returns the currently selected entry for a block, or null.
  */
-export const getSelectedEntry = (blockId: string) =>
-  useHistoryStore.getState().getSelectedEntry(blockId);
+export const getSelectedEntry = (parsedContent: string) =>
+  useHistoryStore.getState().getSelectedEntry(parsedContent);
 
 /**
  * Adds a new translation entry and optionally syncs to DB.
  */
 export const addTranslationEntry = async (
-  blockId: string,
+  parsedContent: string,
   segments: { text: string; translatedText: string }[]
 ): Promise<BlockHistory> => {
-  const history = await useHistoryStore.getState().addEntry(blockId, segments);
+  const history = await useHistoryStore.getState().addEntry(parsedContent, segments);
   syncSave(history);
   return history;
 };
@@ -46,23 +46,23 @@ export const addTranslationEntry = async (
 /**
  * Selects a history entry and optionally syncs to DB.
  */
-export const selectEntry = async (blockId: string, entryId: string): Promise<void> => {
-  await useHistoryStore.getState().selectEntry(blockId, entryId);
-  const history = useHistoryStore.getState().getBlockHistory(blockId);
+export const selectEntry = async (parsedContent: string, entryId: string): Promise<void> => {
+  await useHistoryStore.getState().selectEntry(parsedContent, entryId);
+  const history = useHistoryStore.getState().getBlockHistory(parsedContent);
   if (history) syncSave(history);
 };
 
 /**
  * Deletes a history entry; syncs deletion to DB if block history is fully removed.
  */
-export const deleteEntry = async (blockId: string, entryId: string): Promise<void> => {
-  const pageId = useHistoryStore.getState().pageId;
-  if (!pageId) return;
-  await useHistoryStore.getState().deleteEntry(blockId, entryId);
-  const remaining = useHistoryStore.getState().getBlockHistory(blockId);
+export const deleteEntry = async (parsedContent: string, entryId: string): Promise<void> => {
+  const pageUrl = useHistoryStore.getState().pageUrl;
+  if (!pageUrl) return;
+  await useHistoryStore.getState().deleteEntry(parsedContent, entryId);
+  const remaining = useHistoryStore.getState().getBlockHistory(parsedContent);
   if (remaining) {
     syncSave(remaining);
   } else {
-    syncDelete(blockId, pageId);
+    syncDelete(parsedContent, pageUrl);
   }
 };

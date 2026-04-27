@@ -8,8 +8,8 @@ import * as repo from '@/repositories/history.repository';
  * BlockHistory is the shape the extension and API use directly
  */
 export interface BlockHistory {
-  blockId: string;
-  pageId: string;
+  parsedContent: string;
+  pageUrl: string;
   entries: {
     id: string;
     segments: { text: string; translatedText: string }[];
@@ -19,39 +19,39 @@ export interface BlockHistory {
 }
 
 const toDocument = (history: BlockHistory): HistoryDocument => ({
-  _id: `${history.pageId}:::${history.blockId}`,
-  blockId: history.blockId,
-  pageId: history.pageId,
+  _id: `${history.pageUrl}:::${history.parsedContent}`,
+  parsedContent: history.parsedContent,
+  pageUrl: history.pageUrl,
   entries: history.entries,
   createdAt: new Date().toISOString(),
   updatedAt: new Date().toISOString(),
 });
 
 const fromDocument = (doc: HistoryDocument): BlockHistory => ({
-  blockId: doc.blockId,
-  pageId: doc.pageId,
+  parsedContent: doc.parsedContent,
+  pageUrl: doc.pageUrl,
   entries: doc.entries,
 });
 
 export const getBlockHistory = ({
-  blockId,
-  pageId,
+  parsedContent,
+  pageUrl,
 }: {
-  blockId: string;
-  pageId: string;
+  parsedContent: string;
+  pageUrl: string;
 }): BlockHistory | null => {
-  const doc = repo.findBlockHistory({ blockId, pageId });
+  const doc = repo.findBlockHistory({ parsedContent, pageUrl });
   return doc ? fromDocument(doc) : null;
 };
 
-export const getPageHistories = ({ pageId }: { pageId: string }): BlockHistory[] =>
-  repo.findPageHistories({ pageId }).map(fromDocument);
+export const getPageHistories = ({ pageUrl }: { pageUrl: string }): BlockHistory[] =>
+  repo.findPageHistories({ pageUrl }).map(fromDocument);
 
 export const getAllHistories = (): BlockHistory[] =>
   repo.findAllHistories().map(fromDocument);
 
 export const saveBlockHistory = ({ history }: { history: BlockHistory }): void => {
-  const existing = repo.findBlockHistory({ blockId: history.blockId, pageId: history.pageId });
+  const existing = repo.findBlockHistory({ parsedContent: history.parsedContent, pageUrl: history.pageUrl });
   const doc: HistoryDocument = {
     ...toDocument(history),
     createdAt: existing?.createdAt ?? new Date().toISOString(),
@@ -60,14 +60,14 @@ export const saveBlockHistory = ({ history }: { history: BlockHistory }): void =
 };
 
 export const deleteBlockHistory = ({
-  blockId,
-  pageId,
+  parsedContent,
+  pageUrl,
 }: {
-  blockId: string;
-  pageId: string;
-}): void => repo.deleteBlockHistory({ blockId, pageId });
+  parsedContent: string;
+  pageUrl: string;
+}): void => repo.deleteBlockHistory({ parsedContent, pageUrl });
 
-export const clearPageHistories = ({ pageId }: { pageId: string }): void =>
-  repo.deletePageHistories({ pageId });
+export const clearPageHistories = ({ pageUrl }: { pageUrl: string }): void =>
+  repo.deletePageHistories({ pageUrl });
 
 export const clearAllHistories = (): void => repo.deleteAllHistories();

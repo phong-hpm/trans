@@ -7,7 +7,12 @@ import type { PlatformAdapter } from '../platforms/types';
 import { useGlobalStore } from '../store/global';
 import { useHistoryStore } from '../store/history';
 import { processBlocksDom } from './dom/injectDom';
-import { mountModalDom, mountSidebarDom, mountToasterDom } from './dom/mountDom';
+import {
+  mountModalDom,
+  mountSidebarDom,
+  mountToasterDom,
+  mountTranslateAllDom,
+} from './dom/mountDom';
 import { observePageDom } from './dom/observerDom';
 
 const initModalToggle = (): void => {
@@ -39,24 +44,51 @@ const initDevLogs = (): void => {
   });
 };
 
+const initAutoTranslateAll = (): void => {
+  // Fire once when the store becomes ready; delay 1s to let block toolbars be injected first
+  const unsub = useGlobalStore.subscribe((state, prev) => {
+    if (!state.ready || prev.ready) return;
+    unsub();
+    if (state.autoTranslateAll) {
+      setTimeout(() => document.dispatchEvent(new CustomEvent('trans:translate-all')), 1000);
+    }
+  });
+};
+
 const init = (platform: PlatformAdapter): void => {
   if (ENV.isDev) initDevLogs();
 
   mountToasterDom();
   mountSidebarDom();
+  initAutoTranslateAll();
 
   // Retry on init — some platforms render content asynchronously
   let attempts = 0;
   const retry = setInterval(() => {
-    processBlocksDom(platform.getBlocks());
+    const blocks = platform.getBlocks();
+    processBlocksDom(blocks);
+
+    if (platform.getHeaderAnchor) {
+      const anchor = platform.getHeaderAnchor();
+      if (anchor) mountTranslateAllDom(anchor, () => platform.getBlocks().length);
+    }
+
     if (++attempts >= 10) clearInterval(retry);
   }, 500);
 
-  observePageDom(() => processBlocksDom(platform.getBlocks()));
+  observePageDom(() => {
+    const blocks = platform.getBlocks();
+    processBlocksDom(blocks);
+
+    if (platform.getHeaderAnchor) {
+      const anchor = platform.getHeaderAnchor();
+      if (anchor) mountTranslateAllDom(anchor, () => platform.getBlocks().length);
+    }
+  });
 };
 
 useGlobalStore.getState().init();
-useHistoryStore.getState().init(location.pathname);
+useHistoryStore.getState().init(location.href);
 
 // Modal and its toggle listener are platform-independent — always mount
 initModalToggle();

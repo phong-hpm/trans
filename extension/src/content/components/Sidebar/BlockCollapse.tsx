@@ -9,7 +9,7 @@ import type { BlockHistory } from '../../../types';
 import { deleteEntry, selectEntry } from '../../translationSync';
 
 interface Props {
-  blockId: string;
+  parsedContent: string;
   history: BlockHistory;
   preview: string;
   isOpen: boolean;
@@ -18,7 +18,7 @@ interface Props {
 }
 
 export const BlockCollapse: React.FC<Props> = ({
-  blockId,
+  parsedContent,
   history,
   preview,
   isOpen,
@@ -31,7 +31,7 @@ export const BlockCollapse: React.FC<Props> = ({
   const sorted = [...history.entries].sort((a, b) => b.createdAt - a.createdAt);
 
   const handleSelectEntry = (entryId: string) => {
-    selectEntry(blockId, entryId);
+    selectEntry(parsedContent, entryId);
   };
 
   return (
@@ -109,7 +109,7 @@ export const BlockCollapse: React.FC<Props> = ({
 
                   {/* Delete trigger — uses ConfirmIconButton for two-step confirm */}
                   <span className="flex-shrink-0 mt-0.5" onClick={(e) => e.stopPropagation()}>
-                    <ConfirmIconButton onConfirm={() => deleteEntry(blockId, entry.id)}>
+                    <ConfirmIconButton onConfirm={() => deleteEntry(parsedContent, entry.id)}>
                       <Trash2 className="w-3 h-3" />
                     </ConfirmIconButton>
                   </span>

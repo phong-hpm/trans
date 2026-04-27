@@ -4,38 +4,38 @@
 import { historyCollection } from '@/db/collections/history.collection';
 import type { HistoryDocument } from '@/models/history.model';
 
-const makeId = (pageId: string, blockId: string): string => `${pageId}:::${blockId}`;
+const makeId = (pageUrl: string, parsedContent: string): string => `${pageUrl}:::${parsedContent}`;
 
 export const findBlockHistory = ({
-  blockId,
-  pageId,
+  parsedContent,
+  pageUrl,
 }: {
-  blockId: string;
-  pageId: string;
-}): HistoryDocument | null => historyCollection.findOne({ blockId, pageId });
+  parsedContent: string;
+  pageUrl: string;
+}): HistoryDocument | null => historyCollection.findOne({ parsedContent, pageUrl });
 
-export const findPageHistories = ({ pageId }: { pageId: string }): HistoryDocument[] =>
-  historyCollection.find({ pageId });
+export const findPageHistories = ({ pageUrl }: { pageUrl: string }): HistoryDocument[] =>
+  historyCollection.find({ pageUrl });
 
 export const findAllHistories = (): HistoryDocument[] => historyCollection.find();
 
 export const upsertBlockHistory = ({ doc }: { doc: HistoryDocument }): void => {
   historyCollection.replaceOne(
-    { blockId: doc.blockId, pageId: doc.pageId },
-    { ...doc, _id: doc._id || makeId(doc.pageId, doc.blockId) },
+    { parsedContent: doc.parsedContent, pageUrl: doc.pageUrl },
+    { ...doc, _id: doc._id || makeId(doc.pageUrl, doc.parsedContent) },
     { upsert: true }
   );
 };
 
 export const deleteBlockHistory = ({
-  blockId,
-  pageId,
+  parsedContent,
+  pageUrl,
 }: {
-  blockId: string;
-  pageId: string;
-}): void => historyCollection.deleteOne({ blockId, pageId });
+  parsedContent: string;
+  pageUrl: string;
+}): void => historyCollection.deleteOne({ parsedContent, pageUrl });
 
-export const deletePageHistories = ({ pageId }: { pageId: string }): void =>
-  historyCollection.deleteMany({ pageId });
+export const deletePageHistories = ({ pageUrl }: { pageUrl: string }): void =>
+  historyCollection.deleteMany({ pageUrl });
 
 export const deleteAllHistories = (): void => historyCollection.deleteMany();

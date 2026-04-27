@@ -9,8 +9,16 @@ import { ThemeEnum } from '../../../enums';
 import { useGlobalStore } from '../../../store/global';
 
 export const SettingsPanel: React.FC = () => {
-  const { theme, targetLanguage, alwaysShowTranslated, showSidebar, syncToDb, updateSettings } =
-    useGlobalStore();
+  const {
+    theme,
+    targetLanguage,
+    alwaysShowTranslated,
+    autoTranslateTask,
+    autoTranslateAll,
+    showSidebar,
+    syncToDb,
+    updateSettings,
+  } = useGlobalStore();
 
   return (
     <div className="space-y-3">
@@ -29,9 +37,21 @@ export const SettingsPanel: React.FC = () => {
       <div className="pt-1 space-y-2.5">
         <Toggle
           label="Auto-show translations"
-          sublabel="Display translations automatically without clicking translate"
+          sublabel="Apply saved translation automatically on page load"
           checked={alwaysShowTranslated}
           onChange={(v) => updateSettings({ alwaysShowTranslated: v })}
+        />
+        <Toggle
+          label="Auto translate task"
+          sublabel="On load, translate each block automatically — calls API if no saved translation"
+          checked={autoTranslateTask}
+          onChange={(v) => updateSettings({ autoTranslateTask: v })}
+        />
+        <Toggle
+          label="Auto translate all"
+          sublabel="On load, translate all blocks at once — same as clicking Translate All"
+          checked={autoTranslateAll}
+          onChange={(v) => updateSettings({ autoTranslateAll: v })}
         />
         <Toggle
           label="Show sidebar"

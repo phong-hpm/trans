@@ -4,23 +4,23 @@
 import { read, write } from '@/db';
 import type { HistoryDocument } from '@/models/history.model';
 
-type Filter = { blockId?: string; pageId?: string };
+type Filter = { parsedContent?: string; pageUrl?: string };
 
 export const historyCollection = {
   /**
-   * Find a single document matching blockId + pageId
+   * Find a single document matching parsedContent + pageUrl
    */
-  findOne: ({ blockId, pageId }: Required<Filter>): HistoryDocument | null => {
+  findOne: ({ parsedContent, pageUrl }: Required<Filter>): HistoryDocument | null => {
     const db = read();
-    return db.histories.find((h) => h.blockId === blockId && h.pageId === pageId) ?? null;
+    return db.histories.find((h) => h.parsedContent === parsedContent && h.pageUrl === pageUrl) ?? null;
   },
 
   /**
-   * Find all documents, optionally filtered by pageId
+   * Find all documents, optionally filtered by pageUrl
    */
-  find: ({ pageId }: Pick<Filter, 'pageId'> = {}): HistoryDocument[] => {
+  find: ({ pageUrl }: Pick<Filter, 'pageUrl'> = {}): HistoryDocument[] => {
     const db = read();
-    return pageId !== undefined ? db.histories.filter((h) => h.pageId === pageId) : db.histories;
+    return pageUrl !== undefined ? db.histories.filter((h) => h.pageUrl === pageUrl) : db.histories;
   },
 
   /**
@@ -33,7 +33,7 @@ export const historyCollection = {
   ): void => {
     const db = read();
     const idx = db.histories.findIndex(
-      (h) => h.blockId === filter.blockId && h.pageId === filter.pageId
+      (h) => h.parsedContent === filter.parsedContent && h.pageUrl === filter.pageUrl
     );
 
     if (idx >= 0) {
@@ -46,12 +46,12 @@ export const historyCollection = {
   },
 
   /**
-   * Delete the first document matching blockId + pageId
+   * Delete the first document matching parsedContent + pageUrl
    */
-  deleteOne: ({ blockId, pageId }: Required<Filter>): void => {
+  deleteOne: ({ parsedContent, pageUrl }: Required<Filter>): void => {
     const db = read();
     db.histories = db.histories.filter(
-      (h) => !(h.blockId === blockId && h.pageId === pageId)
+      (h) => !(h.parsedContent === parsedContent && h.pageUrl === pageUrl)
     );
     write(db);
   },
@@ -59,10 +59,10 @@ export const historyCollection = {
   /**
    * Delete all documents matching filter; empty filter deletes everything
    */
-  deleteMany: ({ pageId }: Pick<Filter, 'pageId'> = {}): void => {
+  deleteMany: ({ pageUrl }: Pick<Filter, 'pageUrl'> = {}): void => {
     const db = read();
     db.histories =
-      pageId !== undefined ? db.histories.filter((h) => h.pageId !== pageId) : [];
+      pageUrl !== undefined ? db.histories.filter((h) => h.pageUrl !== pageUrl) : [];
     write(db);
   },
 };

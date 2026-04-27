@@ -2,64 +2,92 @@
 
 import type { BlockHistory } from '../types';
 
-// Internal: derives storage key from entity identity
-const storageKey = (pageId: string, blockId: string): string => `trans:${pageId}:${blockId}`;
+/**
+ * Normalizes a URL to origin + pathname only (strips query string and hash).
+ */
+export const normalizePageUrl = (url: string): string => {
+  try {
+    const u = new URL(url);
+    return u.origin + u.pathname;
+  } catch {
+    return url;
+  }
+};
 
-// Internal: parses a storage key back to entity identity fields
-const parseStorageKey = (key: string): { pageId: string; blockId: string } | null => {
-  if (!key.startsWith('trans:')) return null;
-  const rest = key.slice('trans:'.length);
-  const colonIdx = rest.indexOf(':');
-  if (colonIdx === -1) return null;
-  return { pageId: rest.slice(0, colonIdx), blockId: rest.slice(colonIdx + 1) };
+// Internal: derives storage key from pageUrl + parsedContent hash
+const storageKey = (pageUrl: string, parsedContent: string): string => {
+  // Simple djb2 hash — fast, no crypto needed for a storage key
+  let hash = 5381;
+  const str = pageUrl + '::' + parsedContent;
+  for (let i = 0; i < str.length; i++) {
+    hash = ((hash << 5) + hash) ^ str.charCodeAt(i);
+    hash = hash >>> 0; // keep unsigned 32-bit
+  }
+  return `trans:${hash.toString(36)}`;
 };
 
 // Internal: type guard + backfills identity fields missing from old storage format
-const hydrateHistory = (value: unknown, blockId: string, pageId: string): BlockHistory | null => {
+const hydrateHistory = (
+  value: unknown,
+  pageUrl: string,
+  parsedContent: string
+): BlockHistory | null => {
   if (typeof value !== 'object' || value === null) return null;
   if (!Array.isArray((value as BlockHistory).entries)) return null;
-  return { ...(value as BlockHistory), blockId, pageId };
+  return { ...(value as BlockHistory), pageUrl, parsedContent };
 };
 
-export const getBlockHistoryApi = (blockId: string, pageId: string): Promise<BlockHistory | null> =>
+export const getBlockHistoryApi = (
+  pageUrl: string,
+  parsedContent: string
+): Promise<BlockHistory | null> =>
   new Promise((resolve) => {
-    const key = storageKey(pageId, blockId);
+    const key = storageKey(pageUrl, parsedContent);
     chrome.storage.local.get(key, (result) =>
-      resolve(hydrateHistory(result[key], blockId, pageId))
+      resolve(hydrateHistory(result[key], pageUrl, parsedContent))
     );
   });
 
 export const saveBlockHistoryApi = (history: BlockHistory): Promise<void> =>
   new Promise((resolve) => {
-    const key = storageKey(history.pageId, history.blockId);
+    const key = storageKey(history.pageUrl, history.parsedContent);
     chrome.storage.local.set({ [key]: history }, resolve);
   });
 
-export const deleteBlockHistoryApi = (blockId: string, pageId: string): Promise<void> =>
+export const deleteBlockHistoryApi = (pageUrl: string, parsedContent: string): Promise<void> =>
   new Promise((resolve) => {
-    chrome.storage.local.remove(storageKey(pageId, blockId), resolve);
+    chrome.storage.local.remove(storageKey(pageUrl, parsedContent), resolve);
   });
 
-// Returns all histories for a given page, backfilling identity fields if missing
-export const getAllHistoriesApi = (pageId: string): Promise<BlockHistory[]> =>
+/**
+ * Returns all histories for a given pageUrl.
+ * Iterates all keys and matches by stored pageUrl field.
+ */
+export const getAllHistoriesApi = (pageUrl: string): Promise<BlockHistory[]> =>
   new Promise((resolve) => {
     chrome.storage.local.get(null, (all) => {
       const histories: BlockHistory[] = [];
-      for (const [key, value] of Object.entries(all)) {
-        const parsed = parseStorageKey(key);
-        if (!parsed || parsed.pageId !== pageId) continue;
-        const history = hydrateHistory(value, parsed.blockId, parsed.pageId);
-        if (history) histories.push(history);
+      for (const value of Object.values(all)) {
+        if (typeof value !== 'object' || value === null) continue;
+        const h = value as BlockHistory;
+        if (!Array.isArray(h.entries) || h.pageUrl !== pageUrl) continue;
+        histories.push(h);
       }
       resolve(histories);
     });
   });
 
-// Deletes all histories for a given page
-export const clearPageHistoriesApi = (pageId: string): Promise<void> =>
+/**
+ * Deletes all histories for a given pageUrl.
+ */
+export const clearPageHistoriesApi = (pageUrl: string): Promise<void> =>
   new Promise((resolve) => {
     chrome.storage.local.get(null, (all) => {
-      const keys = Object.keys(all).filter((k) => parseStorageKey(k)?.pageId === pageId);
+      const keys = Object.entries(all)
+        .filter(
+          ([, v]) => typeof v === 'object' && v !== null && (v as BlockHistory).pageUrl === pageUrl
+        )
+        .map(([k]) => k);
       if (!keys.length) {
         resolve();
         return;
@@ -68,11 +96,18 @@ export const clearPageHistoriesApi = (pageId: string): Promise<void> =>
     });
   });
 
-// Deletes all histories across all pages
+/**
+ * Deletes all histories across all pages.
+ */
 export const clearAllHistoriesApi = (): Promise<void> =>
   new Promise((resolve) => {
     chrome.storage.local.get(null, (all) => {
-      const keys = Object.keys(all).filter((k) => k.startsWith('trans:'));
+      const keys = Object.entries(all)
+        .filter(
+          ([, v]) =>
+            typeof v === 'object' && v !== null && Array.isArray((v as BlockHistory).entries)
+        )
+        .map(([k]) => k);
       if (!keys.length) {
         resolve();
         return;
@@ -81,17 +116,20 @@ export const clearAllHistoriesApi = (): Promise<void> =>
     });
   });
 
-// Notifies listener with typed entity identity + new value (null = deleted)
+/**
+ * Notifies listener when any history entry changes.
+ */
 export const subscribeHistoryChangesApi = (
-  listener: (blockId: string, pageId: string, history: BlockHistory | null) => void
+  listener: (pageUrl: string, parsedContent: string, history: BlockHistory | null) => void
 ): (() => void) => {
   const handler = (changes: Record<string, chrome.storage.StorageChange>, area: string) => {
     if (area !== 'local') return;
-    for (const [key, change] of Object.entries(changes)) {
-      const parsed = parseStorageKey(key);
-      if (!parsed) continue;
-      const history = hydrateHistory(change.newValue, parsed.blockId, parsed.pageId);
-      listener(parsed.blockId, parsed.pageId, history);
+    for (const change of Object.values(changes)) {
+      const next = change.newValue as BlockHistory | undefined;
+      const prev = change.oldValue as BlockHistory | undefined;
+      const h = next ?? prev;
+      if (!h?.pageUrl || !h?.parsedContent) continue;
+      listener(h.pageUrl, h.parsedContent, next ?? null);
     }
   };
   chrome.storage.onChanged.addListener(handler);

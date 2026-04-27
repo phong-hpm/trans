@@ -9,54 +9,55 @@ import {
   deleteBlockHistoryApi,
   getAllHistoriesApi,
   getBlockHistoryApi,
+  normalizePageUrl,
   saveBlockHistoryApi,
   subscribeHistoryChangesApi,
 } from '../apis/historyApi';
 import type { BlockHistory, TranslationEntry } from '../types';
 
 interface HistoryStore {
-  pageId: string | null;
+  pageUrl: string | null;
   histories: BlockHistory[];
 
   /**
-   * Loads all histories for the given page into the store and subscribes to storage changes.
+   * Loads all histories for the given pageUrl into the store and subscribes to storage changes.
    * Call once per page context (content script init).
    */
-  init: (pageId: string) => Promise<void>;
+  init: (pageUrl: string) => Promise<void>;
 
   /**
-   * Returns the history for a block, or null if not found.
+   * Returns the history for a block by parsedContent, or null if not found.
    */
-  getBlockHistory: (blockId: string) => BlockHistory | null;
+  getBlockHistory: (parsedContent: string) => BlockHistory | null;
 
   /**
    * Returns the currently selected entry for a block, or null.
    */
-  getSelectedEntry: (blockId: string) => TranslationEntry | null;
+  getSelectedEntry: (parsedContent: string) => TranslationEntry | null;
 
   /**
    * Adds a new translation entry for a block (auto-selected, others deselected).
    * Persists to storage and returns the updated history.
    */
   addEntry: (
-    blockId: string,
+    parsedContent: string,
     segments: { text: string; translatedText: string }[]
   ) => Promise<BlockHistory>;
 
   /**
    * Selects a specific entry for a block (deselects others). Persists to storage.
    */
-  selectEntry: (blockId: string, entryId: string) => Promise<void>;
+  selectEntry: (parsedContent: string, entryId: string) => Promise<void>;
 
   /**
    * Deletes a specific entry. If no entries remain, deletes the block history entirely.
    */
-  deleteEntry: (blockId: string, entryId: string) => Promise<void>;
+  deleteEntry: (parsedContent: string, entryId: string) => Promise<void>;
 
   /**
    * Deletes all entries for a given block.
    */
-  deleteBlockHistory: (blockId: string) => Promise<void>;
+  deleteBlockHistory: (parsedContent: string) => Promise<void>;
 
   /**
    * Clears all histories for the current page.
@@ -70,41 +71,41 @@ interface HistoryStore {
 }
 
 export const useHistoryStore = create<HistoryStore>((set, get) => ({
-  pageId: null,
+  pageUrl: null,
   histories: [],
 
-  init: async (pageId) => {
-    const histories = await getAllHistoriesApi(pageId);
-    set({ pageId, histories });
+  init: async (rawPageUrl) => {
+    const pageUrl = normalizePageUrl(rawPageUrl);
+    const histories = await getAllHistoriesApi(pageUrl);
+    set({ pageUrl, histories });
 
     // Stay in sync with storage changes from other contexts (e.g. sidebar in another tab)
-    subscribeHistoryChangesApi((blockId, changedPageId, history) => {
-      if (changedPageId !== pageId) return;
+    subscribeHistoryChangesApi((changedPageUrl, parsedContent, history) => {
+      if (changedPageUrl !== pageUrl) return;
       set((s) => {
-        const filtered = s.histories.filter((h) => h.blockId !== blockId);
+        const filtered = s.histories.filter((h) => h.parsedContent !== parsedContent);
         return { histories: history ? [...filtered, history] : filtered };
       });
     });
   },
 
-  getBlockHistory: (blockId) => get().histories.find((h) => h.blockId === blockId) ?? null,
+  getBlockHistory: (parsedContent) =>
+    get().histories.find((h) => h.parsedContent === parsedContent) ?? null,
 
-  getSelectedEntry: (blockId) =>
+  getSelectedEntry: (parsedContent) =>
     get()
-      .getBlockHistory(blockId)
+      .getBlockHistory(parsedContent)
       ?.entries.find((e) => e.selected) ?? null,
 
-  addEntry: async (blockId, segments) => {
-    const { pageId } = get();
-    if (!pageId) throw new Error('[HistoryStore] store not initialized');
+  addEntry: async (parsedContent, segments) => {
+    const { pageUrl } = get();
+    if (!pageUrl) throw new Error('[HistoryStore] store not initialized');
 
-    const existing = await getBlockHistoryApi(blockId, pageId);
+    const existing = await getBlockHistoryApi(pageUrl, parsedContent);
     const prevEntries = existing?.entries ?? [];
 
     const newEntry: TranslationEntry = {
       id: nanoid(8),
-      blockId,
-      pageId,
       segments,
       createdAt: Date.now(),
       selected: true,
@@ -115,21 +116,26 @@ export const useHistoryStore = create<HistoryStore>((set, get) => ({
       ...prevEntries.map((e) => ({ ...e, selected: false })),
     ];
 
-    const history: BlockHistory = { blockId, pageId, entries };
-    await saveBlockHistoryApi(history);
+    const history: BlockHistory = {
+      id: existing?.id ?? nanoid(8),
+      pageUrl,
+      parsedContent,
+      entries,
+    };
 
+    await saveBlockHistoryApi(history);
     set((s) => ({
-      histories: [...s.histories.filter((h) => h.blockId !== blockId), history],
+      histories: [...s.histories.filter((h) => h.parsedContent !== parsedContent), history],
     }));
 
     return history;
   },
 
-  selectEntry: async (blockId, entryId) => {
-    const { pageId } = get();
-    if (!pageId) return;
+  selectEntry: async (parsedContent, entryId) => {
+    const { pageUrl } = get();
+    if (!pageUrl) return;
 
-    const existing = await getBlockHistoryApi(blockId, pageId);
+    const existing = await getBlockHistoryApi(pageUrl, parsedContent);
     if (!existing) return;
 
     const history: BlockHistory = {
@@ -138,25 +144,24 @@ export const useHistoryStore = create<HistoryStore>((set, get) => ({
     };
 
     await saveBlockHistoryApi(history);
-
     set((s) => ({
-      histories: [...s.histories.filter((h) => h.blockId !== blockId), history],
+      histories: [...s.histories.filter((h) => h.parsedContent !== parsedContent), history],
     }));
   },
 
-  deleteEntry: async (blockId, entryId) => {
-    const { pageId } = get();
-    if (!pageId) return;
+  deleteEntry: async (parsedContent, entryId) => {
+    const { pageUrl } = get();
+    if (!pageUrl) return;
 
-    const existing = await getBlockHistoryApi(blockId, pageId);
+    const existing = await getBlockHistoryApi(pageUrl, parsedContent);
     if (!existing) return;
 
     const wasSelected = existing.entries.find((e) => e.id === entryId)?.selected ?? false;
     const remaining = existing.entries.filter((e) => e.id !== entryId);
 
     if (!remaining.length) {
-      await deleteBlockHistoryApi(blockId, pageId);
-      set((s) => ({ histories: s.histories.filter((h) => h.blockId !== blockId) }));
+      await deleteBlockHistoryApi(pageUrl, parsedContent);
+      set((s) => ({ histories: s.histories.filter((h) => h.parsedContent !== parsedContent) }));
       return;
     }
 
@@ -171,23 +176,22 @@ export const useHistoryStore = create<HistoryStore>((set, get) => ({
 
     const history: BlockHistory = { ...existing, entries };
     await saveBlockHistoryApi(history);
-
     set((s) => ({
-      histories: [...s.histories.filter((h) => h.blockId !== blockId), history],
+      histories: [...s.histories.filter((h) => h.parsedContent !== parsedContent), history],
     }));
   },
 
-  deleteBlockHistory: async (blockId) => {
-    const { pageId } = get();
-    if (!pageId) return;
-    await deleteBlockHistoryApi(blockId, pageId);
-    set((s) => ({ histories: s.histories.filter((h) => h.blockId !== blockId) }));
+  deleteBlockHistory: async (parsedContent) => {
+    const { pageUrl } = get();
+    if (!pageUrl) return;
+    await deleteBlockHistoryApi(pageUrl, parsedContent);
+    set((s) => ({ histories: s.histories.filter((h) => h.parsedContent !== parsedContent) }));
   },
 
   clearPage: async () => {
-    const { pageId } = get();
-    if (!pageId) return;
-    await clearPageHistoriesApi(pageId);
+    const { pageUrl } = get();
+    if (!pageUrl) return;
+    await clearPageHistoriesApi(pageUrl);
     set({ histories: [] });
   },
 

@@ -8,7 +8,7 @@ import type { ExtensionSettings } from '../types';
 
 interface GlobalStore extends ExtensionSettings {
   ready: boolean;
-  focusedBlockId: string | null;
+  focusedParsedContent: string | null;
   showModal: boolean;
   platformName: string | null;
   // Load from storage + subscribe to live changes — call once per context
@@ -16,7 +16,7 @@ interface GlobalStore extends ExtensionSettings {
   // Update local state + immediately persist to storage
   updateSettings: (partial: Partial<ExtensionSettings>) => void;
   // Open sidebar and scroll to a specific block in the History tab
-  openSidebarToBlock: (blockId: string) => void;
+  openSidebarToBlock: (parsedContent: string) => void;
   // Clear focused block after sidebar has scrolled to it
   clearFocusedBlock: () => void;
   // Toggle the settings modal open/closed
@@ -28,7 +28,7 @@ interface GlobalStore extends ExtensionSettings {
 export const useGlobalStore = create<GlobalStore>((set) => ({
   ...DEFAULT_SETTINGS,
   ready: false,
-  focusedBlockId: null,
+  focusedParsedContent: null,
   showModal: false,
   platformName: null,
 
@@ -52,12 +52,12 @@ export const useGlobalStore = create<GlobalStore>((set) => ({
     saveSettingsApi(partial);
   },
 
-  openSidebarToBlock: (blockId) => {
-    set({ showSidebar: true, focusedBlockId: blockId });
+  openSidebarToBlock: (parsedContent) => {
+    set({ showSidebar: true, focusedParsedContent: parsedContent });
     saveSettingsApi({ showSidebar: true });
   },
 
-  clearFocusedBlock: () => set({ focusedBlockId: null }),
+  clearFocusedBlock: () => set({ focusedParsedContent: null }),
   toggleModal: () => set((s) => ({ showModal: !s.showModal })),
   setPlatformName: (name) => set({ platformName: name }),
 }));

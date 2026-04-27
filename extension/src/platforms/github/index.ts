@@ -18,7 +18,6 @@ export const githubAdapter: PlatformAdapter = {
     const titleContentEl = document.querySelector<HTMLElement>(q.titleText);
     if (titleContainer && titleContentEl) {
       blocks.push({
-        blockId: 'issue-title',
         blockType: BlockTypeEnum.Title,
         containerEl: titleContainer,
         contentEl: titleContentEl,
@@ -33,7 +32,6 @@ export const githubAdapter: PlatformAdapter = {
     );
     if (issueBodyBlock && bodyContentEl) {
       blocks.push({
-        blockId: 'issue-body',
         blockType: BlockTypeEnum.Task,
         containerEl: issueBodyBlock,
         contentEl: bodyContentEl,
@@ -55,7 +53,6 @@ export const githubAdapter: PlatformAdapter = {
 
       const commentEl = block as HTMLElement;
       blocks.push({
-        blockId: `comment-${i}`,
         blockType: BlockTypeEnum.Comment,
         containerEl: commentEl,
         contentEl,
@@ -77,5 +74,10 @@ export const githubAdapter: PlatformAdapter = {
     });
 
     return blocks;
+  },
+
+  getHeaderAnchor: () => {
+    const titleEl = document.querySelector<HTMLElement>(q.titleContainer);
+    return titleEl?.parentElement ?? null;
   },
 };
