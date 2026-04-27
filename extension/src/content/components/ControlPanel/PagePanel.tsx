@@ -2,11 +2,10 @@
 
 import clsx from 'clsx';
 import type React from 'react';
-import { useEffect, useState } from 'react';
 
-import { clearPageHistoriesApi, getAllHistoriesApi } from '../../../apis/historyApi';
 import { ConfirmButton } from '../../../components/Button';
 import { useGlobalStore } from '../../../store/global';
+import { useHistoryStore } from '../../../store/history';
 
 interface Props {
   pathname: string;
@@ -14,12 +13,8 @@ interface Props {
 
 export const PagePanel: React.FC<Props> = ({ pathname }) => {
   const { platformName } = useGlobalStore();
-  const [pageCount, setPageCount] = useState(0);
-
-  useEffect(() => {
-    if (!platformName) return;
-    getAllHistoriesApi(pathname).then((h) => setPageCount(h.length));
-  }, [pathname, platformName]);
+  const pageCount = useHistoryStore((s) => s.histories.length);
+  const clearPage = useHistoryStore((s) => s.clearPage);
 
   if (!platformName) {
     return (
@@ -64,7 +59,7 @@ export const PagePanel: React.FC<Props> = ({ pathname }) => {
           color="danger"
           size="md"
           fullWidth
-          onConfirm={() => clearPageHistoriesApi(pathname).then(() => setPageCount(0))}
+          onConfirm={clearPage}
           confirmMessage="This will remove all saved translations for this page."
         >
           Clear page history

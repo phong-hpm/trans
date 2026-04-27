@@ -1,8 +1,6 @@
-// useBlockHistories.ts — Load and subscribe to all block histories for the current page
+// useBlockHistories.ts — Load and subscribe to all block histories for the current page from useHistoryStore
 
-import { useEffect, useState } from 'react';
-
-import { getAllHistoriesApi, subscribeHistoryChangesApi } from '../../apis/historyApi';
+import { useHistoryStore } from '../../store/history';
 import type { BlockHistory } from '../../types';
 
 export interface BlockHistoryItem {
@@ -30,18 +28,6 @@ const buildItems = (histories: BlockHistory[]): BlockHistoryItem[] =>
     .sort((a, b) => b.lastTranslatedAt - a.lastTranslatedAt);
 
 export const useBlockHistories = (): BlockHistoryItem[] => {
-  const [items, setItems] = useState<BlockHistoryItem[]>([]);
-
-  useEffect(() => {
-    getAllHistoriesApi(location.pathname).then((histories) => setItems(buildItems(histories)));
-  }, []);
-
-  useEffect(() => {
-    return subscribeHistoryChangesApi((_blockId, pageId) => {
-      if (pageId !== location.pathname) return;
-      getAllHistoriesApi(location.pathname).then((histories) => setItems(buildItems(histories)));
-    });
-  }, []);
-
-  return items;
+  const histories = useHistoryStore((s) => s.histories);
+  return buildItems(histories);
 };

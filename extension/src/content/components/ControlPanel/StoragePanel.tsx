@@ -3,13 +3,14 @@
 import type React from 'react';
 import { useEffect, useState } from 'react';
 
-import { clearAllHistoriesApi } from '../../../apis/historyApi';
 import { getStorageQuotaApi, getStorageUsageApi } from '../../../apis/storageApi';
 import { ConfirmButton } from '../../../components/Button';
+import { useHistoryStore } from '../../../store/history';
 
 const toMB = (bytes: number) => (bytes / (1024 * 1024)).toFixed(2);
 
 export const StoragePanel: React.FC = () => {
+  const clearAll = useHistoryStore((s) => s.clearAll);
   const [usedBytes, setUsedBytes] = useState(0);
   const [limitBytes, setLimitBytes] = useState(0);
 
@@ -40,7 +41,7 @@ export const StoragePanel: React.FC = () => {
         color="danger"
         size="md"
         fullWidth
-        onConfirm={() => clearAllHistoriesApi().then(() => getStorageUsageApi().then(setUsedBytes))}
+        onConfirm={() => clearAll().then(() => getStorageUsageApi().then(setUsedBytes))}
         confirmMessage="This will permanently delete all saved translations across all pages."
       >
         Clear all history

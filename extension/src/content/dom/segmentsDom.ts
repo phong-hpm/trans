@@ -1,8 +1,8 @@
-// domSegments.ts — Extract, apply, and restore text segments from a live DOM element
+// dom/segmentsDom.ts — Extract, apply, and restore text segments from a live DOM element
 
 import { nanoid } from 'nanoid';
 
-import type { TranslateSegment } from '../types';
+import type { TranslateSegment } from '../../types';
 
 export interface TranslatedSegment extends TranslateSegment {
   translatedText: string;
@@ -19,7 +19,11 @@ const isInsideSkippedTag = (node: Node): boolean => {
   return false;
 };
 
-export const extractSegments = (root: HTMLElement): TranslateSegment[] => {
+/**
+ * Walks the DOM, wraps each text node in a span with data-trans-id, and returns the segments.
+ * Skips nodes inside code/pre/script/style tags.
+ */
+export const extractSegmentsDom = (root: HTMLElement): TranslateSegment[] => {
   // Collect all text nodes first — modifying DOM inside a TreeWalker loop breaks traversal
   const textNodes: Node[] = [];
   const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
@@ -43,7 +47,10 @@ export const extractSegments = (root: HTMLElement): TranslateSegment[] => {
   });
 };
 
-export const applyTranslation = (segments: TranslatedSegment[], root: HTMLElement): void => {
+/**
+ * Writes translated text into each segment span. Stores the original in data-original.
+ */
+export const applyTranslationDom = (segments: TranslatedSegment[], root: HTMLElement): void => {
   segments.forEach(({ id, text, translatedText }) => {
     const el = root.querySelector(`[data-trans-id="${id}"]`);
     if (!el) return;
@@ -52,22 +59,28 @@ export const applyTranslation = (segments: TranslatedSegment[], root: HTMLElemen
   });
 };
 
-export const restoreOriginal = (segments: TranslatedSegment[], root: HTMLElement): void => {
+/**
+ * Restores the original text in each segment span.
+ */
+export const restoreOriginalDom = (segments: TranslatedSegment[], root: HTMLElement): void => {
   segments.forEach(({ id, text }) => {
     const el = root.querySelector(`[data-trans-id="${id}"]`);
     if (el) el.textContent = text;
   });
 };
 
-// Returns the original (pre-translation) text of an element, reading data-original if available
-export const getSegmentText = (el: HTMLElement): string => {
+/**
+ * Returns the original (pre-translation) text of an element,
+ * reading data-original from existing spans if available.
+ */
+export const getSegmentTextDom = (el: HTMLElement): string => {
   const spans = el.querySelectorAll<HTMLElement>('[data-trans-id]');
   if (spans.length) {
     return Array.from(spans)
       .map((s) => s.getAttribute('data-original') ?? s.textContent ?? '')
       .join(' ');
   }
-  return extractSegments(el)
+  return extractSegmentsDom(el)
     .map((s) => s.text)
     .join(' ');
 };

@@ -1,6 +1,6 @@
 // index.ts — GitHub Issues platform adapter
 
-import { getSegmentText } from '../../content/domSegments';
+import { getSegmentTextDom } from '../../content/dom/segmentsDom';
 import { BlockTypeEnum } from '../../enums';
 import type { ContextBlock } from '../../types';
 import type { Block, PlatformAdapter } from '../types';
@@ -42,7 +42,7 @@ export const githubAdapter: PlatformAdapter = {
         getContextBlocks: (): ContextBlock[] => {
           const titleEl = getTitleEl();
           if (!titleEl) return [];
-          return [{ type: BlockTypeEnum.Title, text: getSegmentText(titleEl) }];
+          return [{ type: BlockTypeEnum.Title, text: getSegmentTextDom(titleEl) }];
         },
       });
     }
@@ -64,12 +64,12 @@ export const githubAdapter: PlatformAdapter = {
         getContextBlocks: (): ContextBlock[] => {
           const ctx: ContextBlock[] = [];
           const titleEl = getTitleEl();
-          if (titleEl) ctx.push({ type: BlockTypeEnum.Title, text: getSegmentText(titleEl) });
+          if (titleEl) ctx.push({ type: BlockTypeEnum.Title, text: getSegmentTextDom(titleEl) });
           const taskEl = getTaskEl();
-          if (taskEl) ctx.push({ type: BlockTypeEnum.Task, text: getSegmentText(taskEl) });
+          if (taskEl) ctx.push({ type: BlockTypeEnum.Task, text: getSegmentTextDom(taskEl) });
           commentBlocks.slice(0, i).forEach((b) => {
             const el = b.querySelector<HTMLElement>(q.markdownBody);
-            if (el) ctx.push({ type: BlockTypeEnum.Comment, text: getSegmentText(el) });
+            if (el) ctx.push({ type: BlockTypeEnum.Comment, text: getSegmentTextDom(el) });
           });
           return ctx;
         },
