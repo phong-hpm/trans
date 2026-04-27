@@ -3,20 +3,15 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 
-import { subscribeHistoryChangesApi } from '../../apis/historyApi';
 import ENV from '../../constants/env';
 import { type BlockTypeEnum, MessageTypeEnum, TranslateStateEnum } from '../../enums';
 import { useGlobalStore } from '../../store/global';
+import { useHistoryStore } from '../../store/history';
 import type { ContextBlock, TranslationEntry } from '../../types';
-import type { TranslatedSegment } from '../domSegments';
-import { applyTranslation, extractSegments, restoreOriginal } from '../domSegments';
-import {
-  addTranslationEntry,
-  deleteEntry,
-  getBlockHistory,
-  getSelectedEntry,
-  selectEntry,
-} from '../translationSync';
+import { observeBlockDom } from '../dom/observerDom';
+import type { TranslatedSegment } from '../dom/segmentsDom';
+import { applyTranslationDom, extractSegmentsDom, restoreOriginalDom } from '../dom/segmentsDom';
+import { addTranslationEntry, deleteEntry, selectEntry } from '../translationSync';
 
 type TranslateState = TranslateStateEnum;
 
@@ -33,7 +28,7 @@ export const useTranslate = (
   const [history, setHistory] = useState<TranslationEntry[]>([]);
   const stateRef = useRef<TranslateState>(TranslateStateEnum.Idle);
   const segmentsRef = useRef<TranslatedSegment[] | null>(null);
-  // Keep stable refs so subscriptions always call the latest version
+  // Keep stable refs so effects always call the latest version
   const translateRef = useRef<() => Promise<void>>(async () => {});
   const restoreRef = useRef<() => void>(() => {});
 
@@ -46,7 +41,7 @@ export const useTranslate = (
   const restore = useCallback(() => {
     const segments = segmentsRef.current;
     if (!segments) return;
-    restoreOriginal(segments, getElement());
+    restoreOriginalDom(segments, getElement());
     setState(TranslateStateEnum.Idle);
   }, [getElement, setState]);
 
@@ -89,7 +84,7 @@ export const useTranslate = (
       translatedText: map.get(s.text) ?? s.text,
     }));
     segmentsRef.current = updated;
-    applyTranslation(updated, el);
+    applyTranslationDom(updated, el);
   }, []);
 
   const translate = useCallback(async () => {
@@ -97,7 +92,7 @@ export const useTranslate = (
 
     // If segments already extracted, just re-apply from memory
     if (segmentsRef.current) {
-      applyTranslation(segmentsRef.current, getElement());
+      applyTranslationDom(segmentsRef.current, getElement());
       setState(TranslateStateEnum.Translated);
       return;
     }
@@ -106,18 +101,17 @@ export const useTranslate = (
 
     try {
       const el = getElement();
-      const rawSegments = extractSegments(el);
+      const rawSegments = extractSegmentsDom(el);
 
       if (!rawSegments.length) {
         setState(TranslateStateEnum.Idle);
         return;
       }
 
-      // Seed segmentsRef with original texts (translatedText = text initially)
       segmentsRef.current = rawSegments.map((s) => ({ ...s, translatedText: s.text }));
 
       // Check for a selected history entry
-      const selectedEntry = await getSelectedEntry(blockId);
+      const selectedEntry = useHistoryStore.getState().getSelectedEntry(blockId);
 
       if (selectedEntry) {
         applyFromEntry(selectedEntry, el);
@@ -133,7 +127,7 @@ export const useTranslate = (
       setHistory(updatedHistory.entries);
       setHasTranslation(true);
 
-      applyTranslation(translated, el);
+      applyTranslationDom(translated, el);
       setState(TranslateStateEnum.Translated);
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Translation failed';
@@ -142,7 +136,6 @@ export const useTranslate = (
     }
   }, [blockId, getElement, setState, callApi, applyFromEntry]);
 
-  // Keep translateRef always pointing to the latest translate function
   useEffect(() => {
     translateRef.current = translate;
   });
@@ -150,11 +143,10 @@ export const useTranslate = (
   const retranslate = useCallback(async () => {
     if (stateRef.current === TranslateStateEnum.Loading) return;
 
-    // Ensure segments are extracted
     let rawSegments = segmentsRef.current;
     if (!rawSegments) {
       const el = getElement();
-      const extracted = extractSegments(el);
+      const extracted = extractSegmentsDom(el);
       if (!extracted.length) return;
       rawSegments = extracted.map((s) => ({ ...s, translatedText: s.text }));
       segmentsRef.current = rawSegments;
@@ -163,7 +155,6 @@ export const useTranslate = (
     setState(TranslateStateEnum.Loading);
 
     try {
-      // Use original texts from segmentsRef (.text is always original)
       const toTranslate = segmentsRef.current!.map(({ id, text }) => ({
         id,
         text,
@@ -176,7 +167,7 @@ export const useTranslate = (
       setHistory(updatedHistory.entries);
       setHasTranslation(true);
 
-      applyTranslation(translated, getElement());
+      applyTranslationDom(translated, getElement());
       setState(TranslateStateEnum.Translated);
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Translation failed';
@@ -187,7 +178,6 @@ export const useTranslate = (
 
   const selectHistoryEntry = useCallback(
     (entryId: string) => {
-      // Storage change triggers the onChanged listener which re-applies
       selectEntry(blockId, entryId);
     },
     [blockId]
@@ -195,26 +185,24 @@ export const useTranslate = (
 
   const deleteHistoryEntry = useCallback(
     (entryId: string) => {
-      // Storage change triggers the onChanged listener which updates history state
       deleteEntry(blockId, entryId);
     },
     [blockId]
   );
 
-  // Initialize history and hasTranslation from storage on mount
+  // Initialize history and hasTranslation from store on mount
   useEffect(() => {
-    getBlockHistory(blockId).then((hist) => {
-      if (hist?.entries.length) {
-        setHistory(hist.entries);
-        setHasTranslation(true);
-      }
-    });
+    const hist = useHistoryStore.getState().getBlockHistory(blockId);
+    if (hist?.entries.length) {
+      setHistory(hist.entries);
+      setHasTranslation(true);
+    }
   }, [blockId]);
 
-  // React to storage changes (sidebar operations, other tabs)
+  // React to store changes (sidebar operations, other tabs via storage subscription)
   useEffect(() => {
-    return subscribeHistoryChangesApi((changedBlockId, changedPageId, hist) => {
-      if (changedBlockId !== blockId || changedPageId !== location.pathname) return;
+    return useHistoryStore.subscribe((state) => {
+      const hist = state.histories.find((h) => h.blockId === blockId);
 
       if (!hist?.entries?.length) {
         setHistory([]);
@@ -237,63 +225,50 @@ export const useTranslate = (
   // Auto-apply saved translation when store is ready and alwaysShowTranslated is enabled
   useEffect(() => {
     if (!ready || stateRef.current !== TranslateStateEnum.Idle || !alwaysShowTranslated) return;
-    getBlockHistory(blockId).then((hist) => {
-      if (hist?.entries.length) translateRef.current();
-    });
+    const hist = useHistoryStore.getState().getBlockHistory(blockId);
+    if (hist?.entries.length) translateRef.current();
   }, [blockId, ready, alwaysShowTranslated]);
 
-  // Watch for re-rendering the block (soft nav, internal updates) and re-apply translation.
-  // When the framework replaces the content, our data-trans-id spans are gone — detect this via
-  // MutationObserver on the element's parent and re-extract + re-apply automatically.
+  // Watch for re-rendering the block and re-apply translation after framework re-renders
   useEffect(() => {
-    const el = getElement();
-    const parent = el.parentElement ?? document.body;
-
-    const observer = new MutationObserver(() => {
+    return observeBlockDom(getElement, (observer) => {
       if (stateRef.current !== TranslateStateEnum.Translated) return;
       if (!segmentsRef.current?.length) return;
 
       const liveEl = getElement();
-      // Skip if the element is detached (framework may still be mounting the new tree)
       if (!liveEl.isConnected) return;
 
-      // If our spans are still present, this mutation is unrelated — ignore
       const firstId = segmentsRef.current[0].id;
       if (liveEl.querySelector(`[data-trans-id="${firstId}"]`)) return;
 
-      // Spans are gone — framework re-rendered the content. Re-extract and re-apply.
       const translationMap = new Map(segmentsRef.current.map((s) => [s.text, s.translatedText]));
 
       // Pause observation so our own DOM mutations don't retrigger the callback
       observer.disconnect();
 
-      const raw = extractSegments(liveEl);
+      const raw = extractSegmentsDom(liveEl);
       if (raw.length) {
         const rehydrated = raw.map((s) => ({
           ...s,
           translatedText: translationMap.get(s.text) ?? s.text,
         }));
         segmentsRef.current = rehydrated;
-        applyTranslation(rehydrated, liveEl);
+        applyTranslationDom(rehydrated, liveEl);
       }
 
-      // Resume — observe the (potentially new) parent in case the element moved
+      // Resume on the (potentially new) parent
       const newParent = liveEl.parentElement ?? document.body;
       observer.observe(newParent, { childList: true, subtree: true });
     });
-
-    observer.observe(parent, { childList: true, subtree: true });
-    return () => observer.disconnect();
   }, [getElement]);
 
-  // React to alwaysShowTranslated changes from popup
+  // React to alwaysShowTranslated changes
   useEffect(() => {
     return useGlobalStore.subscribe((state, prev) => {
       if (state.alwaysShowTranslated === prev.alwaysShowTranslated) return;
       if (state.alwaysShowTranslated && stateRef.current === TranslateStateEnum.Idle) {
-        getBlockHistory(blockId).then((hist) => {
-          if (hist?.entries.length) translateRef.current();
-        });
+        const hist = useHistoryStore.getState().getBlockHistory(blockId);
+        if (hist?.entries.length) translateRef.current();
       } else if (
         !state.alwaysShowTranslated &&
         stateRef.current === TranslateStateEnum.Translated

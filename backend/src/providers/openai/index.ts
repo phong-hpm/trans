@@ -8,7 +8,24 @@ export const openaiProvider: TranslationProvider = {
   async translate({ segments, contextBlocks, targetLanguage, model, userContext }) {
     const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
-    const userMessage = JSON.stringify({ context: contextBlocks ?? [], segments });
+    const filteredSegments = segments.filter((s) => {
+      const text = s.text.trim();
+
+      if (!text) return false;
+
+      const noisePatterns = [
+        /^Move\s/i,
+        /^Open\s/i,
+        /task options/i,
+        /To pick up a draggable item/i,
+        /While dragging/i,
+        /Press space again/i,
+      ];
+
+      return !noisePatterns.some((p) => p.test(text));
+    });
+
+    const userMessage = JSON.stringify({ context: contextBlocks ?? [], segments: filteredSegments });
 
     const completion = await client.chat.completions.create({
       model,
@@ -19,7 +36,10 @@ export const openaiProvider: TranslationProvider = {
     });
 
     const raw = completion.choices[0]?.message?.content ?? '';
-    const cleaned = raw.trim().replace(/^```(?:json)?\n?/, '').replace(/\n?```$/, '');
+    const cleaned = raw
+      .trim()
+      .replace(/^```(?:json)?\n?/, '')
+      .replace(/\n?```$/, '');
     return JSON.parse(cleaned) as { id: string; translatedText: string }[];
   },
 };

@@ -99,16 +99,16 @@ trans/
         │   ├── background.ts            — Service worker CORS proxy: relays /translate requests
         │   └── logger.ts               — Grouped request logger; relays to page DevTools in DEV mode
         ├── store/
-        │   └── global.ts                — Zustand global store: flat settings + ready flag + sidebar state, init(), updateSettings() (auto-saves), openSidebarToBlock(), clearFocusedBlock()
+        │   ├── global.ts                — Zustand global store: flat settings + ready flag + sidebar state, init(), updateSettings() (auto-saves), openSidebarToBlock(), clearFocusedBlock()
+        │   └── history.ts               — Zustand history store: page histories in memory, init(), addEntry(), selectEntry(), deleteEntry(), deleteBlockHistory(), clearPage(), clearAll()
         ├── content/
-        │   ├── main.tsx                 — Entry: detectPlatform, init, MutationObserver, DEV logs
-        │   ├── inject.tsx               — Generic injection engine: mounts TranslateButton per Block
-        │   ├── toast.tsx                — Mounts Sonner <Toaster> into document.body
-        │   ├── sidebar.tsx              — Mounts Sidebar into document.body via shadow DOM
-        │   ├── modal.tsx                — Mounts Modal into document.body via shadow DOM
-        │   ├── domSegments.ts           — Extract/apply/restore/getSegmentText for DOM text segments
-        │   ├── translationHistory.ts    — Block translation history CRUD: addTranslationEntry, selectEntry, deleteEntry
-        │   ├── translationSync.ts       — Sync coordinator: wraps translationHistory + optionally syncs to backend DB
+        │   ├── main.tsx                 — Entry: detectPlatform, init stores, mount DOM, observe page
+        │   ├── translationSync.ts       — Sync coordinator: wraps useHistoryStore + optionally syncs to backend DB
+        │   ├── dom/
+        │   │   ├── injectDom.tsx        — Shadow DOM injection engine: processBlocksDom mounts translate UI per block
+        │   │   ├── segmentsDom.ts       — Extract/apply/restore DOM text segments; TranslatedSegment type
+        │   │   ├── mountDom.tsx         — mountModalDom, mountSidebarDom, mountToasterDom (shared shadow helper)
+        │   │   └── observerDom.ts       — observePageDom (debounced body watcher), observeBlockDom (re-render detector)
         │   ├── shadow.css               — Tailwind directives; imported via ?inline → injected into shadow roots
         │   ├── components/
         │   │   ├── TranslateButton.tsx  — Circle icon button used for title blocks; uses BlockTypeEnum
@@ -116,11 +116,12 @@ trans/
         │   │   ├── TranslateToolbar.tsx — Top-right toolbar for task/comment blocks: toggle + split translate + IconButton(retranslate) + Button(history); uses ThemeWrapper
         │   │   ├── translateOptions.ts  — COMMENT_OPTIONS, SIMPLE_OPTIONS, TranslateOption type shared between Popup and Toolbar
         │   │   ├── ControlPanel/
-        │   │   │   ├── index.tsx        — Nav shell: Settings | Provider | Page | Storage
+        │   │   │   ├── index.tsx        — Nav shell: Settings | Provider | Page | Storage | Develop (dev only)
         │   │   │   ├── SettingsPanel.tsx — Language select + display toggles
         │   │   │   ├── ProviderPanel.tsx — Provider/model selects + user context textarea
         │   │   │   ├── PagePanel.tsx    — Platform info + clear page history
-        │   │   │   └── StoragePanel.tsx — Storage usage bar + clear all history
+        │   │   │   ├── StoragePanel.tsx — Storage usage bar + clear all history
+        │   │   │   └── DevelopPanel.tsx — Dev-only panel: Log Global Store, Log page history buttons (hidden in production)
         │   │   └── Sidebar/
         │   │       ├── index.tsx        — Main sidebar shell: drawer/page modes (isDrawerMode), updateSettings(); uses ThemeWrapper
         │   │       ├── Tabs.tsx         — Generic bottom-border tab bar component

@@ -5,10 +5,10 @@ import { LogTypeEnum, MessageTypeEnum } from '../enums';
 import { detectPlatform } from '../platforms';
 import type { PlatformAdapter } from '../platforms/types';
 import { useGlobalStore } from '../store/global';
-import { processBlocks } from './inject';
-import { mountModal } from './modal';
-import { mountSidebar } from './sidebar';
-import { mountToaster } from './toast';
+import { useHistoryStore } from '../store/history';
+import { processBlocksDom } from './dom/injectDom';
+import { mountModalDom, mountSidebarDom, mountToasterDom } from './dom/mountDom';
+import { observePageDom } from './dom/observerDom';
 
 const initModalToggle = (): void => {
   chrome.runtime.onMessage.addListener((message) => {
@@ -42,28 +42,25 @@ const initDevLogs = (): void => {
 const init = (platform: PlatformAdapter): void => {
   if (ENV.isDev) initDevLogs();
 
-  mountToaster();
-  mountSidebar();
+  mountToasterDom();
+  mountSidebarDom();
 
   // Retry on init — some platforms render content asynchronously
   let attempts = 0;
   const retry = setInterval(() => {
-    processBlocks(platform.getBlocks());
+    processBlocksDom(platform.getBlocks());
     if (++attempts >= 10) clearInterval(retry);
   }, 500);
 
-  let debounce: ReturnType<typeof setTimeout>;
-  new MutationObserver(() => {
-    clearTimeout(debounce);
-    debounce = setTimeout(() => processBlocks(platform.getBlocks()), 400);
-  }).observe(document.body, { childList: true, subtree: true });
+  observePageDom(() => processBlocksDom(platform.getBlocks()));
 };
 
 useGlobalStore.getState().init();
+useHistoryStore.getState().init(location.pathname);
 
 // Modal and its toggle listener are platform-independent — always mount
 initModalToggle();
-mountModal();
+mountModalDom();
 
 const platform = detectPlatform(location.href);
 useGlobalStore.getState().setPlatformName(platform?.name ?? null);
