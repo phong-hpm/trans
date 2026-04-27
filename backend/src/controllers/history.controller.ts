@@ -4,10 +4,9 @@ import type { Request, Response } from 'express';
 
 import * as historyService from '@/services/history.service';
 
-// GET /history
-// GET /history?pageId=X
-// GET /history?pageId=X&blockId=Y
-// Always returns { data: BlockHistory[] }
+/**
+ * Returns { data: BlockHistory[] }, filterable by ?pageId and ?blockId
+ */
 export const getHistories = (req: Request, res: Response): void => {
   const { pageId, blockId } = req.query as { pageId?: string; blockId?: string };
 
@@ -25,9 +24,9 @@ export const getHistories = (req: Request, res: Response): void => {
   res.json({ data: historyService.getAllHistories() });
 };
 
-// PUT /history
-// Body: { pageId, blockId, entries }
-// Returns { data: null }
+/**
+ * Saves a block history. Body: { pageId, blockId, entries }
+ */
 export const saveBlockHistory = (req: Request, res: Response): void => {
   const { pageId, blockId, entries } = req.body as {
     pageId?: string;
@@ -56,10 +55,9 @@ export const saveBlockHistory = (req: Request, res: Response): void => {
   res.status(200).json({ data: null });
 };
 
-// DELETE /history
-// DELETE /history?pageId=X
-// DELETE /history?pageId=X&blockId=Y
-// Returns { data: null }
+/**
+ * Deletes histories, filterable by ?pageId and ?blockId
+ */
 export const deleteHistories = (req: Request, res: Response): void => {
   const { pageId, blockId } = req.query as { pageId?: string; blockId?: string };
 

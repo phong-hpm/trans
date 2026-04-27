@@ -10,7 +10,7 @@ interface Database {
   histories: HistoryDocument[];
 }
 
-const DB_PATH = path.join(__dirname, 'db.json');
+const DB_PATH = path.join(__dirname, '../../temp/db.json');
 
 const read = (): Database => {
   if (!fs.existsSync(DB_PATH)) return { histories: [] };

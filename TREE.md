@@ -1,6 +1,6 @@
 # Project Tree
 
-Generated on 2026-04-24. Excludes `node_modules/`, `dist/`, `.git/`.
+Generated on 2026-04-27. Excludes `node_modules/`, `dist/`, `.git/`, `backend/temp/`.
 
 ```
 trans/
@@ -8,25 +8,37 @@ trans/
 ├── CLAUDE.md                — Project rules (comments in English, file headers, docs language)
 ├── README.md                — Setup and usage guide
 ├── TREE.md                  — This file
-│
 ├── backend/
 │   ├── .env.example         — Environment variable template (OPENAI_API_KEY, GEMINI_API_KEY, PORT)
 │   ├── .gitignore
 │   ├── package.json
 │   ├── tsconfig.json        — Includes @/ path alias pointing to src/
+│   ├── temp/                — Gitignored runtime data (db.json lives here)
 │   └── src/
 │       ├── server.ts        — Express app setup, mounts /api router
 │       ├── types.ts         — Shared API types: TranslateSegment, TranslateRequest, TranslatedSegment
 │       ├── lib/
 │       │   └── logger.ts            — Chalk-coloured request/response/error logger (Logger class)
+│       ├── db/
+│       │   ├── index.ts             — Mock DB layer: read/write db.json; swap here to connect real MongoDB
+│       │   └── collections/
+│       │       └── history.collection.ts — MongoDB-style collection interface backed by db.json
+│       ├── models/
+│       │   └── history.model.ts     — HistoryDocument / HistoryEntry interfaces (DB schema)
+│       ├── repositories/
+│       │   └── history.repository.ts — Data access layer for history documents (wraps history.collection)
 │       ├── routes/
-│       │   ├── index.ts     — Root router: mounts /v1
+│       │   ├── index.ts             — Root router: mounts /v1
+│       │   ├── translate.route.ts   — POST /translate (legacy route kept for compatibility)
 │       │   └── v1/
-│       │       └── translate.route.ts — POST /api/v1/translate
+│       │       ├── translate.route.ts — POST /api/v1/translate
+│       │       └── history.route.ts   — GET/POST/DELETE /api/v1/history (query-param filters)
 │       ├── controllers/
-│       │   └── translate.controller.ts — Validates request, delegates to service
+│       │   ├── translate.controller.ts — Validates request, delegates to translate service
+│       │   └── history.controller.ts   — History CRUD: get (filterable), save, delete (filterable)
 │       ├── services/
-│       │   └── translate.service.ts   — Calls provider, merges original text into response
+│       │   ├── translate.service.ts    — Calls provider, merges original text into response
+│       │   └── history.service.ts      — Business logic for history CRUD; converts BlockHistory ↔ HistoryDocument
 │       └── providers/
 │           ├── types.ts     — TranslationProvider interface
 │           ├── index.ts     — Provider registry (lookup by name)
@@ -69,7 +81,7 @@ trans/
         │   ├── Select.tsx               — Reusable labeled select component
         │   ├── TextareaInput.tsx        — Reusable labeled textarea with optional help text
         ├── utils/
-        │   └── api.ts                   — buildUrlApi: builds backend URLs with optional query params
+        │   └── api.ts                   — buildUrlApi: builds backend URLs with optional query params; callApi: generic fetch wrapper with JSON + error handling
         ├── apis/
         │   ├── historyApi.ts            — chrome.storage.local CRUD for BlockHistory
         │   ├── storageApi.ts            — chrome.storage quota/usage helpers
@@ -117,11 +129,6 @@ trans/
         │   └── hooks/
         │       ├── useTranslate.ts      — Translation state machine with history-aware cache, retranslate, selectHistoryEntry, deleteHistoryEntry
         │       └── useBlockHistories.ts — Load and subscribe to all block histories for current page
-        └── popup/
-            ├── index.html              — Popup HTML entry (crxjs resolves this from manifest action.default_popup)
-            ├── index.tsx               — Popup entry point
-            ├── popup.css              — Tailwind directives for popup UI
-            └── Popup.tsx              — Settings form (language, provider, model, toggles, ConfirmButton for history clear); uses ThemeWrapper + updateSettings()
 ```
 
 # To delete: rm -rf extension/src/content/components/Modal
