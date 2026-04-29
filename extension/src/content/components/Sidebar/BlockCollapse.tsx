@@ -3,6 +3,7 @@
 import clsx from 'clsx';
 import { Check, ChevronDown, ChevronRight, Trash2 } from 'lucide-react';
 import type React from 'react';
+import { useMemo } from 'react';
 
 import { ConfirmIconButton } from '../../../components/IconButton';
 import type { BlockHistory } from '../../../types';
@@ -27,8 +28,11 @@ export const BlockCollapse: React.FC<Props> = ({
 }) => {
   const entryCount = history.entries.length;
 
-  // Sort entries newest first
-  const sorted = [...history.entries].sort((a, b) => b.createdAt - a.createdAt);
+  // Sort entries newest first — memoized so we don't re-sort on unrelated renders
+  const sorted = useMemo(
+    () => [...history.entries].sort((a, b) => b.createdAt - a.createdAt),
+    [history.entries]
+  );
 
   const handleSelectEntry = (entryId: string) => {
     selectEntry(parsedContent, entryId);
@@ -62,7 +66,7 @@ export const BlockCollapse: React.FC<Props> = ({
           className={clsx(
             'flex-shrink-0 text-[10px] font-medium px-1.5 py-0.5 rounded-full',
             'bg-gray-100 text-gray-500',
-            'dark:bg-gray-800 dark:text-gray-400'
+            'dark:bg-gray-800 dark:bg-gray-800 dark:text-gray-400'
           )}
         >
           {entryCount}
@@ -76,11 +80,13 @@ export const BlockCollapse: React.FC<Props> = ({
             const translatedPreview = entry.segments.map((s) => s.translatedText).join(' ');
 
             return (
-              <div key={entry.id}>
-                <div
+              <div key={entry.id} className="flex items-start">
+                {/* Entry row — keyboard-accessible button for entry selection */}
+                <button
+                  type="button"
                   onClick={() => handleSelectEntry(entry.id)}
                   className={clsx(
-                    'flex items-start gap-2 px-3 py-2 cursor-pointer border-l-2 transition-colors',
+                    'flex-1 flex items-start gap-2 px-3 py-2 text-left cursor-pointer border-l-2 transition-colors min-w-0',
                     entry.selected
                       ? 'border-blue-500 bg-blue-50 dark:bg-blue-950/30'
                       : 'border-transparent hover:bg-gray-50 dark:hover:bg-gray-900'
@@ -106,13 +112,13 @@ export const BlockCollapse: React.FC<Props> = ({
                       {new Date(entry.createdAt).toLocaleString()}
                     </p>
                   </div>
+                </button>
 
-                  {/* Delete trigger — uses ConfirmIconButton for two-step confirm */}
-                  <span className="flex-shrink-0 mt-0.5" onClick={(e) => e.stopPropagation()}>
-                    <ConfirmIconButton onConfirm={() => deleteEntry(parsedContent, entry.id)}>
-                      <Trash2 className="w-3 h-3" />
-                    </ConfirmIconButton>
-                  </span>
+                {/* Delete trigger — outside the selection button to prevent click conflict */}
+                <div className="flex-shrink-0 flex items-center px-2 py-2">
+                  <ConfirmIconButton onConfirm={() => deleteEntry(parsedContent, entry.id)}>
+                    <Trash2 className="w-3 h-3" />
+                  </ConfirmIconButton>
                 </div>
               </div>
             );

@@ -2,6 +2,7 @@
 // Converts between API-facing BlockHistory shape and internal HistoryDocument
 
 import type { HistoryDocument } from '@/models/history.model';
+import { makeId } from '@/repositories/history.repository';
 import * as repo from '@/repositories/history.repository';
 
 /**
@@ -18,14 +19,17 @@ export interface BlockHistory {
   }[];
 }
 
-const toDocument = (history: BlockHistory): HistoryDocument => ({
-  _id: `${history.pageUrl}:::${history.parsedContent}`,
-  parsedContent: history.parsedContent,
-  pageUrl: history.pageUrl,
-  entries: history.entries,
-  createdAt: new Date().toISOString(),
-  updatedAt: new Date().toISOString(),
-});
+const toDocument = (history: BlockHistory): HistoryDocument => {
+  const now = new Date().toISOString();
+  return {
+    _id: makeId(history.pageUrl, history.parsedContent),
+    parsedContent: history.parsedContent,
+    pageUrl: history.pageUrl,
+    entries: history.entries,
+    createdAt: now,
+    updatedAt: now,
+  };
+};
 
 const fromDocument = (doc: HistoryDocument): BlockHistory => ({
   parsedContent: doc.parsedContent,

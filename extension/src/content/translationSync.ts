@@ -1,6 +1,7 @@
-// translationSync.ts — Coordinator: wraps useHistoryStore and optionally syncs to backend DB
-// Use this module (not useHistoryStore directly) from hooks and components.
-// DB sync is fire-and-forget — local operations never fail due to DB unavailability.
+// translationSync.ts — Coordinator: wraps useHistoryStore write operations + optional DB sync.
+// Use this module (not useHistoryStore directly) from hooks and components for any write.
+// Read operations (getBlockHistory, getSelectedEntry) can call useHistoryStore directly —
+// this is intentional: reads are pure getters, no sync side effects needed.
 
 import { deleteBlockHistoryDbApi, saveBlockHistoryDbApi } from '../apis/dbHistoryApi';
 import { useGlobalStore } from '../store/global';

@@ -55,12 +55,38 @@ const initAutoTranslateAll = (): void => {
   });
 };
 
+/**
+ * Single global settings watcher — dispatches a DOM event when per-block settings change.
+ * This replaces N per-block useGlobalStore.subscribe calls (one per mounted block) with a
+ * single subscription, reducing overhead proportional to the number of blocks on the page.
+ */
+const initSettingsWatcher = (): void => {
+  useGlobalStore.subscribe((state, prev) => {
+    const changed =
+      state.alwaysShowTranslated !== prev.alwaysShowTranslated ||
+      state.autoTranslateTask !== prev.autoTranslateTask;
+    if (!changed) return;
+
+    document.dispatchEvent(
+      new CustomEvent('trans:settings-change', {
+        detail: {
+          alwaysShowTranslated: state.alwaysShowTranslated,
+          prevAlwaysShowTranslated: prev.alwaysShowTranslated,
+          autoTranslateTask: state.autoTranslateTask,
+          prevAutoTranslateTask: prev.autoTranslateTask,
+        },
+      })
+    );
+  });
+};
+
 const init = (platform: PlatformAdapter): void => {
   if (ENV.isDev) initDevLogs();
 
   mountToasterDom();
   mountSidebarDom();
   initAutoTranslateAll();
+  initSettingsWatcher();
 
   // Retry on init — some platforms render content asynchronously
   let attempts = 0;
@@ -76,7 +102,16 @@ const init = (platform: PlatformAdapter): void => {
     if (++attempts >= 10) clearInterval(retry);
   }, 500);
 
+  // Track URL for Turbo soft navigation detection
+  let lastUrl = location.href;
+
   observePageDom(() => {
+    // GitHub Turbo navigation: re-init history store when URL changes
+    if (location.href !== lastUrl) {
+      lastUrl = location.href;
+      useHistoryStore.getState().init(location.href);
+    }
+
     const blocks = platform.getBlocks();
     processBlocksDom(blocks);
 

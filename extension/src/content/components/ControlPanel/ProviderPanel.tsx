@@ -8,9 +8,6 @@ import { MODELS, PROVIDERS } from '../../../constants/providers';
 import type { ProviderEnum } from '../../../enums';
 import { useGlobalStore } from '../../../store/global';
 
-const buildExample = (platform: string): string =>
-  `e.g. I'm a frontend developer on a React + TypeScript SaaS. We track work in ${platform}. Prefer concise, technically accurate translations — keep common English terms like "modal", "debounce", or "input" as-is.`;
-
 export const ProviderPanel: React.FC = () => {
   const { provider, model, userContext, platformName, updateSettings } = useGlobalStore();
 
@@ -46,7 +43,9 @@ export const ProviderPanel: React.FC = () => {
             Describe your role and context so the AI can tailor translations to your domain. This is
             sent with every translation request.
             <br />
-            <span className="text-gray-400 dark:text-gray-600">{buildExample(platform)}</span>
+            <span className="text-gray-400 dark:text-gray-600">
+              {`e.g. I'm a frontend developer on a React + TypeScript SaaS. We track work in ${platform}. Prefer concise, technically accurate translations — keep common English terms like "modal", "debounce", or "input" as-is.`}
+            </span>
           </>
         }
       />

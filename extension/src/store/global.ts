@@ -25,39 +25,47 @@ interface GlobalStore extends ExtensionSettings {
   setPlatformName: (name: string | null) => void;
 }
 
-export const useGlobalStore = create<GlobalStore>((set) => ({
-  ...DEFAULT_SETTINGS,
-  ready: false,
-  focusedParsedContent: null,
-  showModal: false,
-  platformName: null,
+export const useGlobalStore = create<GlobalStore>((set) => {
+  // Holds the cleanup fn for the settings subscription — stored in closure so it can be
+  // torn down on re-init without leaking module-level state
+  let _settingsUnsub: (() => void) | null = null;
 
-  init: () => {
-    getSettingsApi(DEFAULT_SETTINGS).then((items) => {
-      set({ ...(items as ExtensionSettings), ready: true });
-    });
+  return {
+    ...DEFAULT_SETTINGS,
+    ready: false,
+    focusedParsedContent: null,
+    showModal: false,
+    platformName: null,
 
-    return subscribeSettingsChangesApi((changes) => {
-      const patch = Object.fromEntries(
-        Object.entries(changes)
-          .filter(([key]) => key in DEFAULT_SETTINGS)
-          .map(([key, change]) => [key, change.newValue])
-      ) as Partial<ExtensionSettings>;
-      if (Object.keys(patch).length) set(patch);
-    });
-  },
+    init: () => {
+      _settingsUnsub?.();
+      getSettingsApi(DEFAULT_SETTINGS).then((items) => {
+        set({ ...(items as ExtensionSettings), ready: true });
+      });
+      _settingsUnsub = subscribeSettingsChangesApi((changes) => {
+        const patch = Object.fromEntries(
+          Object.entries(changes)
+            .filter(([key]) => key in DEFAULT_SETTINGS)
+            .map(([key, change]) => [key, change.newValue])
+        ) as Partial<ExtensionSettings>;
+        if (Object.keys(patch).length) set(patch);
+      });
+    },
 
-  updateSettings: (partial) => {
-    set(partial);
-    saveSettingsApi(partial);
-  },
+    updateSettings: (partial) => {
+      set(partial);
+      saveSettingsApi(partial);
+    },
 
-  openSidebarToBlock: (parsedContent) => {
-    set({ showSidebar: true, focusedParsedContent: parsedContent });
-    saveSettingsApi({ showSidebar: true });
-  },
+    // Could be split into setFocusedBlock + persistSidebarOpen if callers ever need
+    // to focus a block without toggling sidebar visibility.
+    openSidebarToBlock: (parsedContent) => {
+      set({ showSidebar: true, focusedParsedContent: parsedContent });
+      saveSettingsApi({ showSidebar: true });
+    },
 
-  clearFocusedBlock: () => set({ focusedParsedContent: null }),
-  toggleModal: () => set((s) => ({ showModal: !s.showModal })),
-  setPlatformName: (name) => set({ platformName: name }),
-}));
+    clearFocusedBlock: () => set({ focusedParsedContent: null }),
+    toggleModal: () => set((s) => ({ showModal: !s.showModal })),
+    setPlatformName: (name) => set({ platformName: name }),
+  };
+});

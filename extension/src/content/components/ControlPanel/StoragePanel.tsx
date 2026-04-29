@@ -6,8 +6,7 @@ import { useEffect, useState } from 'react';
 import { getStorageQuotaApi, getStorageUsageApi } from '../../../apis/storageApi';
 import { ConfirmButton } from '../../../components/Button';
 import { useHistoryStore } from '../../../store/history';
-
-const toMB = (bytes: number) => (bytes / (1024 * 1024)).toFixed(2);
+import { toMB } from '../../../utils/format';
 
 export const StoragePanel: React.FC = () => {
   const clearAll = useHistoryStore((s) => s.clearAll);

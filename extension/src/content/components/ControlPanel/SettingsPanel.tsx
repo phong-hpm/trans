@@ -36,20 +36,20 @@ export const SettingsPanel: React.FC = () => {
       />
       <div className="pt-1 space-y-2.5">
         <Toggle
-          label="Auto-show translations"
-          sublabel="Apply saved translation automatically on page load"
+          label="Auto-show saved translations"
+          sublabel="On page load, re-apply the last saved translation for each block — no API call"
           checked={alwaysShowTranslated}
           onChange={(v) => updateSettings({ alwaysShowTranslated: v })}
         />
         <Toggle
-          label="Auto translate task"
-          sublabel="On load, translate each block automatically — calls API if no saved translation"
+          label="Auto-translate each block"
+          sublabel="On page load, translate every block individually — uses saved translation if available, otherwise calls API"
           checked={autoTranslateTask}
           onChange={(v) => updateSettings({ autoTranslateTask: v })}
         />
         <Toggle
-          label="Auto translate all"
-          sublabel="On load, translate all blocks at once — same as clicking Translate All"
+          label="Auto-translate all blocks at once"
+          sublabel="On page load, fire the Translate All action — translates every block in one batch via API"
           checked={autoTranslateAll}
           onChange={(v) => updateSettings({ autoTranslateAll: v })}
         />

@@ -13,6 +13,7 @@ import { HistoryTab } from './HistoryTab';
 import { Tabs } from './Tabs';
 
 const TABS = [{ id: SidebarTabEnum.History, label: 'History' }];
+// 320px = Tailwind w-80 (20rem × 16px). Also used for document.body.style.marginRight in page mode.
 const SIDEBAR_WIDTH = 320;
 
 export const Sidebar: React.FC = () => {

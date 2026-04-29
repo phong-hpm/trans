@@ -1,31 +1,23 @@
-// index.ts — OpenAI translation provider (client initialized per-call to avoid missing-key errors at startup)
+// providers/openai/index.ts — OpenAI translation provider (lazy singleton client)
 
 import OpenAI from 'openai';
+
 import type { TranslationProvider } from '@/providers/types';
+
 import { buildPrompt } from './prompt';
+
+// Lazy singleton — initialized once on first use to avoid startup errors on missing key
+let _client: OpenAI | null = null;
+const getClient = (): OpenAI => {
+  if (!_client) _client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+  return _client;
+};
 
 export const openaiProvider: TranslationProvider = {
   async translate({ segments, contextBlocks, targetLanguage, model, userContext }) {
-    const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+    const client = getClient();
 
-    const filteredSegments = segments.filter((s) => {
-      const text = s.text.trim();
-
-      if (!text) return false;
-
-      const noisePatterns = [
-        /^Move\s/i,
-        /^Open\s/i,
-        /task options/i,
-        /To pick up a draggable item/i,
-        /While dragging/i,
-        /Press space again/i,
-      ];
-
-      return !noisePatterns.some((p) => p.test(text));
-    });
-
-    const userMessage = JSON.stringify({ context: contextBlocks ?? [], segments: filteredSegments });
+    const userMessage = JSON.stringify({ context: contextBlocks ?? [], segments });
 
     const completion = await client.chat.completions.create({
       model,
@@ -40,6 +32,13 @@ export const openaiProvider: TranslationProvider = {
       .trim()
       .replace(/^```(?:json)?\n?/, '')
       .replace(/\n?```$/, '');
-    return JSON.parse(cleaned) as { id: string; translatedText: string }[];
+
+    try {
+      return JSON.parse(cleaned) as { id: string; translatedText: string }[];
+    } catch {
+      throw new Error(
+        `[openai/${model}] Failed to parse response JSON. Raw: ${cleaned.slice(0, 200)}`
+      );
+    }
   },
 };

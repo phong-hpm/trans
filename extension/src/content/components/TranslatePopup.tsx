@@ -1,13 +1,13 @@
-// TranslatePopup.tsx — Inline mode-selection popup portalled to document.body via shadow root for z-index + Tailwind support
+// TranslatePopup.tsx — Mode-selection popup portalled to document.body via shadow root for z-index + Tailwind support
 
 import clsx from 'clsx';
 import type React from 'react';
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 
 import { ThemeWrapper } from '../../components/ThemeWrapper';
 import { BlockTypeEnum } from '../../enums';
-import shadowStyles from '../shadow.css?inline';
+import { createShadowHost } from '../dom/shadowDom';
 import { COMMENT_OPTIONS, SIMPLE_OPTIONS } from './translateOptions';
 
 interface Props {
@@ -28,25 +28,18 @@ export const TranslatePopup: React.FC<Props> = ({ blockType, anchorRef, onSelect
     if (rect) setPosition({ top: rect.bottom + 4, left: rect.left });
   }, [anchorRef]);
 
-  // Create a shadow root in document.body so Tailwind styles apply and z-index escapes shadow DOM
-  const portalMount = useMemo(() => {
-    const host = document.createElement('div');
-    host.style.cssText = `position:absolute;top:0;left:0;width:0;height:0;z-index:999999;`;
-    const shadow = host.attachShadow({ mode: 'open' });
-    const style = document.createElement('style');
-    style.textContent = shadowStyles;
-    shadow.appendChild(style);
-    const mount = document.createElement('div');
-    shadow.appendChild(mount);
-    document.body.appendChild(host);
-    return { host, mount };
-  }, []);
+  // useState with lazy initializer: creates the shadow host once on mount.
+  // The host is not appended to document.body here — that's done in useEffect below.
+  const [portal] = useState(() =>
+    createShadowHost('position:absolute;top:0;left:0;width:0;height:0;z-index:999999;')
+  );
 
   useEffect(() => {
+    document.body.appendChild(portal.host);
     return () => {
-      document.body.removeChild(portalMount.host);
+      document.body.removeChild(portal.host);
     };
-  }, [portalMount]);
+  }, [portal.host]);
 
   useEffect(() => {
     const handler = (e: MouseEvent) => {
@@ -104,6 +97,6 @@ export const TranslatePopup: React.FC<Props> = ({ blockType, anchorRef, onSelect
         ))}
       </div>
     </ThemeWrapper>,
-    portalMount.mount
+    portal.mount
   );
 };

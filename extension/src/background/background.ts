@@ -27,13 +27,18 @@ chrome.action.onClicked.addListener((tab) => {
   if (!tab.id) return;
   const tabId = tab.id;
 
-  const attemptToggle = (retriesLeft: number): void => {
-    chrome.tabs.sendMessage(tabId, { type: MessageTypeEnum.ToggleModal }).catch(() => {
-      if (retriesLeft > 0) setTimeout(() => attemptToggle(retriesLeft - 1), 350);
-    });
+  const sendToggle = async (maxRetries: number): Promise<void> => {
+    for (let attempt = 0; attempt <= maxRetries; attempt++) {
+      try {
+        await chrome.tabs.sendMessage(tabId, { type: MessageTypeEnum.ToggleModal });
+        return;
+      } catch {
+        if (attempt < maxRetries) await new Promise((r) => setTimeout(r, 350));
+      }
+    }
   };
 
-  attemptToggle(3);
+  void sendToggle(3);
 });
 
 chrome.runtime.onMessage.addListener(

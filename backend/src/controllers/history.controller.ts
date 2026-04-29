@@ -4,20 +4,37 @@ import type { Request, Response } from 'express';
 
 import * as historyService from '@/services/history.service';
 
+type HistoryScope =
+  | { scope: 'block'; pageUrl: string; parsedContent: string }
+  | { scope: 'page'; pageUrl: string }
+  | { scope: 'all' };
+
+// Resolves which history scope applies based on query params
+const resolveHistoryScope = (query: { pageUrl?: string; parsedContent?: string }): HistoryScope => {
+  if (query.pageUrl && query.parsedContent) {
+    return { scope: 'block', pageUrl: query.pageUrl, parsedContent: query.parsedContent };
+  }
+  if (query.pageUrl) {
+    return { scope: 'page', pageUrl: query.pageUrl };
+  }
+  return { scope: 'all' };
+};
+
 /**
  * Returns { data: BlockHistory[] }, filterable by ?pageUrl and ?parsedContent
  */
 export const getHistories = (req: Request, res: Response): void => {
-  const { pageUrl, parsedContent } = req.query as { pageUrl?: string; parsedContent?: string };
+  const query = req.query as { pageUrl?: string; parsedContent?: string };
+  const scope = resolveHistoryScope(query);
 
-  if (pageUrl && parsedContent) {
-    const history = historyService.getBlockHistory({ parsedContent, pageUrl });
+  if (scope.scope === 'block') {
+    const history = historyService.getBlockHistory(scope);
     res.json({ data: history ? [history] : [] });
     return;
   }
 
-  if (pageUrl) {
-    res.json({ data: historyService.getPageHistories({ pageUrl }) });
+  if (scope.scope === 'page') {
+    res.json({ data: historyService.getPageHistories(scope) });
     return;
   }
 
@@ -59,16 +76,17 @@ export const saveBlockHistory = (req: Request, res: Response): void => {
  * Deletes histories, filterable by ?pageUrl and ?parsedContent
  */
 export const deleteHistories = (req: Request, res: Response): void => {
-  const { pageUrl, parsedContent } = req.query as { pageUrl?: string; parsedContent?: string };
+  const query = req.query as { pageUrl?: string; parsedContent?: string };
+  const scope = resolveHistoryScope(query);
 
-  if (pageUrl && parsedContent) {
-    historyService.deleteBlockHistory({ parsedContent, pageUrl });
+  if (scope.scope === 'block') {
+    historyService.deleteBlockHistory(scope);
     res.status(200).json({ data: null });
     return;
   }
 
-  if (pageUrl) {
-    historyService.clearPageHistories({ pageUrl });
+  if (scope.scope === 'page') {
+    historyService.clearPageHistories(scope);
     res.status(200).json({ data: null });
     return;
   }

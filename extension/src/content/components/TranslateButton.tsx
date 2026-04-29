@@ -1,21 +1,20 @@
-// TranslateButton.tsx — Translate icon button with inline mode-selection popup
+// TranslateButton.tsx — Translate icon button for title blocks (single-click, no mode selection)
 
 import clsx from 'clsx';
 import { Loader2, RotateCcw } from 'lucide-react';
 import type React from 'react';
-import { useRef, useState } from 'react';
 
 import logoUrl from '../../assets/logo.png';
 import { type BlockTypeEnum, TranslateStateEnum } from '../../enums';
 import type { ContextBlock } from '../../types';
 import { useTranslate } from '../hooks/useTranslate';
-import { TranslatePopup } from './TranslatePopup';
 
 interface Props {
   parsedContent: string;
   blockType: BlockTypeEnum;
   getElement: () => HTMLElement;
   getContextBlocks?: () => ContextBlock[];
+  getContainerEl?: () => HTMLElement;
 }
 
 export const TranslateButton: React.FC<Props> = ({
@@ -23,14 +22,14 @@ export const TranslateButton: React.FC<Props> = ({
   blockType,
   getElement,
   getContextBlocks,
+  getContainerEl,
 }) => {
-  const [popupOpen, setPopupOpen] = useState(false);
-  const buttonRef = useRef<HTMLButtonElement>(null);
   const { state, translate, restore } = useTranslate(
     parsedContent,
     blockType,
     getElement,
-    getContextBlocks
+    getContextBlocks,
+    getContainerEl
   );
 
   const handleClick = () => {
@@ -39,10 +38,7 @@ export const TranslateButton: React.FC<Props> = ({
       restore();
       return;
     }
-    setPopupOpen((v) => !v);
-  };
-
-  const handleSelect = (_mode: string) => {
+    // Title blocks have a single translate mode — call directly without popup
     translate();
   };
 
@@ -58,7 +54,6 @@ export const TranslateButton: React.FC<Props> = ({
             ? 'bg-blue-400 hover:bg-blue-500'
             : 'bg-white hover:bg-gray-100'
         )}
-        ref={buttonRef}
         onClick={handleClick}
         title={tooltip}
         type="button"
@@ -69,15 +64,6 @@ export const TranslateButton: React.FC<Props> = ({
           <img src={logoUrl} alt="Translate" className="w-full h-full object-contain" />
         )}
       </button>
-
-      {popupOpen && (
-        <TranslatePopup
-          blockType={blockType}
-          anchorRef={buttonRef}
-          onSelect={handleSelect}
-          onClose={() => setPopupOpen(false)}
-        />
-      )}
     </div>
   );
 };
