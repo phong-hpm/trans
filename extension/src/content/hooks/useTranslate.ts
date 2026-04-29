@@ -11,7 +11,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 
-import ENV from '../../constants/env';
 import { type BlockTypeEnum, MessageTypeEnum, TranslateStateEnum } from '../../enums';
 import { useGlobalStore } from '../../store/global';
 import { useHistoryStore } from '../../store/history';
@@ -86,7 +85,7 @@ export const useTranslate = (
         segments: rawSegments.map(({ id, text }) => ({ id, text })),
         contextBlocks,
         targetLanguage,
-        backendUrl: ENV.backendUrl,
+        // backendUrl is read by the background service worker from its own ENV — not sent in message
         provider,
         model,
         userContext: userContext || undefined,

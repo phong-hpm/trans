@@ -1,12 +1,12 @@
 // background.ts — Service worker proxy: relays translate requests to bypass content script CORS
 
+import ENV from '../constants/env';
 import { MessageTypeEnum } from '../enums';
 import type { TranslateRequest, TranslateResponse } from '../types';
 import { logCall, logError, logResponse } from './logger';
 
 interface TranslateMessage extends TranslateRequest {
   type: MessageTypeEnum.Translate;
-  backendUrl: string;
 }
 
 interface TranslateResult {
@@ -45,7 +45,7 @@ chrome.runtime.onMessage.addListener(
   (message: TranslateMessage, _sender, sendResponse: (result: MessageResult) => void) => {
     if (message.type !== MessageTypeEnum.Translate) return;
 
-    const url = `${message.backendUrl}/translate`; // backendUrl already includes /api/v1
+    const url = `${ENV.backendUrl}/translate`; // ENV.backendUrl already includes /api/v1
     const requestData: TranslateRequest = {
       blockType: message.blockType,
       segments: message.segments,

@@ -24,11 +24,11 @@ export interface TranslateRequest {
 
 /**
  * Message shape sent from content script → background service worker.
- * Extends TranslateRequest with routing fields that the background needs but the backend does not.
+ * Extends TranslateRequest with the message type discriminator.
+ * backendUrl is NOT included — the background service worker reads it from its own ENV.
  */
 export interface BackgroundTranslateMessage extends TranslateRequest {
   type: string;
-  backendUrl: string;
 }
 
 export interface TranslateResponse {

@@ -105,11 +105,18 @@ const init = (platform: PlatformAdapter): void => {
   // Track URL for Turbo soft navigation detection
   let lastUrl = location.href;
 
-  observePageDom(() => {
-    // GitHub Turbo navigation: re-init history store when URL changes
+  // Async callback: awaiting init() ensures histories are loaded before processBlocksDom runs,
+  // eliminating the race where blocks mount with an empty history store.
+  observePageDom(async () => {
     if (location.href !== lastUrl) {
       lastUrl = location.href;
-      useHistoryStore.getState().init(location.href);
+      // Await so processBlocksDom below sees the fresh histories for the new page
+      await useHistoryStore.getState().init(location.href);
+      // initAutoTranslateAll only fires on the first ready transition; handle subsequent
+      // Turbo navigations by checking the setting directly after history re-init
+      if (useGlobalStore.getState().autoTranslateAll) {
+        setTimeout(() => document.dispatchEvent(new CustomEvent('trans:translate-all')), 1000);
+      }
     }
 
     const blocks = platform.getBlocks();
@@ -123,7 +130,6 @@ const init = (platform: PlatformAdapter): void => {
 };
 
 useGlobalStore.getState().init();
-useHistoryStore.getState().init(location.href);
 
 // Modal and its toggle listener are platform-independent — always mount
 initModalToggle();
@@ -131,4 +137,12 @@ mountModalDom();
 
 const platform = detectPlatform(location.href);
 useGlobalStore.getState().setPlatformName(platform?.name ?? null);
-if (platform) init(platform);
+
+// Await history init before starting block injection so the first processBlocksDom run
+// sees the loaded histories (avoids startup race on slow storage reads).
+void useHistoryStore
+  .getState()
+  .init(location.href)
+  .then(() => {
+    if (platform) init(platform);
+  });

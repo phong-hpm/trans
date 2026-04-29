@@ -8,7 +8,6 @@ import {
   clearPageHistoriesApi,
   deleteBlockHistoryApi,
   getAllHistoriesApi,
-  getBlockHistoryApi,
   saveBlockHistoryApi,
   subscribeHistoryChangesApi,
 } from '../apis/historyApi';
@@ -114,7 +113,8 @@ export const useHistoryStore = create<HistoryStore>((set, get) => {
       const { pageUrl } = get();
       if (!pageUrl) throw new Error('[HistoryStore] store not initialized');
 
-      const existing = await getBlockHistoryApi(pageUrl, parsedContent);
+      // Use in-memory store — no storage round-trip needed since histories is always in sync
+      const existing = get().getBlockHistory(parsedContent);
       const prevEntries = existing?.entries ?? [];
 
       const newEntry: TranslationEntry = {
@@ -136,11 +136,12 @@ export const useHistoryStore = create<HistoryStore>((set, get) => {
         entries,
       };
 
-      await saveBlockHistoryApi(history);
+      // Optimistic: update store immediately so the UI reflects the new entry without I/O lag
       set((s) => ({
         histories: [...s.histories.filter((h) => h.parsedContent !== parsedContent), history],
       }));
 
+      await saveBlockHistoryApi(history);
       return history;
     },
 
@@ -148,7 +149,8 @@ export const useHistoryStore = create<HistoryStore>((set, get) => {
       const { pageUrl } = get();
       if (!pageUrl) return;
 
-      const existing = await getBlockHistoryApi(pageUrl, parsedContent);
+      // Use in-memory store — avoids unnecessary storage read
+      const existing = get().getBlockHistory(parsedContent);
       if (!existing) return;
 
       const history: BlockHistory = {
@@ -156,25 +158,29 @@ export const useHistoryStore = create<HistoryStore>((set, get) => {
         entries: existing.entries.map((e) => ({ ...e, selected: e.id === entryId })),
       };
 
-      await saveBlockHistoryApi(history);
+      // Optimistic update before persisting
       set((s) => ({
         histories: [...s.histories.filter((h) => h.parsedContent !== parsedContent), history],
       }));
+
+      await saveBlockHistoryApi(history);
     },
 
     deleteEntry: async (parsedContent, entryId) => {
       const { pageUrl } = get();
       if (!pageUrl) return;
 
-      const existing = await getBlockHistoryApi(pageUrl, parsedContent);
+      // Use in-memory store — avoids unnecessary storage read
+      const existing = get().getBlockHistory(parsedContent);
       if (!existing) return;
 
       const wasSelected = existing.entries.find((e) => e.id === entryId)?.selected ?? false;
       const remaining = existing.entries.filter((e) => e.id !== entryId);
 
       if (!remaining.length) {
-        await deleteBlockHistoryApi(pageUrl, parsedContent);
+        // Optimistic: remove from store before persisting
         set((s) => ({ histories: s.histories.filter((h) => h.parsedContent !== parsedContent) }));
+        await deleteBlockHistoryApi(pageUrl, parsedContent);
         return;
       }
 
@@ -188,10 +194,11 @@ export const useHistoryStore = create<HistoryStore>((set, get) => {
       }
 
       const history: BlockHistory = { ...existing, entries };
-      await saveBlockHistoryApi(history);
+      // Optimistic update before persisting
       set((s) => ({
         histories: [...s.histories.filter((h) => h.parsedContent !== parsedContent), history],
       }));
+      await saveBlockHistoryApi(history);
     },
 
     deleteBlockHistory: async (parsedContent) => {
