@@ -47,7 +47,7 @@ export const githubAdapter: PlatformAdapter = {
 
     // Comments
     const commentBlocks = Array.from(document.querySelectorAll(q.commentBlock));
-    commentBlocks.forEach((block, i) => {
+    commentBlocks.forEach((block) => {
       const contentEl = block.querySelector<HTMLElement>(q.markdownBody);
       if (!contentEl) return;
 
@@ -64,7 +64,11 @@ export const githubAdapter: PlatformAdapter = {
           if (titleEl) ctx.push({ type: BlockTypeEnum.Title, text: getSegmentTextDom(titleEl) });
           const taskEl = getTaskEl();
           if (taskEl) ctx.push({ type: BlockTypeEnum.Task, text: getSegmentTextDom(taskEl) });
-          commentBlocks.slice(0, i).forEach((b) => {
+          // Re-query at call time so context includes comments added after getBlocks() ran
+          const liveCommentBlocks = Array.from(document.querySelectorAll(q.commentBlock));
+          const myIndex = liveCommentBlocks.indexOf(commentEl);
+          const preceding = myIndex >= 0 ? liveCommentBlocks.slice(0, myIndex) : [];
+          preceding.forEach((b) => {
             const el = b.querySelector<HTMLElement>(q.markdownBody);
             if (el) ctx.push({ type: BlockTypeEnum.Comment, text: getSegmentTextDom(el) });
           });

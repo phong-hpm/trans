@@ -85,13 +85,19 @@ const readTextDom = (root: HTMLElement): string => {
 };
 
 /**
- * Returns the original (pre-translation) text of an element.
- * Reads data-original from existing translation spans when available.
- * Falls back to a read-only TreeWalker traversal — never mutates the DOM.
+ * Returns the ORIGINAL (pre-translation) text of an element — safe to use for context building.
+ *
+ * Three cases:
+ * 1. Translated (spans + data-original present)  → reads data-original (original text) ✓
+ * 2. Extracted not yet applied (spans, no data-original) → falls back to textContent (still original) ✓
+ * 3. Never extracted (no spans)                  → readTextDom (read-only TreeWalker) ✓
+ *
+ * Never returns translated text, never mutates the DOM.
  */
 export const getSegmentTextDom = (el: HTMLElement): string => {
   const spans = el.querySelectorAll<HTMLElement>('[data-trans-id]');
   if (spans.length) {
+    // data-original is set by applyTranslationDom; falls back to textContent (original) if not yet applied
     return Array.from(spans)
       .map((s) => s.getAttribute('data-original') ?? s.textContent ?? '')
       .join(' ');

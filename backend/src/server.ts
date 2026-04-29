@@ -11,8 +11,7 @@ dotenv.config();
 const app = express();
 const port = process.env.PORT || 8000;
 
-app.use(cors());
-app.options('*', cors());
+app.use(cors()); // handles OPTIONS preflight for all routes
 app.use(express.json());
 
 app.use('/api', apiRoutes);

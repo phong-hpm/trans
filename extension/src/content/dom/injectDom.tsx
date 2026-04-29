@@ -14,21 +14,20 @@ import { createShadowHost } from './shadowDom';
 const TITLE_ANCHOR_STYLE = 'position:absolute;top:8px;right:-32px;z-index:9999;';
 
 /**
- * Tracks mounted React roots by parsedContent.
- * Allows us to unmount orphaned roots when a block's content is re-injected
- * after a full DOM replacement (e.g. GitHub replaces an entire comment container).
+ * Tracks mounted React roots keyed by their anchor element (a unique DOM node per block).
+ * Using the anchor as key avoids collision when two blocks share identical parsedContent.
  */
-const blockRoots = new Map<string, { anchor: HTMLElement; root: Root }>();
+const blockRoots = new Map<HTMLElement, Root>();
 
 /**
  * Unmounts and removes any roots whose anchor element is no longer in the document.
  * Called at the start of each processBlocksDom run.
  */
 const cleanupOrphanedRoots = (): void => {
-  for (const [key, { anchor, root }] of blockRoots) {
+  for (const [anchor, root] of blockRoots) {
     if (!anchor.isConnected) {
       root.unmount();
-      blockRoots.delete(key);
+      blockRoots.delete(anchor);
     }
   }
 };
@@ -82,7 +81,7 @@ const mountShadowDom = (
 
   const root = createRoot(mount);
   root.render(ui);
-  blockRoots.set(parsedContent, { anchor, root });
+  blockRoots.set(anchor, root);
   anchor.appendChild(host);
 };
 
