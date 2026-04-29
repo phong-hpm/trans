@@ -22,6 +22,7 @@ interface Props {
   blockType: BlockTypeEnum;
   getElement: () => HTMLElement;
   getContextBlocks?: () => ContextBlock[];
+  getContainerEl?: () => HTMLElement;
 }
 
 export const TranslateToolbar: React.FC<Props> = ({
@@ -29,6 +30,7 @@ export const TranslateToolbar: React.FC<Props> = ({
   blockType,
   getElement,
   getContextBlocks,
+  getContainerEl,
 }) => {
   const options = blockType === BlockTypeEnum.Comment ? COMMENT_OPTIONS : SIMPLE_OPTIONS;
   const [selectedOption, setSelectedOption] = useState<TranslateOption>(options[0]);
@@ -40,7 +42,8 @@ export const TranslateToolbar: React.FC<Props> = ({
     parsedContent,
     blockType,
     getElement,
-    getContextBlocks
+    getContextBlocks,
+    getContainerEl
   );
 
   const isTranslated = state === TranslateStateEnum.Translated;

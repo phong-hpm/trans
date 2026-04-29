@@ -1,22 +1,16 @@
 // historyApi.ts — Repository for block translation histories; chrome.storage.local is the backing store
 
 import type { BlockHistory } from '../types';
+import { normalizePageUrl } from '../utils/url';
 
-/**
- * Normalizes a URL to origin + pathname only (strips query string and hash).
- */
-export const normalizePageUrl = (url: string): string => {
-  try {
-    const u = new URL(url);
-    return u.origin + u.pathname;
-  } catch {
-    return url;
-  }
-};
+export { normalizePageUrl };
 
-// Internal: derives storage key from pageUrl + parsedContent hash
+// Internal: derives a storage key from pageUrl + parsedContent.
+// Uses a djb2 hash with a 'trans:' prefix so all history keys are namespaced.
+// NOTE: djb2 has a small but non-zero collision risk — two different (pageUrl, parsedContent)
+// pairs can produce the same hash. In practice this is extremely rare and collisions only
+// cause one block's history to overwrite another's, not data corruption.
 const storageKey = (pageUrl: string, parsedContent: string): string => {
-  // Simple djb2 hash — fast, no crypto needed for a storage key
   let hash = 5381;
   const str = pageUrl + '::' + parsedContent;
   for (let i = 0; i < str.length; i++) {
@@ -36,6 +30,28 @@ const hydrateHistory = (
   if (!Array.isArray((value as BlockHistory).entries)) return null;
   return { ...(value as BlockHistory), pageUrl, parsedContent };
 };
+
+// Internal: loads all storage entries whose key starts with 'trans:' and matches a predicate
+const getTransEntries = (
+  predicate: (key: string, value: BlockHistory) => boolean
+): Promise<{ keys: string[]; histories: BlockHistory[] }> =>
+  new Promise((resolve) => {
+    chrome.storage.local.get(null, (all) => {
+      const keys: string[] = [];
+      const histories: BlockHistory[] = [];
+      for (const [k, v] of Object.entries(all)) {
+        if (!k.startsWith('trans:')) continue;
+        if (typeof v !== 'object' || v === null) continue;
+        const h = v as BlockHistory;
+        if (!Array.isArray(h.entries)) continue;
+        if (predicate(k, h)) {
+          keys.push(k);
+          histories.push(h);
+        }
+      }
+      resolve({ keys, histories });
+    });
+  });
 
 export const getBlockHistoryApi = (
   pageUrl: string,
@@ -61,60 +77,40 @@ export const deleteBlockHistoryApi = (pageUrl: string, parsedContent: string): P
 
 /**
  * Returns all histories for a given pageUrl.
- * Iterates all keys and matches by stored pageUrl field.
+ * Only scans keys with the 'trans:' prefix to skip unrelated storage entries.
  */
 export const getAllHistoriesApi = (pageUrl: string): Promise<BlockHistory[]> =>
-  new Promise((resolve) => {
-    chrome.storage.local.get(null, (all) => {
-      const histories: BlockHistory[] = [];
-      for (const value of Object.values(all)) {
-        if (typeof value !== 'object' || value === null) continue;
-        const h = value as BlockHistory;
-        if (!Array.isArray(h.entries) || h.pageUrl !== pageUrl) continue;
-        histories.push(h);
-      }
-      resolve(histories);
-    });
-  });
+  getTransEntries((_, h) => h.pageUrl === pageUrl).then(({ histories }) => histories);
 
 /**
  * Deletes all histories for a given pageUrl.
  */
 export const clearPageHistoriesApi = (pageUrl: string): Promise<void> =>
-  new Promise((resolve) => {
-    chrome.storage.local.get(null, (all) => {
-      const keys = Object.entries(all)
-        .filter(
-          ([, v]) => typeof v === 'object' && v !== null && (v as BlockHistory).pageUrl === pageUrl
-        )
-        .map(([k]) => k);
-      if (!keys.length) {
-        resolve();
-        return;
-      }
-      chrome.storage.local.remove(keys, resolve);
-    });
-  });
+  getTransEntries((_, h) => h.pageUrl === pageUrl).then(
+    ({ keys }) =>
+      new Promise((resolve) => {
+        if (!keys.length) {
+          resolve();
+          return;
+        }
+        chrome.storage.local.remove(keys, resolve);
+      })
+  );
 
 /**
  * Deletes all histories across all pages.
  */
 export const clearAllHistoriesApi = (): Promise<void> =>
-  new Promise((resolve) => {
-    chrome.storage.local.get(null, (all) => {
-      const keys = Object.entries(all)
-        .filter(
-          ([, v]) =>
-            typeof v === 'object' && v !== null && Array.isArray((v as BlockHistory).entries)
-        )
-        .map(([k]) => k);
-      if (!keys.length) {
-        resolve();
-        return;
-      }
-      chrome.storage.local.remove(keys, resolve);
-    });
-  });
+  getTransEntries(() => true).then(
+    ({ keys }) =>
+      new Promise((resolve) => {
+        if (!keys.length) {
+          resolve();
+          return;
+        }
+        chrome.storage.local.remove(keys, resolve);
+      })
+  );
 
 /**
  * Notifies listener when any history entry changes.

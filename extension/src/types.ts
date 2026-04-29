@@ -22,6 +22,15 @@ export interface TranslateRequest {
   userContext?: string;
 }
 
+/**
+ * Message shape sent from content script → background service worker.
+ * Extends TranslateRequest with routing fields that the background needs but the backend does not.
+ */
+export interface BackgroundTranslateMessage extends TranslateRequest {
+  type: string;
+  backendUrl: string;
+}
+
 export interface TranslateResponse {
   segments: { id: string; text: string; translatedText: string }[];
 }
@@ -34,7 +43,8 @@ export interface TranslationEntry {
 }
 
 export interface BlockHistory {
-  id: string;
+  // id is optional — the backend does not return it; extension assigns one on first save
+  id?: string;
   pageUrl: string;
   parsedContent: string;
   entries: TranslationEntry[];

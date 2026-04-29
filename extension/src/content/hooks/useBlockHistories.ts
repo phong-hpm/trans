@@ -1,5 +1,7 @@
 // useBlockHistories.ts — Load and subscribe to all block histories for the current page from useHistoryStore
 
+import { useMemo } from 'react';
+
 import { useHistoryStore } from '../../store/history';
 import type { BlockHistory } from '../../types';
 
@@ -29,5 +31,6 @@ const buildItems = (histories: BlockHistory[]): BlockHistoryItem[] =>
 
 export const useBlockHistories = (): BlockHistoryItem[] => {
   const histories = useHistoryStore((s) => s.histories);
-  return buildItems(histories);
+  // Memoize so sorted/mapped items are only recomputed when histories reference changes
+  return useMemo(() => buildItems(histories), [histories]);
 };

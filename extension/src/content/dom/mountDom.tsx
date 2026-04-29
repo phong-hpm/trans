@@ -6,7 +6,7 @@ import { Toaster } from 'sonner';
 import { ControlPanelModal } from '../components/ControlPanelModal';
 import { Sidebar } from '../components/Sidebar';
 import { TranslateAllButton } from '../components/TranslateAllButton';
-import shadowStyles from '../shadow.css?inline';
+import { createShadowHost } from './shadowDom';
 
 /**
  * Shared helper: creates a shadow DOM host, appends it to body, and mounts a React component.
@@ -14,18 +14,8 @@ import shadowStyles from '../shadow.css?inline';
 const mountShadowDom = (dataAttr: string, hostStyle: string, Component: React.FC): void => {
   if (document.querySelector(`[${dataAttr}]`)) return;
 
-  const host = document.createElement('div');
+  const { host, mount } = createShadowHost(hostStyle);
   host.setAttribute(dataAttr, 'true');
-  host.style.cssText = hostStyle;
-
-  const shadow = host.attachShadow({ mode: 'open' });
-
-  const style = document.createElement('style');
-  style.textContent = shadowStyles;
-  shadow.appendChild(style);
-
-  const mount = document.createElement('div');
-  shadow.appendChild(mount);
 
   document.body.appendChild(host);
   createRoot(mount).render(<Component />);
@@ -59,18 +49,8 @@ export const mountSidebarDom = (): void =>
 export const mountTranslateAllDom = (anchor: HTMLElement, getBlockCount: () => number): void => {
   if (anchor.querySelector('[data-trans-translate-all]')) return;
 
-  const host = document.createElement('div');
+  const { host, mount } = createShadowHost('display:inline-flex;align-items:center;');
   host.setAttribute('data-trans-translate-all', 'true');
-  host.style.cssText = 'display:inline-flex;align-items:center;';
-
-  const shadow = host.attachShadow({ mode: 'open' });
-
-  const style = document.createElement('style');
-  style.textContent = shadowStyles;
-  shadow.appendChild(style);
-
-  const mount = document.createElement('div');
-  shadow.appendChild(mount);
 
   anchor.appendChild(host);
   createRoot(mount).render(<TranslateAllButton getBlockCount={getBlockCount} />);

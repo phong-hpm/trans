@@ -70,8 +70,24 @@ export const restoreOriginalDom = (segments: TranslatedSegment[], root: HTMLElem
 };
 
 /**
- * Returns the original (pre-translation) text of an element,
- * reading data-original from existing spans if available.
+ * Reads all visible text from an element without mutating the DOM.
+ * Used for context building — does not wrap text nodes in spans.
+ */
+const readTextDom = (root: HTMLElement): string => {
+  const parts: string[] = [];
+  const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+  let node: Node | null;
+  while ((node = walker.nextNode())) {
+    const text = node.textContent?.trim();
+    if (text && !isInsideSkippedTag(node)) parts.push(text);
+  }
+  return parts.join(' ');
+};
+
+/**
+ * Returns the original (pre-translation) text of an element.
+ * Reads data-original from existing translation spans when available.
+ * Falls back to a read-only TreeWalker traversal — never mutates the DOM.
  */
 export const getSegmentTextDom = (el: HTMLElement): string => {
   const spans = el.querySelectorAll<HTMLElement>('[data-trans-id]');
@@ -80,7 +96,5 @@ export const getSegmentTextDom = (el: HTMLElement): string => {
       .map((s) => s.getAttribute('data-original') ?? s.textContent ?? '')
       .join(' ');
   }
-  return extractSegmentsDom(el)
-    .map((s) => s.text)
-    .join(' ');
+  return readTextDom(el);
 };

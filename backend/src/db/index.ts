@@ -12,12 +12,21 @@ interface Database {
 
 const DB_PATH = path.join(__dirname, '../../temp/db.json');
 
+// In-memory cache — populated on first read, invalidated on every write
+let _cache: Database | null = null;
+
 const read = (): Database => {
-  if (!fs.existsSync(DB_PATH)) return { histories: [] };
-  return JSON.parse(fs.readFileSync(DB_PATH, 'utf-8')) as Database;
+  if (_cache) return _cache;
+  if (!fs.existsSync(DB_PATH)) {
+    _cache = { histories: [] };
+    return _cache;
+  }
+  _cache = JSON.parse(fs.readFileSync(DB_PATH, 'utf-8')) as Database;
+  return _cache;
 };
 
 const write = (data: Database): void => {
+  _cache = data;
   fs.writeFileSync(DB_PATH, JSON.stringify(data, null, 2), 'utf-8');
 };
 

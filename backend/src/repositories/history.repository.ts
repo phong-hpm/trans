@@ -4,7 +4,8 @@
 import { historyCollection } from '@/db/collections/history.collection';
 import type { HistoryDocument } from '@/models/history.model';
 
-const makeId = (pageUrl: string, parsedContent: string): string => `${pageUrl}:::${parsedContent}`;
+export const makeId = (pageUrl: string, parsedContent: string): string =>
+  `${pageUrl}:::${parsedContent}`;
 
 export const findBlockHistory = ({
   parsedContent,

@@ -39,15 +39,19 @@ trans/
 │       ├── services/
 │       │   ├── translate.service.ts    — Calls provider, merges original text into response
 │       │   └── history.service.ts      — Business logic for history CRUD; converts BlockHistory ↔ HistoryDocument
+│       ├── config/
+│       │   └── models.ts            — ALLOWED_MODELS: per-provider allowed model lists, computed once at startup from env vars
 │       └── providers/
 │           ├── types.ts     — TranslationProvider interface
 │           ├── index.ts     — Provider registry (lookup by name)
+│           ├── shared/
+│           │   └── prompt.ts — Base system prompt shared by all providers (buildSharedPrompt)
 │           ├── openai/
-│           │   ├── index.ts — OpenAI provider (lazy client init)
-│           │   └── prompt.ts — GPT-optimised system prompt
+│           │   ├── index.ts — OpenAI provider (lazy singleton client, try-catch JSON.parse)
+│           │   └── prompt.ts — Re-exports buildSharedPrompt (OpenAI-specific overrides go here)
 │           └── gemini/
-│               ├── index.ts — Gemini provider (lazy client init)
-│               └── prompt.ts — Gemini-optimised system prompt
+│               ├── index.ts — Gemini provider (lazy singleton client, try-catch JSON.parse)
+│               └── prompt.ts — Re-exports buildSharedPrompt (Gemini-specific overrides go here)
 │
 └── extension/
     ├── .gitignore
@@ -81,7 +85,9 @@ trans/
         │   ├── Select.tsx               — Reusable labeled select component
         │   ├── TextareaInput.tsx        — Reusable labeled textarea with optional help text
         ├── utils/
-        │   └── api.ts                   — buildUrlApi: builds backend URLs with optional query params; callApi: generic fetch wrapper with JSON + error handling
+        │   ├── api.ts                   — buildUrlApi: builds backend URLs with optional query params; callApi: generic fetch wrapper with JSON + error handling
+        │   ├── format.ts                — toMB: bytes → human-readable MB string
+        │   └── url.ts                   — normalizePageUrl: strips query string + hash for stable page storage keys
         ├── apis/
         │   ├── historyApi.ts            — chrome.storage.local CRUD for BlockHistory
         │   ├── storageApi.ts            — chrome.storage quota/usage helpers
@@ -103,11 +109,13 @@ trans/
         │   └── history.ts               — Zustand history store: page histories in memory, init(), addEntry(), selectEntry(), deleteEntry(), deleteBlockHistory(), clearPage(), clearAll()
         ├── content/
         │   ├── main.tsx                 — Entry: detectPlatform, init stores, mount DOM, observe page
+        │   ├── activeTranslations.ts    — In-memory Set of parsedContent keys currently showing translation; survives component re-mounts
         │   ├── translationSync.ts       — Sync coordinator: wraps useHistoryStore + optionally syncs to backend DB
         │   ├── dom/
         │   │   ├── injectDom.tsx        — Shadow DOM injection engine: processBlocksDom mounts translate UI per block
-        │   │   ├── segmentsDom.ts       — Extract/apply/restore DOM text segments; TranslatedSegment type
-        │   │   ├── mountDom.tsx         — mountModalDom, mountSidebarDom, mountToasterDom, mountTranslateAllDom (shared shadow helper)
+        │   │   ├── segmentsDom.ts       — Extract/apply/restore DOM text segments; read-only readTextDom for context building
+        │   │   ├── mountDom.tsx         — mountModalDom, mountSidebarDom, mountToasterDom, mountTranslateAllDom (uses createShadowHost)
+        │   │   ├── shadowDom.ts         — createShadowHost: shared factory for shadow root hosts with Tailwind styles injected
         │   │   └── observerDom.ts       — observePageDom (debounced body watcher), observeBlockDom (re-render detector)
         │   ├── shadow.css               — Tailwind directives; imported via ?inline → injected into shadow roots
         │   ├── components/

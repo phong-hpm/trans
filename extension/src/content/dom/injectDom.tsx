@@ -1,5 +1,6 @@
 // dom/injectDom.tsx — Shadow DOM injection engine: mounts translate UI onto platform blocks
 
+import type { Root } from 'react-dom/client';
 import { createRoot } from 'react-dom/client';
 
 import { BlockTypeEnum } from '../../enums';
@@ -7,10 +8,30 @@ import type { Block } from '../../platforms/types';
 import type { ContextBlock } from '../../types';
 import { TranslateButton } from '../components/TranslateButton';
 import { TranslateToolbar } from '../components/TranslateToolbar';
-import shadowStyles from '../shadow.css?inline';
+import { createShadowHost } from './shadowDom';
 
 // Title button floats outside the container to the right
 const TITLE_ANCHOR_STYLE = 'position:absolute;top:8px;right:-32px;z-index:9999;';
+
+/**
+ * Tracks mounted React roots by parsedContent.
+ * Allows us to unmount orphaned roots when a block's content is re-injected
+ * after a full DOM replacement (e.g. GitHub replaces an entire comment container).
+ */
+const blockRoots = new Map<string, { anchor: HTMLElement; root: Root }>();
+
+/**
+ * Unmounts and removes any roots whose anchor element is no longer in the document.
+ * Called at the start of each processBlocksDom run.
+ */
+const cleanupOrphanedRoots = (): void => {
+  for (const [key, { anchor, root }] of blockRoots) {
+    if (!anchor.isConnected) {
+      root.unmount();
+      blockRoots.delete(key);
+    }
+  }
+};
 
 /**
  * Extracts and joins all visible text nodes from an element, separated by newlines.
@@ -29,6 +50,8 @@ export const getParsedContentDom = (el: HTMLElement): string => {
 
 /**
  * Creates a shadow root host with Tailwind styles and mounts the translate UI into it.
+ * containerEl is the stable outer ancestor (e.g. .react-issue-comment) used by
+ * observeBlockDom — it must not be replaced by framework re-renders.
  */
 const mountShadowDom = (
   anchor: HTMLElement,
@@ -36,26 +59,20 @@ const mountShadowDom = (
   parsedContent: string,
   blockType: BlockTypeEnum,
   getLiveElement: (() => HTMLElement | null) | undefined,
-  getContextBlocks?: () => ContextBlock[]
+  getContextBlocks: (() => ContextBlock[]) | undefined,
+  containerEl: HTMLElement
 ): void => {
   if (anchor.querySelector(`[data-trans-block]`)) return;
 
-  const host = document.createElement('div');
+  const { host, mount } = createShadowHost('');
   host.setAttribute('data-trans-block', parsedContent.slice(0, 40));
-
-  const shadow = host.attachShadow({ mode: 'open' });
-  const style = document.createElement('style');
-  style.textContent = shadowStyles;
-  shadow.appendChild(style);
-
-  const mount = document.createElement('div');
-  shadow.appendChild(mount);
 
   // Prefer getLiveElement (re-queries DOM each call) over captured contentEl reference,
   // so getElement() never returns a stale node after GitHub re-renders the block.
   const getElement = (): HTMLElement => getLiveElement?.() ?? contentEl;
+  const getContainerEl = (): HTMLElement => containerEl;
 
-  const props = { parsedContent, blockType, getElement, getContextBlocks };
+  const props = { parsedContent, blockType, getElement, getContextBlocks, getContainerEl };
   const ui =
     blockType === BlockTypeEnum.Title ? (
       <TranslateButton {...props} />
@@ -63,7 +80,9 @@ const mountShadowDom = (
       <TranslateToolbar {...props} />
     );
 
-  createRoot(mount).render(ui);
+  const root = createRoot(mount);
+  root.render(ui);
+  blockRoots.set(parsedContent, { anchor, root });
   anchor.appendChild(host);
 };
 
@@ -100,8 +119,11 @@ const createBlockAnchorDom = (contentEl: HTMLElement): HTMLElement | null => {
 
 /**
  * Processes a list of blocks: creates anchors and mounts shadow UI for any new blocks.
+ * Cleans up orphaned React roots from previously detached blocks before mounting.
  */
 export const processBlocksDom = (blocks: Block[]): void => {
+  cleanupOrphanedRoots();
+
   for (const block of blocks) {
     const anchor =
       block.blockType === BlockTypeEnum.Title
@@ -119,7 +141,8 @@ export const processBlocksDom = (blocks: Block[]): void => {
       parsedContent,
       block.blockType,
       block.getLiveElement,
-      block.getContextBlocks
+      block.getContextBlocks,
+      block.containerEl
     );
   }
 };
