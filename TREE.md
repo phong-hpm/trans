@@ -31,7 +31,7 @@ trans/
 │       │   ├── index.ts             — Root router: mounts /v1
 │       │   ├── translate.route.ts   — POST /translate (legacy route kept for compatibility)
 │       │   └── v1/
-│       │       ├── translate.route.ts — POST /api/v1/translate
+│       │       ├── translate.route.ts — POST /api/v1/translate, POST /api/v1/translate/batch
 │       │       └── history.route.ts   — GET/POST/DELETE /api/v1/history (query-param filters)
 │       ├── controllers/
 │       │   ├── translate.controller.ts — Validates request, delegates to translate service
@@ -108,9 +108,11 @@ trans/
         │   ├── global.ts                — Zustand global store: flat settings + ready flag + sidebar state, init(), updateSettings() (auto-saves), openSidebarToBlock(), clearFocusedBlock()
         │   └── history.ts               — Zustand history store: page histories in memory, init(), addEntry(), selectEntry(), deleteEntry(), deleteBlockHistory(), clearPage(), clearAll()
         ├── content/
+        │   ├── DETECTION.md             — Explains platform detection, block discovery, MutationObserver strategy, and Turbo navigation handling
         │   ├── main.tsx                 — Entry: detectPlatform, init stores, mount DOM, observe page
         │   ├── activeTranslations.ts    — In-memory Set of parsedContent keys currently showing translation; survives component re-mounts
         │   ├── translationSync.ts       — Sync coordinator: wraps useHistoryStore + optionally syncs to backend DB
+        │   ├── batchTranslate.ts        — batchTranslateAll: extracts segments from all blocks, sends one BatchTranslate message, saves results to history
         │   ├── dom/
         │   │   ├── injectDom.tsx        — Shadow DOM injection engine: processBlocksDom mounts translate UI per block
         │   │   ├── segmentsDom.ts       — Extract/apply/restore DOM text segments; read-only readTextDom for context building
@@ -119,7 +121,7 @@ trans/
         │   │   └── observerDom.ts       — observePageDom (debounced body watcher), observeBlockDom (re-render detector)
         │   ├── shadow.css               — Tailwind directives; imported via ?inline → injected into shadow roots
         │   ├── components/
-        │   │   ├── TranslateAllButton.tsx — Header-level button that translates all blocks at once; dispatches trans:translate-all event; tracks done/total progress
+        │   │   ├── TranslateAllButton.tsx — Fixed floating pill button (bottom-right); calls batchTranslateAll then dispatches trans:translate-all; tracks per-block progress
         │   │   ├── TranslateButton.tsx  — Circle icon button used for title blocks; uses BlockTypeEnum
         │   │   ├── TranslatePopup.tsx   — Mode-selection dropdown portalled into shadow root; uses ThemeWrapper
         │   │   ├── TranslateToolbar.tsx — Top-right toolbar for task/comment blocks: toggle + split translate + IconButton(retranslate) + Button(history); uses ThemeWrapper

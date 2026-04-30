@@ -1,11 +1,19 @@
 // translate.service.ts — Translation business logic: noise filtering, provider dispatch, segment merge
 
 import { getProvider } from '@/providers';
-import type { ContextBlock, TranslateSegment, TranslatedSegment } from '@/types';
+import type { BatchBlock, ContextBlock, TranslateSegment, TranslatedSegment } from '@/types';
 
 interface TranslateParams {
   segments: TranslateSegment[];
   contextBlocks?: ContextBlock[];
+  targetLanguage: string;
+  provider: string;
+  model: string;
+  userContext?: string;
+}
+
+interface TranslateBatchParams {
+  blocks: BatchBlock[];
   targetLanguage: string;
   provider: string;
   model: string;
@@ -28,6 +36,41 @@ const filterNoise = (segments: TranslateSegment[]): TranslateSegment[] =>
     if (!text) return false;
     return !NOISE_PATTERNS.some((p) => p.test(text));
   });
+
+export const translateBatchSegments = async ({
+  blocks,
+  targetLanguage,
+  provider,
+  model,
+  userContext,
+}: TranslateBatchParams): Promise<{ segments: TranslatedSegment[] }[]> => {
+  // Filter noise per block; build per-block id→text maps for result reconstruction
+  const filteredBlocks = blocks.map((b) => ({
+    ...b,
+    segments: filterNoise(b.segments),
+  }));
+  const blockTextMaps = blocks.map(
+    (b) => new Map(b.segments.map((s) => [s.id, s.text]))
+  );
+
+  const llmProvider = getProvider(provider);
+  const flatResults = await llmProvider.translateBatch({
+    blocks: filteredBlocks,
+    targetLanguage,
+    model,
+    userContext,
+  });
+  const resultMap = new Map(flatResults.map((r) => [r.id, r.translatedText]));
+
+  // Re-group by block; fall back to original text for any noise-filtered or missing IDs
+  return blocks.map((b, i) => ({
+    segments: b.segments.map((s) => ({
+      id: s.id,
+      text: blockTextMaps[i].get(s.id) ?? '',
+      translatedText: resultMap.get(s.id) ?? s.text,
+    })),
+  }));
+};
 
 export const translateSegments = async ({
   segments,

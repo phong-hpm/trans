@@ -80,3 +80,32 @@ Return ONLY valid JSON — no markdown fences, no explanation:
   { "id": "...", "translatedText": "..." }
 ]
 `;
+
+/**
+ * Batch variant: all blocks are translated in a single LLM call.
+ * Output is a flat array covering all segments across all blocks.
+ * Each provider wraps this in its own format (system message, systemInstruction, etc.)
+ */
+export const buildBatchSharedPrompt = (targetLanguage: string, userContext?: string): string => `
+${buildSharedPrompt(targetLanguage, userContext).trim().split('INPUT FORMAT:')[0].trim()}
+
+INPUT FORMAT (batch — all blocks in one call):
+{
+  "blocks": [
+    {
+      "type": "title" | "task" | "comment",
+      "context": [{ "type": "...", "text": "..." }],
+      "segments": [{ "id": "...", "text": "..." }]
+    }
+  ]
+}
+
+OUTPUT FORMAT:
+Return a single flat JSON array covering ALL segments across ALL blocks — no markdown fences, no explanation:
+[
+  { "id": "...", "translatedText": "..." }
+]
+
+Preserve the same STYLE RULES, KEEP IN ENGLISH, ANTI-LITERAL, and DO NOT MODIFY rules as the single-block mode.
+Maintain consistent terminology across all blocks in the batch.
+`;

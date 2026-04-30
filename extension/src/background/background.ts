@@ -2,24 +2,17 @@
 
 import ENV from '../constants/env';
 import { MessageTypeEnum } from '../enums';
-import type { TranslateRequest, TranslateResponse } from '../types';
+import type {
+  BackgroundBatchTranslateMessage,
+  BatchTranslateResponse,
+  TranslateRequest,
+  TranslateResponse,
+} from '../types';
 import { logCall, logError, logResponse } from './logger';
 
 interface TranslateMessage extends TranslateRequest {
   type: MessageTypeEnum.Translate;
 }
-
-interface TranslateResult {
-  success: true;
-  segments: TranslateResponse['segments'];
-}
-
-interface TranslateError {
-  success: false;
-  error: string;
-}
-
-type MessageResult = TranslateResult | TranslateError;
 
 // Forward icon click to the active content script as a ToggleModal message.
 // Retries up to 3 times with a 350ms delay if the content script is not yet ready.
@@ -41,45 +34,89 @@ chrome.action.onClicked.addListener((tab) => {
   void sendToggle(3);
 });
 
+const postJson = (url: string, body: unknown): Promise<Response> =>
+  fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+
 chrome.runtime.onMessage.addListener(
-  (message: TranslateMessage, _sender, sendResponse: (result: MessageResult) => void) => {
-    if (message.type !== MessageTypeEnum.Translate) return;
+  (
+    message: TranslateMessage | BackgroundBatchTranslateMessage,
+    _sender,
+    sendResponse: (result: unknown) => void
+  ) => {
+    // ── Single-block translate ──────────────────────────────────────────────
+    if (message.type === MessageTypeEnum.Translate) {
+      const msg = message as TranslateMessage;
+      const url = `${ENV.backendUrl}/translate`;
+      const requestData: TranslateRequest = {
+        blockType: msg.blockType,
+        segments: msg.segments,
+        contextBlocks: msg.contextBlocks,
+        targetLanguage: msg.targetLanguage,
+        provider: msg.provider,
+        model: msg.model,
+        userContext: msg.userContext,
+      };
 
-    const url = `${ENV.backendUrl}/translate`; // ENV.backendUrl already includes /api/v1
-    const requestData: TranslateRequest = {
-      blockType: message.blockType,
-      segments: message.segments,
-      contextBlocks: message.contextBlocks,
-      targetLanguage: message.targetLanguage,
-      provider: message.provider,
-      model: message.model,
-      userContext: message.userContext,
-    };
+      logCall('POST', url, requestData);
 
-    logCall('POST', url, requestData);
+      postJson(url, requestData)
+        .then(async (res) => {
+          if (!res.ok) {
+            const err = (await res.json().catch(() => ({}))) as { error?: string };
+            throw new Error(err.error ?? `HTTP ${res.status}`);
+          }
+          return res.json() as Promise<TranslateResponse>;
+        })
+        .then((data) => {
+          logResponse('POST', url, requestData, data);
+          sendResponse({ success: true, segments: data.segments });
+        })
+        .catch((err: unknown) => {
+          const error = err instanceof Error ? err.message : 'Translation failed';
+          logError('POST', url, requestData, error);
+          sendResponse({ success: false, error });
+        });
 
-    fetch(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(requestData),
-    })
-      .then(async (res) => {
-        if (!res.ok) {
-          const err = (await res.json().catch(() => ({}))) as { error?: string };
-          throw new Error(err.error ?? `HTTP ${res.status}`);
-        }
-        return res.json() as Promise<TranslateResponse>;
-      })
-      .then((data) => {
-        logResponse('POST', url, requestData, data);
-        sendResponse({ success: true, segments: data.segments });
-      })
-      .catch((err: unknown) => {
-        const error = err instanceof Error ? err.message : 'Translation failed';
-        logError('POST', url, requestData, error);
-        sendResponse({ success: false, error });
-      });
+      return true;
+    }
 
-    return true;
+    // ── Batch translate ─────────────────────────────────────────────────────
+    if (message.type === MessageTypeEnum.BatchTranslate) {
+      const msg = message as BackgroundBatchTranslateMessage;
+      const url = `${ENV.backendUrl}/translate/batch`;
+      const requestData = {
+        blocks: msg.blocks,
+        targetLanguage: msg.targetLanguage,
+        provider: msg.provider,
+        model: msg.model,
+        userContext: msg.userContext,
+      };
+
+      logCall('POST', url, requestData);
+
+      postJson(url, requestData)
+        .then(async (res) => {
+          if (!res.ok) {
+            const err = (await res.json().catch(() => ({}))) as { error?: string };
+            throw new Error(err.error ?? `HTTP ${res.status}`);
+          }
+          return res.json() as Promise<BatchTranslateResponse>;
+        })
+        .then((data) => {
+          logResponse('POST', url, requestData, data);
+          sendResponse({ success: true, blocks: data.blocks });
+        })
+        .catch((err: unknown) => {
+          const error = err instanceof Error ? err.message : 'Batch translation failed';
+          logError('POST', url, requestData, error);
+          sendResponse({ success: false, error });
+        });
+
+      return true;
+    }
   }
 );

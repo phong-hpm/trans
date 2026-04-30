@@ -31,3 +31,24 @@ export interface TranslatedSegment {
 export interface TranslateResponse {
   segments: TranslatedSegment[];
 }
+
+// ─── Batch translate ───────────────────────────────────────────────────────────
+
+export interface BatchBlock {
+  blockType: BlockType;
+  segments: TranslateSegment[];
+  contextBlocks?: ContextBlock[];
+}
+
+export interface BatchTranslateRequest {
+  blocks: BatchBlock[];
+  targetLanguage: string;
+  provider: string;
+  model: string;
+  userContext?: string;
+}
+
+export interface BatchTranslateResponse {
+  /** Results in the same order as the input blocks array. */
+  blocks: { segments: TranslatedSegment[] }[];
+}

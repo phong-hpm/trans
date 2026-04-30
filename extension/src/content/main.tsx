@@ -3,7 +3,6 @@
 import ENV from '../constants/env';
 import { LogTypeEnum, MessageTypeEnum } from '../enums';
 import { detectPlatform } from '../platforms';
-import type { PlatformAdapter } from '../platforms/types';
 import { useGlobalStore } from '../store/global';
 import { useHistoryStore } from '../store/history';
 import { processBlocksDom } from './dom/injectDom';
@@ -80,69 +79,85 @@ const initSettingsWatcher = (): void => {
   });
 };
 
-const init = (platform: PlatformAdapter): void => {
-  if (ENV.isDev) initDevLogs();
-
+/**
+ * Mounts platform-level UI (toaster + sidebar). Both are idempotent — safe to call on
+ * every observer tick; they bail out immediately if already mounted.
+ */
+const mountPlatformDom = (): void => {
   mountToasterDom();
   mountSidebarDom();
-  initAutoTranslateAll();
-  initSettingsWatcher();
+};
 
-  // Retry on init — some platforms render content asynchronously
-  let attempts = 0;
-  const retry = setInterval(() => {
-    const blocks = platform.getBlocks();
-    processBlocksDom(blocks);
+// ─── Module-level setup (platform-independent) ────────────────────────────────
 
-    if (platform.getHeaderAnchor) {
-      const anchor = platform.getHeaderAnchor();
-      if (anchor) mountTranslateAllDom(anchor, () => platform.getBlocks().length);
-    }
+useGlobalStore.getState().init();
+initModalToggle();
+mountModalDom();
 
-    if (++attempts >= 10) clearInterval(retry);
-  }, 500);
+if (ENV.isDev) initDevLogs();
+initAutoTranslateAll();
+initSettingsWatcher();
 
-  // Track URL for Turbo soft navigation detection
-  let lastUrl = location.href;
+// ─── Page observer — always active, even when starting on a non-platform page ─
+//
+// Starting on e.g. GitHub issue *list* means detectPlatform returns null at load
+// time, so observePageDom must be set up unconditionally at module level.
+// Platform detection runs inside the callback so Turbo soft-navigations that
+// move from a non-platform page to a platform page are handled correctly.
 
-  // Async callback: awaiting init() ensures histories are loaded before processBlocksDom runs,
-  // eliminating the race where blocks mount with an empty history store.
-  observePageDom(async () => {
-    if (location.href !== lastUrl) {
-      lastUrl = location.href;
+let lastUrl = location.href;
+
+observePageDom(async () => {
+  const platform = detectPlatform(location.href);
+
+  if (location.href !== lastUrl) {
+    lastUrl = location.href;
+    useGlobalStore.getState().setPlatformName(platform?.name ?? null);
+
+    if (platform) {
       // Await so processBlocksDom below sees the fresh histories for the new page
       await useHistoryStore.getState().init(location.href);
-      // initAutoTranslateAll only fires on the first ready transition; handle subsequent
-      // Turbo navigations by checking the setting directly after history re-init
+      // initAutoTranslateAll only fires on the first ready transition; handle
+      // subsequent Turbo navigations by checking the setting directly
       if (useGlobalStore.getState().autoTranslateAll) {
         setTimeout(() => document.dispatchEvent(new CustomEvent('trans:translate-all')), 1000);
       }
     }
+  }
 
-    const blocks = platform.getBlocks();
-    processBlocksDom(blocks);
+  if (!platform) return;
 
-    if (platform.getHeaderAnchor) {
-      const anchor = platform.getHeaderAnchor();
-      if (anchor) mountTranslateAllDom(anchor, () => platform.getBlocks().length);
-    }
-  });
-};
+  mountPlatformDom();
+  mountTranslateAllDom(() => platform.getBlocks());
 
-useGlobalStore.getState().init();
+  const blocks = platform.getBlocks();
+  processBlocksDom(blocks);
+});
 
-// Modal and its toggle listener are platform-independent — always mount
-initModalToggle();
-mountModalDom();
+// ─── Initial load: retry interval for async platform content ──────────────────
+//
+// Some platforms (GitHub) render content asynchronously after the content
+// script fires. Retry processBlocksDom a few times to catch late-arriving nodes.
+// The observer above handles all subsequent mutations.
 
-const platform = detectPlatform(location.href);
-useGlobalStore.getState().setPlatformName(platform?.name ?? null);
+const initialPlatform = detectPlatform(location.href);
+useGlobalStore.getState().setPlatformName(initialPlatform?.name ?? null);
 
-// Await history init before starting block injection so the first processBlocksDom run
-// sees the loaded histories (avoids startup race on slow storage reads).
-void useHistoryStore
-  .getState()
-  .init(location.href)
-  .then(() => {
-    if (platform) init(platform);
-  });
+if (initialPlatform) {
+  mountPlatformDom();
+
+  // Await history init before starting block injection so the first
+  // processBlocksDom run sees the loaded histories (avoids startup race).
+  mountTranslateAllDom(() => initialPlatform.getBlocks());
+
+  void useHistoryStore
+    .getState()
+    .init(location.href)
+    .then(() => {
+      let attempts = 0;
+      const retry = setInterval(() => {
+        processBlocksDom(initialPlatform.getBlocks());
+        if (++attempts >= 10) clearInterval(retry);
+      }, 500);
+    });
+}

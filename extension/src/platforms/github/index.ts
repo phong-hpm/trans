@@ -79,9 +79,4 @@ export const githubAdapter: PlatformAdapter = {
 
     return blocks;
   },
-
-  getHeaderAnchor: () => {
-    const titleEl = document.querySelector<HTMLElement>(q.titleContainer);
-    return titleEl?.parentElement ?? null;
-  },
 };
