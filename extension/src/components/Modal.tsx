@@ -7,7 +7,8 @@ import { useEffect } from 'react';
 
 import { ThemeWrapper } from './ThemeWrapper';
 
-export type ModalBackdrop = 'blur' | 'none';
+/** 'blur' — dim + blur overlay; 'dim' — dim only; 'none' — transparent, click-through */
+export type ModalBackdrop = 'blur' | 'dim' | 'none';
 export type ModalSize = 'sm' | 'md' | 'lg' | 'xl';
 
 const SIZE_CLASS: Record<ModalSize, string> = {
@@ -51,14 +52,16 @@ export const Modal: React.FC<Props> = ({
         className="fixed inset-0 z-[999999] flex items-start justify-center pt-16"
         style={{ fontFamily: 'system-ui, sans-serif' }}
       >
-        {/* Backdrop */}
-        <div
-          className={clsx(
-            'absolute inset-0 bg-black/40',
-            backdrop === 'blur' && 'backdrop-blur-[2px]'
-          )}
-          onClick={onClose}
-        />
+        {/* Backdrop — only rendered when not 'none' */}
+        {backdrop !== 'none' && (
+          <div
+            className={clsx(
+              'absolute inset-0 bg-black/40',
+              backdrop === 'blur' && 'backdrop-blur-[2px]'
+            )}
+            onClick={onClose}
+          />
+        )}
 
         {/* Card — outer wrapper carries shadow + rounded; inner clips overflow for children */}
         <div

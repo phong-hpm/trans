@@ -21,20 +21,19 @@ export const SettingsPanel: React.FC = () => {
   } = useGlobalStore();
 
   return (
-    <div className="space-y-3">
-      <Toggle
-        label="Sync history to server"
-        sublabel="Saves translation history to the backend database"
-        checked={syncToDb}
-        onChange={(v) => updateSettings({ syncToDb: v })}
-      />
+    <div className="space-y-4">
       <Select
         label="Your language"
         value={targetLanguage}
         options={LANGUAGES.map((lang) => ({ value: lang, label: lang }))}
         onChange={(v) => updateSettings({ targetLanguage: v })}
       />
-      <div className="pt-1 space-y-2.5">
+
+      {/* Auto-translate — actions that fire on page load */}
+      <div className="space-y-2.5">
+        <p className="text-[11px] font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">
+          Auto-translate
+        </p>
         <Toggle
           label="Auto-show saved translations"
           sublabel="On page load, re-apply the last saved translation for each block — no API call"
@@ -53,6 +52,13 @@ export const SettingsPanel: React.FC = () => {
           checked={autoTranslateAll}
           onChange={(v) => updateSettings({ autoTranslateAll: v })}
         />
+      </div>
+
+      {/* Display — visual preferences */}
+      <div className="space-y-2.5">
+        <p className="text-[11px] font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">
+          Display
+        </p>
         <Toggle
           label="Show sidebar"
           sublabel="Display the translation history sidebar"
@@ -63,6 +69,19 @@ export const SettingsPanel: React.FC = () => {
           label="Dark mode"
           checked={theme === ThemeEnum.Dark}
           onChange={(v) => updateSettings({ theme: v ? ThemeEnum.Dark : ThemeEnum.Light })}
+        />
+      </div>
+
+      {/* Data */}
+      <div className="space-y-2.5">
+        <p className="text-[11px] font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">
+          Data
+        </p>
+        <Toggle
+          label="Sync history to server"
+          sublabel="Saves translation history to the backend database"
+          checked={syncToDb}
+          onChange={(v) => updateSettings({ syncToDb: v })}
         />
       </div>
     </div>

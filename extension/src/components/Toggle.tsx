@@ -17,6 +17,9 @@ export const Toggle: React.FC<Props> = ({ label, sublabel, checked, onChange }) 
   >
     <button
       type="button"
+      role="switch"
+      aria-checked={checked}
+      aria-label={label}
       className={clsx(
         'relative w-8 h-5 rounded-full transition-colors duration-200 flex-shrink-0 border',
         checked ? 'bg-blue-600 border-blue-600' : 'bg-white border-gray-300',

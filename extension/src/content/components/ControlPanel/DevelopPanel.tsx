@@ -2,7 +2,8 @@
 
 import { ChevronDown, ChevronRight, Copy, Terminal } from 'lucide-react';
 import type React from 'react';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
+import { useShallow } from 'zustand/react/shallow';
 
 import { Button } from '../../../components/Button';
 import { IconButton } from '../../../components/IconButton';
@@ -20,14 +21,17 @@ interface StoreInspectorProps {
 
 const StoreInspector: React.FC<StoreInspectorProps> = ({ label, data }) => {
   const [open, setOpen] = useState(false);
-  const filtered = filterStore(data);
-  const json = JSON.stringify(filtered, null, 2);
+  // Only compute filtered/json when panel is open — avoid work on every render while collapsed
+  const filtered = useMemo(() => (open ? filterStore(data) : null), [open, data]);
+  const json = useMemo(() => (filtered ? JSON.stringify(filtered, null, 2) : ''), [filtered]);
 
   const handleCopy = () => {
+    if (!json) return;
     navigator.clipboard.writeText(json).catch(() => {});
   };
 
   const handleLog = () => {
+    if (!filtered) return;
     console.group(`[${label}]`);
     console.log(filtered);
     console.groupEnd();
@@ -67,18 +71,23 @@ const StoreInspector: React.FC<StoreInspectorProps> = ({ label, data }) => {
 };
 
 export const DevelopPanel: React.FC = () => {
-  const globalStore = useGlobalStore();
-  const historyStore = useHistoryStore();
+  // Use snapshot accessors for one-off log actions — avoid subscribing the full store to this panel.
+  // For the StoreInspector display, subscribe only to the data fields (no function values) so this
+  // component re-renders only when the actual state changes, not on every action dispatch.
+  const globalStoreData = useGlobalStore(useShallow((s) => filterStore(s) as object));
+  const historyStoreData = useHistoryStore(useShallow((s) => filterStore(s) as object));
 
   const handleLogGlobalStore = () => {
+    const snap = useGlobalStore.getState();
     console.group('[GlobalStore]');
-    console.log(filterStore(globalStore));
+    console.log(filterStore(snap));
     console.groupEnd();
   };
 
   const handleLogPageHistory = () => {
+    const snap = useHistoryStore.getState();
     console.group('[HistoryStore] page history');
-    console.log(historyStore.histories);
+    console.log(snap.histories);
     console.groupEnd();
   };
 
@@ -87,8 +96,8 @@ export const DevelopPanel: React.FC = () => {
       {/* Store Inspectors */}
       <div className="space-y-2">
         <div className="text-xs font-medium text-gray-500 dark:text-gray-400">Stores</div>
-        <StoreInspector label="Global Store" data={globalStore} />
-        <StoreInspector label="History Store" data={historyStore} />
+        <StoreInspector label="Global Store" data={globalStoreData} />
+        <StoreInspector label="History Store" data={historyStoreData} />
       </div>
 
       {/* Actions */}

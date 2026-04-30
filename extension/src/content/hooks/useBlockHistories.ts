@@ -20,10 +20,14 @@ const buildItems = (histories: BlockHistory[]): BlockHistoryItem[] =>
         (best, e) => (e.createdAt > best.createdAt ? e : best),
         h.entries[0]
       );
+      // Use translatedText of the selected entry so users recognise the translation in the sidebar.
+      // Fall back to original text if translatedText is somehow missing.
+      const selectedEntry = h.entries.find((e) => e.selected) ?? mostRecent;
+      const preview = selectedEntry.segments.map((s) => s.translatedText || s.text).join(' ');
       return {
         parsedContent: h.parsedContent,
         history: h,
-        preview: mostRecent.segments.map((s) => s.text).join(' '),
+        preview,
         lastTranslatedAt: mostRecent.createdAt,
       };
     })

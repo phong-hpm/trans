@@ -1,11 +1,15 @@
 // TranslateButton.tsx — Translate icon button for title blocks (single-click, no mode selection)
+// When translated: shows restore + retranslate + history actions inline
 
 import clsx from 'clsx';
-import { Loader2, RotateCcw } from 'lucide-react';
+import { Clock, Loader2, RotateCcw, Undo2 } from 'lucide-react';
 import type React from 'react';
 
 import logoUrl from '../../assets/logo.png';
+import { IconButton } from '../../components/IconButton';
+import { ThemeWrapper } from '../../components/ThemeWrapper';
 import { type BlockTypeEnum, TranslateStateEnum } from '../../enums';
+import { useGlobalStore } from '../../store/global';
 import type { ContextBlock } from '../../types';
 import { useTranslate } from '../hooks/useTranslate';
 
@@ -24,7 +28,8 @@ export const TranslateButton: React.FC<Props> = ({
   getContextBlocks,
   getContainerEl,
 }) => {
-  const { state, translate, restore } = useTranslate(
+  const { openSidebarToBlock } = useGlobalStore();
+  const { state, translate, restore, retranslate, history } = useTranslate(
     parsedContent,
     blockType,
     getElement,
@@ -32,38 +37,65 @@ export const TranslateButton: React.FC<Props> = ({
     getContainerEl
   );
 
+  const isTranslated = state === TranslateStateEnum.Translated;
+  const isLoading = state === TranslateStateEnum.Loading;
+
   const handleClick = () => {
-    if (state === TranslateStateEnum.Loading) return;
-    if (state === TranslateStateEnum.Translated) {
+    if (isLoading) return;
+    if (isTranslated) {
       restore();
       return;
     }
-    // Title blocks have a single translate mode — call directly without popup
     translate();
   };
 
-  const tooltip = state === TranslateStateEnum.Translated ? 'Show original' : 'Translate with AI';
-
   return (
-    <div className="relative w-7 h-7" style={{ fontFamily: 'system-ui, sans-serif' }}>
-      <button
-        className={clsx(
-          'flex items-center justify-center w-7 h-7 rounded-full cursor-pointer p-1',
-          'transition-all duration-150 select-none text-black',
-          state === TranslateStateEnum.Translated
-            ? 'bg-blue-400 hover:bg-blue-500'
-            : 'bg-white hover:bg-gray-100'
+    <ThemeWrapper>
+      <div className="flex items-center gap-1" style={{ fontFamily: 'system-ui, sans-serif' }}>
+        {/* Main toggle button */}
+        <button
+          className={clsx(
+            'flex items-center justify-center w-7 h-7 rounded-full cursor-pointer p-1',
+            'transition-all duration-150 select-none text-black',
+            isTranslated ? 'bg-blue-400 hover:bg-blue-500' : 'bg-white hover:bg-gray-100'
+          )}
+          onClick={handleClick}
+          title={isTranslated ? 'Show original' : 'Translate with AI'}
+          type="button"
+        >
+          {isLoading && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+          {isTranslated && <Undo2 className="w-3.5 h-3.5" />}
+          {!isLoading && !isTranslated && (
+            <img src={logoUrl} alt="Translate" className="w-full h-full object-contain" />
+          )}
+        </button>
+
+        {/* Retranslate + History — visible only when showing translation */}
+        {isTranslated && (
+          <>
+            <IconButton
+              variant="outline"
+              color="ghost"
+              onClick={retranslate}
+              disabled={isLoading}
+              title="Retranslate"
+            >
+              <RotateCcw className="w-3 h-3" />
+            </IconButton>
+
+            {history.length > 0 && (
+              <IconButton
+                variant="outline"
+                color="ghost"
+                onClick={() => openSidebarToBlock(parsedContent)}
+                title="View translation history"
+              >
+                <Clock className="w-3 h-3" />
+              </IconButton>
+            )}
+          </>
         )}
-        onClick={handleClick}
-        title={tooltip}
-        type="button"
-      >
-        {state === TranslateStateEnum.Loading && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
-        {state === TranslateStateEnum.Translated && <RotateCcw className="w-3.5 h-3.5" />}
-        {state === TranslateStateEnum.Idle && (
-          <img src={logoUrl} alt="Translate" className="w-full h-full object-contain" />
-        )}
-      </button>
-    </div>
+      </div>
+    </ThemeWrapper>
   );
 };
