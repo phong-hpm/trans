@@ -3,6 +3,7 @@
 import { createRoot } from 'react-dom/client';
 import { Toaster } from 'sonner';
 
+import type { Block } from '../../platforms/types';
 import { ControlPanelModal } from '../components/ControlPanelModal';
 import { Sidebar } from '../components/Sidebar';
 import { TranslateAllButton } from '../components/TranslateAllButton';
@@ -42,18 +43,20 @@ export const mountSidebarDom = (): void =>
   );
 
 /**
- * Mounts the Translate All button next to the page header anchor. Idempotent.
- * anchor — the element to append the button host into.
- * getBlockCount — called at click time to know how many blocks exist.
+ * Mounts the Translate All floating button into document.body. Idempotent.
+ * Fixed-positioned below the GitHub sticky header, independent of GitHub DOM structure.
+ * getBlocks — called at click time to retrieve the current list of translatable blocks.
  */
-export const mountTranslateAllDom = (anchor: HTMLElement, getBlockCount: () => number): void => {
-  if (anchor.querySelector('[data-trans-translate-all]')) return;
+export const mountTranslateAllDom = (getBlocks: () => Block[]): void => {
+  if (document.querySelector('[data-trans-translate-all]')) return;
 
-  const { host, mount } = createShadowHost('display:inline-flex;align-items:center;');
+  const { host, mount } = createShadowHost(
+    'position:fixed;bottom:72px;right:16px;z-index:9990;pointer-events:auto;'
+  );
   host.setAttribute('data-trans-translate-all', 'true');
 
-  anchor.appendChild(host);
-  createRoot(mount).render(<TranslateAllButton getBlockCount={getBlockCount} />);
+  document.body.appendChild(host);
+  createRoot(mount).render(<TranslateAllButton getBlocks={getBlocks} />);
 };
 
 /**

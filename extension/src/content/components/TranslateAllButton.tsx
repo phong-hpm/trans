@@ -1,23 +1,27 @@
-// TranslateAllButton.tsx — Button that triggers translation of all blocks on the page at once
+// TranslateAllButton.tsx — Fixed floating button that batch-translates all blocks in one API call
 
 import clsx from 'clsx';
 import { Languages, Loader2 } from 'lucide-react';
 import type React from 'react';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { toast } from 'sonner';
 
 import { ThemeWrapper } from '../../components/ThemeWrapper';
+import type { Block } from '../../platforms/types';
+import { batchTranslateAll } from '../batchTranslate';
 
 interface Props {
-  getBlockCount: () => number;
+  getBlocks: () => Block[];
 }
 
-export const TranslateAllButton: React.FC<Props> = ({ getBlockCount }) => {
+export const TranslateAllButton: React.FC<Props> = ({ getBlocks }) => {
   const [isTranslating, setIsTranslating] = useState(false);
   const [done, setDone] = useState(0);
   const [total, setTotal] = useState(0);
   const totalRef = useRef(0);
   const doneRef = useRef(0);
 
+  // Count individual block completions dispatched after batch result is applied
   useEffect(() => {
     const handler = () => {
       doneRef.current += 1;
@@ -30,17 +34,34 @@ export const TranslateAllButton: React.FC<Props> = ({ getBlockCount }) => {
     return () => document.removeEventListener('trans:translate-done', handler);
   }, []);
 
-  const handleClick = useCallback(() => {
+  const handleClick = useCallback(async () => {
     if (isTranslating) return;
-    const count = getBlockCount();
-    if (!count) return;
-    totalRef.current = count;
+
+    const blocks = getBlocks();
+    if (!blocks.length) return;
+
+    // Set total upfront so the progress counter works as blocks complete
+    totalRef.current = blocks.length;
     doneRef.current = 0;
-    setTotal(count);
+    setTotal(blocks.length);
     setDone(0);
     setIsTranslating(true);
-    document.dispatchEvent(new CustomEvent('trans:translate-all'));
-  }, [isTranslating, getBlockCount]);
+
+    try {
+      const count = await batchTranslateAll(blocks);
+      if (!count) {
+        // No segments found — nothing to do
+        setIsTranslating(false);
+        return;
+      }
+      // All entries saved to history — trigger each block to apply from history (no API call)
+      document.dispatchEvent(new CustomEvent('trans:translate-all'));
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Batch translation failed';
+      toast.error(msg);
+      setIsTranslating(false);
+    }
+  }, [isTranslating, getBlocks]);
 
   return (
     <ThemeWrapper>
@@ -50,24 +71,24 @@ export const TranslateAllButton: React.FC<Props> = ({ getBlockCount }) => {
         disabled={isTranslating}
         title="Translate all blocks"
         className={clsx(
-          'flex items-center gap-1.5 px-2.5 py-1 rounded text-xs font-medium transition-colors',
-          'border shadow-sm',
+          'flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-colors',
+          'shadow-md border',
           isTranslating
             ? 'border-blue-200 bg-blue-50 text-blue-600 cursor-not-allowed dark:border-blue-800 dark:bg-blue-950/40 dark:text-blue-400'
-            : 'border-gray-200 bg-white text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-950 dark:text-gray-200 dark:hover:bg-gray-800'
+            : 'border-gray-200 bg-white text-gray-700 hover:bg-gray-50 hover:shadow-lg dark:border-gray-600 dark:bg-gray-900 dark:text-gray-200 dark:hover:bg-gray-800'
         )}
         style={{ fontFamily: 'system-ui, sans-serif' }}
       >
         {isTranslating ? (
           <>
-            <Loader2 className="w-3 h-3 animate-spin flex-shrink-0" />
+            <Loader2 className="w-3.5 h-3.5 animate-spin flex-shrink-0" />
             <span className="whitespace-nowrap tabular-nums">
               {done}/{total}
             </span>
           </>
         ) : (
           <>
-            <Languages className="w-3 h-3 flex-shrink-0" />
+            <Languages className="w-3.5 h-3.5 flex-shrink-0" />
             <span className="whitespace-nowrap">Translate all</span>
           </>
         )}

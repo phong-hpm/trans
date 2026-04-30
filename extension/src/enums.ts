@@ -2,6 +2,7 @@
 
 export enum MessageTypeEnum {
   Translate = 'TRANSLATE',
+  BatchTranslate = 'BATCH_TRANSLATE',
   DevLog = 'DEV_LOG',
   ToggleModal = 'TOGGLE_MODAL',
 }

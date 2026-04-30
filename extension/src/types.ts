@@ -31,6 +31,28 @@ export interface BackgroundTranslateMessage extends TranslateRequest {
   type: string;
 }
 
+// ─── Batch translate ──────────────────────────────────────────────────────────
+
+export interface BatchTranslateBlock {
+  blockType: BlockTypeEnum;
+  segments: { id: string; text: string }[];
+  contextBlocks?: ContextBlock[];
+}
+
+export interface BackgroundBatchTranslateMessage {
+  type: string;
+  blocks: BatchTranslateBlock[];
+  targetLanguage: string;
+  provider: string;
+  model: string;
+  userContext?: string;
+}
+
+export interface BatchTranslateResponse {
+  /** Results in the same order as the input blocks array. */
+  blocks: { segments: { id: string; text: string; translatedText: string }[] }[];
+}
+
 export interface TranslateResponse {
   segments: { id: string; text: string; translatedText: string }[];
 }

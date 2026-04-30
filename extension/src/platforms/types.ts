@@ -16,6 +16,4 @@ export interface PlatformAdapter {
   name: string;
   pagePattern: RegExp;
   getBlocks: () => Block[];
-  /** Returns the element to attach the Translate All button next to, or null if not available */
-  getHeaderAnchor?: () => HTMLElement | null;
 }
