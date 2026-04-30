@@ -20,6 +20,8 @@ export const TranslateAllButton: React.FC<Props> = ({ getBlocks }) => {
   const [total, setTotal] = useState(0);
   const totalRef = useRef(0);
   const doneRef = useRef(0);
+  // Ref-based guard for atomic double-click protection (state updates are async/batched)
+  const isTranslatingRef = useRef(false);
 
   // Count individual block completions dispatched after batch result is applied
   useEffect(() => {
@@ -27,6 +29,7 @@ export const TranslateAllButton: React.FC<Props> = ({ getBlocks }) => {
       doneRef.current += 1;
       setDone(doneRef.current);
       if (doneRef.current >= totalRef.current) {
+        isTranslatingRef.current = false;
         setIsTranslating(false);
       }
     };
@@ -35,11 +38,13 @@ export const TranslateAllButton: React.FC<Props> = ({ getBlocks }) => {
   }, []);
 
   const handleClick = useCallback(async () => {
-    if (isTranslating) return;
+    // Ref guard is atomic; state guard is for UI disabled state
+    if (isTranslatingRef.current) return;
 
     const blocks = getBlocks();
     if (!blocks.length) return;
 
+    isTranslatingRef.current = true;
     // Set total upfront so the progress counter works as blocks complete
     totalRef.current = blocks.length;
     doneRef.current = 0;
@@ -51,6 +56,7 @@ export const TranslateAllButton: React.FC<Props> = ({ getBlocks }) => {
       const count = await batchTranslateAll(blocks);
       if (!count) {
         // No segments found — nothing to do
+        isTranslatingRef.current = false;
         setIsTranslating(false);
         return;
       }
@@ -59,9 +65,10 @@ export const TranslateAllButton: React.FC<Props> = ({ getBlocks }) => {
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Batch translation failed';
       toast.error(msg);
+      isTranslatingRef.current = false;
       setIsTranslating(false);
     }
-  }, [isTranslating, getBlocks]);
+  }, [getBlocks]);
 
   return (
     <ThemeWrapper>

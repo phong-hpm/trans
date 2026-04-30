@@ -10,8 +10,9 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
+import { useShallow } from 'zustand/react/shallow';
 
-import { type BlockTypeEnum, MessageTypeEnum, TranslateStateEnum } from '../../enums';
+import { BlockTypeEnum, MessageTypeEnum, TranslateStateEnum } from '../../enums';
 import { useGlobalStore } from '../../store/global';
 import { useHistoryStore } from '../../store/history';
 import type { ContextBlock, TranslationEntry } from '../../types';
@@ -30,6 +31,8 @@ export const useTranslate = (
   getContextBlocks?: () => ContextBlock[],
   getContainerEl?: () => HTMLElement
 ) => {
+  // Shallow selector — only re-renders when these specific values change,
+  // not when unrelated store fields (showModal, focusedParsedContent, etc.) update.
   const {
     targetLanguage,
     provider,
@@ -38,12 +41,28 @@ export const useTranslate = (
     ready,
     alwaysShowTranslated,
     autoTranslateTask,
-  } = useGlobalStore();
+  } = useGlobalStore(
+    useShallow((s) => ({
+      targetLanguage: s.targetLanguage,
+      provider: s.provider,
+      model: s.model,
+      userContext: s.userContext,
+      ready: s.ready,
+      alwaysShowTranslated: s.alwaysShowTranslated,
+      autoTranslateTask: s.autoTranslateTask,
+    }))
+  );
   const [uiState, setUiState] = useState<TranslateState>(TranslateStateEnum.Idle);
-  const [hasTranslation, setHasTranslation] = useState(false);
   const [history, setHistory] = useState<TranslationEntry[]>([]);
+  // Derived — no separate state needed; history.length > 0 is always equivalent
+  const hasTranslation = history.length > 0;
   const stateRef = useRef<TranslateState>(TranslateStateEnum.Idle);
   const segmentsRef = useRef<TranslatedSegment[] | null>(null);
+  // Translation mode — stored in a ref so toolbar updates don't trigger re-renders
+  // 'full': title + task + all preceding comments (default)
+  // 'context': title + task only (filter out comment-type context)
+  // 'direct': no context
+  const modeRef = useRef<'full' | 'context' | 'direct'>('full');
   // Stable refs — always point to the latest translate/restore without causing re-subscriptions.
   // Effects that call these use no dep array so the ref is updated every render.
   const translateRef = useRef<() => Promise<void>>(async () => {});
@@ -54,7 +73,6 @@ export const useTranslate = (
       stateRef.current = s;
       setUiState(s);
       if (s === TranslateStateEnum.Translated) {
-        setHasTranslation(true);
         markActive(parsedContent);
       } else if (s === TranslateStateEnum.Idle) {
         markInactive(parsedContent);
@@ -77,7 +95,14 @@ export const useTranslate = (
 
   const callApi = useCallback(
     async (rawSegments: TranslatedSegment[]): Promise<TranslatedSegment[]> => {
-      const contextBlocks = getContextBlocks?.() ?? [];
+      const allContext = getContextBlocks?.() ?? [];
+      // Filter context based on selected mode
+      const contextBlocks =
+        modeRef.current === 'direct'
+          ? []
+          : modeRef.current === 'context'
+            ? allContext.filter((b) => b.type !== BlockTypeEnum.Comment)
+            : allContext; // 'full' — send everything
       const result = await chrome.runtime.sendMessage({
         type: MessageTypeEnum.Translate,
         // blockType is sent to the backend for future prompt differentiation (e.g. title vs comment tone)
@@ -184,7 +209,6 @@ export const useTranslate = (
 
       const updatedHistory = await addTranslationEntry(parsedContent, translated);
       setHistory(updatedHistory.entries);
-      setHasTranslation(true);
 
       // Apply to current live element — handles replacement that happened during API call
       applyToLiveElement(translated);
@@ -224,7 +248,6 @@ export const useTranslate = (
 
       const updatedHistory = await addTranslationEntry(parsedContent, translated);
       setHistory(updatedHistory.entries);
-      setHasTranslation(true);
 
       // Apply to current live element — handles replacement during API call
       applyToLiveElement(translated);
@@ -257,7 +280,6 @@ export const useTranslate = (
     const hist = useHistoryStore.getState().getBlockHistory(parsedContent);
     if (hist?.entries.length) {
       setHistory(hist.entries);
-      setHasTranslation(true);
       if (isActive(parsedContent)) {
         translateRef.current();
       }
@@ -271,13 +293,11 @@ export const useTranslate = (
 
       if (!hist?.entries?.length) {
         setHistory([]);
-        setHasTranslation(false);
         if (stateRef.current === TranslateStateEnum.Translated) restoreRef.current();
         return;
       }
 
       setHistory(hist.entries);
-      setHasTranslation(true);
 
       // Re-apply if currently showing translation
       const selected = hist.entries.find((e) => e.selected);
@@ -409,6 +429,10 @@ export const useTranslate = (
     return () => document.removeEventListener('trans:settings-change', handler);
   }, [parsedContent]);
 
+  const setMode = useCallback((mode: 'full' | 'context' | 'direct') => {
+    modeRef.current = mode;
+  }, []);
+
   return {
     state: uiState,
     translate,
@@ -418,5 +442,6 @@ export const useTranslate = (
     history,
     selectHistoryEntry,
     deleteHistoryEntry,
+    setMode,
   };
 };

@@ -38,7 +38,7 @@ export const TranslateToolbar: React.FC<Props> = ({
   const dropdownRef = useRef<HTMLButtonElement>(null);
   const { openSidebarToBlock } = useGlobalStore();
 
-  const { state, translate, retranslate, restore, hasTranslation, history } = useTranslate(
+  const { state, translate, retranslate, restore, hasTranslation, history, setMode } = useTranslate(
     parsedContent,
     blockType,
     getElement,
@@ -56,7 +56,13 @@ export const TranslateToolbar: React.FC<Props> = ({
 
   const handleSelectMode = (mode: string) => {
     const opt = options.find((o) => o.value === mode);
-    if (opt) setSelectedOption(opt);
+    if (opt) {
+      setSelectedOption(opt);
+      // Propagate mode to callApi so next translate uses the correct context filtering
+      if (mode === 'full' || mode === 'context' || mode === 'direct') {
+        setMode(mode);
+      }
+    }
   };
 
   return (
@@ -76,8 +82,12 @@ export const TranslateToolbar: React.FC<Props> = ({
           <button
             type="button"
             onClick={translate}
-            disabled={isLoading}
-            title={selectedOption.sublabel}
+            disabled={isLoading || isTranslated}
+            title={
+              isTranslated
+                ? 'Already translated — use retranslate to refresh'
+                : selectedOption.sublabel
+            }
             className={clsx(
               'flex items-center gap-1 px-2 py-1 text-xs transition-colors disabled:opacity-60',
               'text-gray-700 hover:bg-gray-50',
@@ -105,8 +115,8 @@ export const TranslateToolbar: React.FC<Props> = ({
           </button>
         </div>
 
-        {/* Retranslate button — shown when there's a prior translation */}
-        {hasTranslation && (
+        {/* Retranslate button — shown only when block is actively showing translation */}
+        {isTranslated && (
           <IconButton
             variant="outline"
             color="ghost"

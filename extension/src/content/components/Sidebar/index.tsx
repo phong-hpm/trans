@@ -3,7 +3,7 @@
 import clsx from 'clsx';
 import { AlignRight, Languages, PanelRight, X } from 'lucide-react';
 import type React from 'react';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 import { IconButton } from '../../../components/IconButton';
 import { ThemeWrapper } from '../../../components/ThemeWrapper';
@@ -19,15 +19,24 @@ const SIDEBAR_WIDTH = 320;
 export const Sidebar: React.FC = () => {
   const { showSidebar, sidebarMode, updateSettings } = useGlobalStore();
   const [activeTab, setActiveTab] = useState<string>(SidebarTabEnum.History);
+  // Persisted across open/close cycles — stored here so HistoryTab unmount doesn't reset it
+  const [openBlocks, setOpenBlocks] = useState<Record<string, boolean>>({});
+
+  const handleSetBlock = useCallback((parsedContent: string, open: boolean) => {
+    setOpenBlocks((prev) => ({ ...prev, [parsedContent]: open }));
+  }, []);
 
   const isDrawerMode = sidebarMode === SidebarModeEnum.Drawer;
 
-  // Push page content when NOT in drawer mode (i.e., page mode)
+  // Push page content when NOT in drawer mode (i.e., page mode).
+  // Back up the previous marginRight so cleanup restores it (not '')
+  // in case GitHub or another script already set a value.
   useEffect(() => {
     if (!showSidebar || isDrawerMode) return;
+    const prev = document.body.style.marginRight;
     document.body.style.marginRight = `${SIDEBAR_WIDTH}px`;
     return () => {
-      document.body.style.marginRight = '';
+      document.body.style.marginRight = prev;
     };
   }, [showSidebar, isDrawerMode]);
 
@@ -89,7 +98,9 @@ export const Sidebar: React.FC = () => {
 
         {/* Tab content — scrollable */}
         <div className="flex-1 overflow-y-auto">
-          {activeTab === SidebarTabEnum.History && <HistoryTab />}
+          {activeTab === SidebarTabEnum.History && (
+            <HistoryTab openBlocks={openBlocks} onSetBlock={handleSetBlock} />
+          )}
         </div>
       </div>
     </ThemeWrapper>

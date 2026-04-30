@@ -14,11 +14,16 @@ export const StoragePanel: React.FC = () => {
   const [limitBytes, setLimitBytes] = useState(0);
 
   useEffect(() => {
-    getStorageUsageApi().then(setUsedBytes);
-    getStorageQuotaApi().then(setLimitBytes);
+    getStorageUsageApi()
+      .then(setUsedBytes)
+      .catch(() => {});
+    getStorageQuotaApi()
+      .then(setLimitBytes)
+      .catch(() => {});
   }, []);
 
-  const usedPct = Math.min((usedBytes / limitBytes) * 100, 100);
+  // Guard against limitBytes = 0 (not yet loaded) to avoid Infinity → 100% flash
+  const usedPct = limitBytes > 0 ? Math.min((usedBytes / limitBytes) * 100, 100) : 0;
 
   return (
     <div className="space-y-3">

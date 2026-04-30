@@ -2,22 +2,28 @@
 
 import clsx from 'clsx';
 import type React from 'react';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef } from 'react';
 
 import { useGlobalStore } from '../../../store/global';
 import { useBlockHistories } from '../../hooks/useBlockHistories';
 import { BlockCollapse } from './BlockCollapse';
 
-export const HistoryTab: React.FC = () => {
+interface Props {
+  /** Persisted open/closed state — passed from Sidebar so it survives close/reopen cycles */
+  openBlocks: Record<string, boolean>;
+  /** Set a specific block open or closed */
+  onSetBlock: (parsedContent: string, open: boolean) => void;
+}
+
+export const HistoryTab: React.FC<Props> = ({ openBlocks, onSetBlock }) => {
   const { focusedParsedContent, clearFocusedBlock } = useGlobalStore();
   const histories = useBlockHistories();
-  const [openBlocks, setOpenBlocks] = useState<Record<string, boolean>>({});
   const itemRefs = useRef<Record<string, HTMLElement | null>>({});
 
   // When focusedParsedContent changes, open that block and scroll to it
   useEffect(() => {
     if (!focusedParsedContent) return;
-    setOpenBlocks((prev) => ({ ...prev, [focusedParsedContent]: true }));
+    onSetBlock(focusedParsedContent, true); // force-open the focused block
     requestAnimationFrame(() => {
       itemRefs.current[focusedParsedContent]?.scrollIntoView({
         behavior: 'smooth',
@@ -25,7 +31,7 @@ export const HistoryTab: React.FC = () => {
       });
       clearFocusedBlock();
     });
-  }, [focusedParsedContent, clearFocusedBlock]);
+  }, [focusedParsedContent, clearFocusedBlock, onSetBlock]);
 
   if (!histories.length) {
     return (
@@ -51,9 +57,7 @@ export const HistoryTab: React.FC = () => {
           history={item.history}
           preview={item.preview}
           isOpen={!!openBlocks[item.parsedContent]}
-          onToggle={() =>
-            setOpenBlocks((prev) => ({ ...prev, [item.parsedContent]: !prev[item.parsedContent] }))
-          }
+          onToggle={() => onSetBlock(item.parsedContent, !openBlocks[item.parsedContent])}
           refCallback={(el) => {
             itemRefs.current[item.parsedContent] = el;
           }}
