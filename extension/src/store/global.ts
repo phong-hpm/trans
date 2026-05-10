@@ -4,12 +4,14 @@ import { create } from 'zustand';
 
 import { getSettingsApi, saveSettingsApi, subscribeSettingsChangesApi } from '../apis/syncApi';
 import { DEFAULT_SETTINGS } from '../constants/settings';
+import { SidebarTabEnum } from '../enums';
 import type { ExtensionSettings } from '../types';
 
 interface GlobalStore extends ExtensionSettings {
   ready: boolean;
   focusedParsedContent: string | null;
   showModal: boolean;
+  activeSidebarTab: SidebarTabEnum;
   platformName: string | null;
   // Load from storage + subscribe to live changes — call once per context
   init: () => void;
@@ -17,8 +19,14 @@ interface GlobalStore extends ExtensionSettings {
   updateSettings: (partial: Partial<ExtensionSettings>) => void;
   // Open sidebar and scroll to a specific block in the History tab
   openSidebarToBlock: (parsedContent: string) => void;
+  // Open sidebar directly to the settings tab
+  openSettingsPanel: () => void;
+  // Switch the currently visible sidebar tab
+  setSidebarTab: (tab: SidebarTabEnum) => void;
   // Clear focused block after sidebar has scrolled to it
   clearFocusedBlock: () => void;
+  // Open the settings modal
+  openModal: () => void;
   // Toggle the settings modal open/closed
   toggleModal: () => void;
   // Set detected platform name (null = unsupported page)
@@ -35,6 +43,7 @@ export const useGlobalStore = create<GlobalStore>((set) => {
     ready: false,
     focusedParsedContent: null,
     showModal: false,
+    activeSidebarTab: SidebarTabEnum.History,
     platformName: null,
 
     init: () => {
@@ -60,11 +69,23 @@ export const useGlobalStore = create<GlobalStore>((set) => {
     // Could be split into setFocusedBlock + persistSidebarOpen if callers ever need
     // to focus a block without toggling sidebar visibility.
     openSidebarToBlock: (parsedContent) => {
-      set({ showSidebar: true, focusedParsedContent: parsedContent });
+      set({
+        showSidebar: true,
+        activeSidebarTab: SidebarTabEnum.History,
+        focusedParsedContent: parsedContent,
+      });
       saveSettingsApi({ showSidebar: true });
     },
 
+    openSettingsPanel: () => {
+      set({ showSidebar: true, activeSidebarTab: SidebarTabEnum.Settings });
+      saveSettingsApi({ showSidebar: true });
+    },
+
+    setSidebarTab: (tab) => set({ activeSidebarTab: tab }),
+
     clearFocusedBlock: () => set({ focusedParsedContent: null }),
+    openModal: () => set({ showModal: true }),
     toggleModal: () => set((s) => ({ showModal: !s.showModal })),
     setPlatformName: (name) => set({ platformName: name }),
   };

@@ -1,10 +1,9 @@
-// dom/mountDom.tsx — Mount global UI components (modal, sidebar, toaster) into document.body
+// dom/mountDom.tsx — Mount global UI components (sidebar, toaster, launcher) into document.body
 
 import { createRoot } from 'react-dom/client';
 import { Toaster } from 'sonner';
 
 import type { Block } from '../../platforms/types';
-import { ControlPanelModal } from '../components/ControlPanelModal';
 import { Sidebar } from '../components/Sidebar';
 import { TranslateAllButton } from '../components/TranslateAllButton';
 import { createShadowHost } from './shadowDom';
@@ -21,16 +20,6 @@ const mountShadowDom = (dataAttr: string, hostStyle: string, Component: React.FC
   document.body.appendChild(host);
   createRoot(mount).render(<Component />);
 };
-
-/**
- * Mounts the ControlPanelModal into document.body via shadow DOM. Idempotent.
- */
-export const mountModalDom = (): void =>
-  mountShadowDom(
-    'data-trans-modal',
-    'position:fixed;top:0;left:0;width:100%;height:0;z-index:999999;',
-    ControlPanelModal
-  );
 
 /**
  * Mounts the Sidebar into document.body via shadow DOM. Idempotent.

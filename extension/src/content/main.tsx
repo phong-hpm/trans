@@ -6,21 +6,8 @@ import { detectPlatform } from '../platforms';
 import { useGlobalStore } from '../store/global';
 import { useHistoryStore } from '../store/history';
 import { processBlocksDom } from './dom/injectDom';
-import {
-  mountModalDom,
-  mountSidebarDom,
-  mountToasterDom,
-  mountTranslateAllDom,
-} from './dom/mountDom';
+import { mountSidebarDom, mountToasterDom, mountTranslateAllDom } from './dom/mountDom';
 import { observePageDom } from './dom/observerDom';
-
-const initModalToggle = (): void => {
-  chrome.runtime.onMessage.addListener((message) => {
-    if (message.type === MessageTypeEnum.ToggleModal) {
-      useGlobalStore.getState().toggleModal();
-    }
-  });
-};
 
 const initDevLogs = (): void => {
   chrome.runtime.onMessage.addListener((message) => {
@@ -91,8 +78,6 @@ const mountPlatformDom = (): void => {
 // ─── Module-level setup (platform-independent) ────────────────────────────────
 
 useGlobalStore.getState().init();
-initModalToggle();
-mountModalDom();
 
 if (ENV.isDev) initDevLogs();
 initAutoTranslateAll();

@@ -28,7 +28,7 @@ export const Button: React.FC<Props> = ({
     <button
       type="button"
       className={clsx(
-        'flex items-center gap-1 font-medium rounded transition-colors disabled:opacity-60',
+        'flex items-center gap-1 font-medium rounded transition-colors disabled:opacity-60 justify-center',
         size === 'sm' && 'py-1 px-2 text-xs',
         size === 'md' && 'py-1.5 px-3 text-xs',
         fullWidth && 'w-full',

@@ -21,6 +21,7 @@ interface Props {
   parsedContent: string;
   blockType: BlockTypeEnum;
   getElement: () => HTMLElement;
+  getElements?: () => HTMLElement[];
   getContextBlocks?: () => ContextBlock[];
   getContainerEl?: () => HTMLElement;
 }
@@ -29,6 +30,7 @@ export const TranslateToolbar: React.FC<Props> = ({
   parsedContent,
   blockType,
   getElement,
+  getElements,
   getContextBlocks,
   getContainerEl,
 }) => {
@@ -42,6 +44,7 @@ export const TranslateToolbar: React.FC<Props> = ({
     parsedContent,
     blockType,
     getElement,
+    getElements,
     getContextBlocks,
     getContainerEl
   );

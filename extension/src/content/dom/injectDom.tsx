@@ -3,15 +3,10 @@
 import type { Root } from 'react-dom/client';
 import { createRoot } from 'react-dom/client';
 
-import { BlockTypeEnum } from '../../enums';
 import type { Block } from '../../platforms/types';
 import type { ContextBlock } from '../../types';
-import { TranslateButton } from '../components/TranslateButton';
 import { TranslateToolbar } from '../components/TranslateToolbar';
 import { createShadowHost } from './shadowDom';
-
-// Title button floats outside the container to the right
-const TITLE_ANCHOR_STYLE = 'position:absolute;top:8px;right:-32px;z-index:9999;';
 
 /**
  * Tracks mounted React roots keyed by their anchor element (a unique DOM node per block).
@@ -47,6 +42,12 @@ export const getParsedContentDom = (el: HTMLElement): string => {
   return parts.join('\n');
 };
 
+export const getParsedContentsDom = (elements: HTMLElement[]): string =>
+  elements
+    .map((el) => getParsedContentDom(el))
+    .filter(Boolean)
+    .join('\n');
+
 /**
  * Creates a shadow root host with Tailwind styles and mounts the translate UI into it.
  * containerEl is the stable outer ancestor (e.g. .react-issue-comment) used by
@@ -55,9 +56,11 @@ export const getParsedContentDom = (el: HTMLElement): string => {
 const mountShadowDom = (
   anchor: HTMLElement,
   contentEl: HTMLElement,
+  attachedContentEls: HTMLElement[],
   parsedContent: string,
-  blockType: BlockTypeEnum,
+  blockType: Block['blockType'],
   getLiveElement: (() => HTMLElement | null) | undefined,
+  getLiveAttachedElements: (() => HTMLElement[]) | undefined,
   getContextBlocks: (() => ContextBlock[]) | undefined,
   containerEl: HTMLElement
 ): void => {
@@ -69,37 +72,27 @@ const mountShadowDom = (
   // Prefer getLiveElement (re-queries DOM each call) over captured contentEl reference,
   // so getElement() never returns a stale node after GitHub re-renders the block.
   const getElement = (): HTMLElement => getLiveElement?.() ?? contentEl;
+  const getElements = (): HTMLElement[] => {
+    const primary = getElement();
+    const attached = getLiveAttachedElements?.() ?? attachedContentEls;
+    return [...attached, primary].filter((el, index, elements) => elements.indexOf(el) === index);
+  };
   const getContainerEl = (): HTMLElement => containerEl;
 
-  const props = { parsedContent, blockType, getElement, getContextBlocks, getContainerEl };
-  const ui =
-    blockType === BlockTypeEnum.Title ? (
-      <TranslateButton {...props} />
-    ) : (
-      <TranslateToolbar {...props} />
-    );
+  const props = {
+    parsedContent,
+    blockType,
+    getElement,
+    getElements,
+    getContextBlocks,
+    getContainerEl,
+  };
+  const ui = <TranslateToolbar {...props} />;
 
   const root = createRoot(mount);
   root.render(ui);
   blockRoots.set(anchor, root);
   anchor.appendChild(host);
-};
-
-/**
- * Creates an absolutely-positioned anchor for the title block's circle button.
- * Returns null if the anchor already exists.
- */
-const createTitleAnchorDom = (containerEl: HTMLElement): HTMLElement | null => {
-  if (containerEl.querySelector(`[data-trans-block]`)) return null;
-
-  if (window.getComputedStyle(containerEl).position === 'static') {
-    containerEl.style.position = 'relative';
-  }
-
-  const anchor = document.createElement('div');
-  anchor.style.cssText = TITLE_ANCHOR_STYLE;
-  containerEl.appendChild(anchor);
-  return anchor;
 };
 
 /**
@@ -124,22 +117,24 @@ export const processBlocksDom = (blocks: Block[]): void => {
   cleanupOrphanedRoots();
 
   for (const block of blocks) {
-    const anchor =
-      block.blockType === BlockTypeEnum.Title
-        ? createTitleAnchorDom(block.containerEl)
-        : createBlockAnchorDom(block.contentEl);
+    const anchor = createBlockAnchorDom(block.contentEl);
 
     if (!anchor) continue;
 
-    const parsedContent = getParsedContentDom(block.contentEl);
+    const parsedContent = getParsedContentsDom([
+      ...(block.attachedContentEls ?? []),
+      block.contentEl,
+    ]);
     if (!parsedContent) continue;
 
     mountShadowDom(
       anchor,
       block.contentEl,
+      block.attachedContentEls ?? [],
       parsedContent,
       block.blockType,
       block.getLiveElement,
+      block.getLiveAttachedElements,
       block.getContextBlocks,
       block.containerEl
     );
