@@ -1,4 +1,4 @@
-// PlatformRuntime.tsx — React-owned side effects for platform state, history, settings, and dev logs
+// App.tsx — Root content-script React app: platform scanning, history, settings, and dev logs
 
 import type React from 'react';
 import { useEffect, useRef } from 'react';
@@ -6,18 +6,14 @@ import { Toaster } from 'sonner';
 
 import ENV from '../../constants/env';
 import { LogTypeEnum, MessageTypeEnum } from '../../enums';
-import type { Block } from '../../platforms/types';
 import { useGlobalStore } from '../../store/global';
 import { useHistoryStore } from '../../store/history';
-import { mountSidebarDom, mountTranslateAllDom } from '../dom/mountDom';
+import { mountGlobalUiDom } from '../dom/globalUiDom';
+import { useWatchPlatformDom } from '../hooks/useWatchPlatformDom';
 
-interface Props {
-  href: string;
-  platformName: string | null;
-  getBlocks: () => Block[];
-}
-
-export const PlatformRuntime: React.FC<Props> = ({ href, platformName, getBlocks }) => {
+export const App: React.FC = () => {
+  const { href, platformName, getBlocks } = useWatchPlatformDom();
+  const { init: initHistory } = useHistoryStore();
   const lastAutoTranslateHrefRef = useRef<string | null>(null);
 
   const runAutoTranslateAll = (targetHref: string): void => {
@@ -94,16 +90,12 @@ export const PlatformRuntime: React.FC<Props> = ({ href, platformName, getBlocks
     useGlobalStore.getState().setPlatformName(platformName);
     if (!platformName) return;
 
-    mountSidebarDom();
-    mountTranslateAllDom(getBlocks);
+    mountGlobalUiDom(getBlocks);
 
-    void useHistoryStore
-      .getState()
-      .init(href)
-      .then(() => {
-        if (useGlobalStore.getState().autoTranslateAll) runAutoTranslateAll(href);
-      });
-  }, [href, platformName, getBlocks]);
+    void initHistory(href).then(() => {
+      if (useGlobalStore.getState().autoTranslateAll) runAutoTranslateAll(href);
+    });
+  }, [href, platformName, getBlocks, initHistory]);
 
   return platformName ? <Toaster position="bottom-right" richColors /> : null;
 };

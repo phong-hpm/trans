@@ -10,44 +10,27 @@ import { IconButton } from '../../components/IconButton';
 import { ThemeWrapper } from '../../components/ThemeWrapper';
 import { Toggle } from '../../components/Toggle';
 import { BlockTypeEnum, TranslateStateEnum } from '../../enums';
+import type { BlockTranslationTarget } from '../../platforms/types';
 import { useGlobalStore } from '../../store/global';
-import type { ContextBlock } from '../../types';
 import { useTranslate } from '../hooks/useTranslate';
 import type { TranslateOption } from './translateOptions';
 import { COMMENT_OPTIONS, SIMPLE_OPTIONS } from './translateOptions';
 import { TranslatePopup } from './TranslatePopup';
 
 interface Props {
-  parsedContent: string;
-  blockType: BlockTypeEnum;
-  getElement: () => HTMLElement;
-  getElements?: () => HTMLElement[];
-  getContextBlocks?: () => ContextBlock[];
-  getContainerEl?: () => HTMLElement;
+  blockTarget: BlockTranslationTarget;
 }
 
-export const TranslateToolbar: React.FC<Props> = ({
-  parsedContent,
-  blockType,
-  getElement,
-  getElements,
-  getContextBlocks,
-  getContainerEl,
-}) => {
+export const TranslateToolbar: React.FC<Props> = ({ blockTarget }) => {
+  const { parsedContent, blockType } = blockTarget;
   const options = blockType === BlockTypeEnum.Comment ? COMMENT_OPTIONS : SIMPLE_OPTIONS;
   const [selectedOption, setSelectedOption] = useState<TranslateOption>(options[0]);
   const [popupOpen, setPopupOpen] = useState(false);
   const dropdownRef = useRef<HTMLButtonElement>(null);
   const { openSidebarToBlock } = useGlobalStore();
 
-  const { state, translate, retranslate, restore, hasTranslation, history, setMode } = useTranslate(
-    parsedContent,
-    blockType,
-    getElement,
-    getElements,
-    getContextBlocks,
-    getContainerEl
-  );
+  const { state, translate, retranslate, restore, hasTranslation, history, setMode } =
+    useTranslate(blockTarget);
 
   const isTranslated = state === TranslateStateEnum.Translated;
   const isLoading = state === TranslateStateEnum.Loading;

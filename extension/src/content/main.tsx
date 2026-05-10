@@ -1,37 +1,22 @@
-// main.tsx — Content-script runtime: detects supported pages and mounts React islands
+// main.tsx — Content-script entrypoint: boots the React runtime island
 
-import { detectPlatform } from '../platforms';
-import { processBlocksDom } from './dom/injectDom';
-import { mountRuntimeDom } from './dom/mountDom';
-import { observePageDom } from './dom/observerDom';
+import type { Root } from 'react-dom/client';
+import { createRoot } from 'react-dom/client';
 
-const getCurrentPlatform = () => detectPlatform(location.href);
+import { RUNTIME_NODE_ID } from '../constants/dom';
+import { App } from './components/App';
 
-const mountPlatformDom = (): void => {
-  mountRuntimeDom({
-    href: location.href,
-    platformName: getCurrentPlatform()?.name ?? null,
-    getBlocks: () => getCurrentPlatform()?.getBlocks() ?? [],
-  });
-};
+let runtimeRoot: Root | null = null;
 
-const renderPlatformBlocks = (): void => {
-  const platform = getCurrentPlatform();
-  if (!platform) return;
-
-  processBlocksDom(platform.getBlocks());
-};
-
-let lastUrl = location.href;
-
-observePageDom(() => {
-  if (location.href !== lastUrl) {
-    lastUrl = location.href;
-    mountPlatformDom();
+const mountRuntimeDom = (): void => {
+  if (!runtimeRoot) {
+    const el = document.createElement('div');
+    el.id = RUNTIME_NODE_ID;
+    document.body.appendChild(el);
+    runtimeRoot = createRoot(el);
   }
 
-  renderPlatformBlocks();
-});
+  runtimeRoot.render(<App />);
+};
 
-mountPlatformDom();
-renderPlatformBlocks();
+mountRuntimeDom();

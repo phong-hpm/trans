@@ -1,6 +1,6 @@
 // index.ts — GitHub Issues platform adapter
 
-import { getSegmentTextDom } from '../../content/dom/segmentsDom';
+import { getOriginalTextDom } from '../../content/dom/textDom';
 import { BlockTypeEnum } from '../../enums';
 import type { ContextBlock } from '../../types';
 import type { Block, PlatformAdapter } from '../types';
@@ -51,16 +51,16 @@ export const githubAdapter: PlatformAdapter = {
         getContextBlocks: (): ContextBlock[] => {
           const ctx: ContextBlock[] = [];
           const titleEl = getTitleEl();
-          if (titleEl) ctx.push({ type: BlockTypeEnum.Title, text: getSegmentTextDom(titleEl) });
+          if (titleEl) ctx.push({ type: BlockTypeEnum.Title, text: getOriginalTextDom(titleEl) });
           const taskEl = getTaskEl();
-          if (taskEl) ctx.push({ type: BlockTypeEnum.Task, text: getSegmentTextDom(taskEl) });
+          if (taskEl) ctx.push({ type: BlockTypeEnum.Task, text: getOriginalTextDom(taskEl) });
           // Re-query at call time so context includes comments added after getBlocks() ran
           const liveCommentBlocks = Array.from(document.querySelectorAll(q.commentBlock));
           const myIndex = liveCommentBlocks.indexOf(commentEl);
           const preceding = myIndex >= 0 ? liveCommentBlocks.slice(0, myIndex) : [];
           preceding.forEach((b) => {
             const el = b.querySelector<HTMLElement>(q.markdownBody);
-            if (el) ctx.push({ type: BlockTypeEnum.Comment, text: getSegmentTextDom(el) });
+            if (el) ctx.push({ type: BlockTypeEnum.Comment, text: getOriginalTextDom(el) });
           });
           return ctx;
         },

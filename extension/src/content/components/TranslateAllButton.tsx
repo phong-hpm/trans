@@ -10,7 +10,7 @@ import extensionIconUrl from '../../../icons/icon128.png';
 import { ThemeWrapper } from '../../components/ThemeWrapper';
 import type { Block } from '../../platforms/types';
 import { useGlobalStore } from '../../store/global';
-import { batchTranslateAll } from '../batchTranslate';
+import { useTranslateAll } from '../hooks/useTranslateAll';
 
 interface Props {
   getBlocks: () => Block[];
@@ -20,7 +20,8 @@ export const TranslateAllButton: React.FC<Props> = ({ getBlocks }) => {
   const [isTranslating, setIsTranslating] = useState(false);
   const [done, setDone] = useState(0);
   const [total, setTotal] = useState(0);
-  const openSettingsPanel = useGlobalStore((s) => s.openSettingsPanel);
+  const { openSettingsPanel } = useGlobalStore();
+  const { onTranslateAll } = useTranslateAll();
   const totalRef = useRef(0);
   const doneRef = useRef(0);
   // Ref-based guard for atomic double-click protection (state updates are async/batched)
@@ -56,7 +57,7 @@ export const TranslateAllButton: React.FC<Props> = ({ getBlocks }) => {
     setIsTranslating(true);
 
     try {
-      const count = await batchTranslateAll(blocks);
+      const count = await onTranslateAll(blocks);
       if (!count) {
         // No segments found — nothing to do
         isTranslatingRef.current = false;
@@ -71,12 +72,12 @@ export const TranslateAllButton: React.FC<Props> = ({ getBlocks }) => {
       isTranslatingRef.current = false;
       setIsTranslating(false);
     }
-  }, [getBlocks]);
+  }, [onTranslateAll, getBlocks]);
 
   return (
     <ThemeWrapper>
       <div
-        className="group relative flex h-10 items-center justify-end"
+        className="group pointer-events-auto fixed bottom-[72px] right-4 z-[9990] flex h-10 items-center justify-end"
         style={{ fontFamily: 'system-ui, sans-serif' }}
       >
         <div

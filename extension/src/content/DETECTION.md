@@ -21,16 +21,15 @@ pages have translatable blocks. The extension must:
 
 ## Files Involved
 
-| File                          | Role                                                      |
-| ----------------------------- | --------------------------------------------------------- |
-| `main.tsx`                    | Entry point — wires everything together                   |
-| `dom/observerDom.ts`          | `MutationObserver` utilities                              |
-| `dom/injectDom.tsx`           | Block injection engine (`processBlocksDom`)               |
-| `dom/mountDom.tsx`            | Global UI mounts (toaster, sidebar, translate-all button) |
-| `platforms/index.ts`          | `detectPlatform(url)` — maps URL to adapter               |
-| `platforms/types.ts`          | `PlatformAdapter` and `Block` interfaces                  |
-| `platforms/github/index.ts`   | GitHub adapter — queries DOM for blocks                   |
-| `platforms/github/queries.ts` | All GitHub CSS selectors in one place                     |
+| File                            | Role                                                  |
+| ------------------------------- | ----------------------------------------------------- |
+| `main.tsx`                      | Entry point — wires everything together               |
+| `hooks/useWatchPlatformDom.tsx` | Watches platform DOM and mounts per-block toolbars    |
+| `dom/globalUiDom.tsx`           | Global shadow-root UI mount (sidebar + translate-all) |
+| `platforms/index.ts`            | `detectPlatform(url)` — maps URL to adapter           |
+| `platforms/types.ts`            | `PlatformAdapter` and `Block` interfaces              |
+| `platforms/github/index.ts`     | GitHub adapter — queries DOM for blocks               |
+| `platforms/github/queries.ts`   | All GitHub CSS selectors in one place                 |
 
 ---
 
@@ -94,24 +93,13 @@ after initial load.
 GitHub renders content asynchronously — the content script may fire before the
 issue title or comments exist in the DOM.
 
-```ts
-// main.tsx — runs once at startup when starting on a platform page
-let attempts = 0;
-const retry = setInterval(() => {
-  processBlocksDom(initialPlatform.getBlocks());
-  // also mounts translate-all button if anchor is available
-  if (++attempts >= 10) clearInterval(retry);
-}, 500);
-```
-
-- Runs at most **10 times × 500 ms = 5 seconds** after load.
-- Stops itself after 10 attempts.
-- Only active at startup; the observer below handles all subsequent changes.
+`useWatchPlatformDom()` runs once on mount, then re-runs through the page-level
+observer below whenever GitHub adds/removes DOM nodes.
 
 ### 3b. MutationObserver (always active)
 
 ```ts
-// dom/observerDom.ts
+// hooks/useWatchPlatformDom.tsx
 observer.observe(document.body, { childList: true, subtree: true });
 ```
 
@@ -147,29 +135,29 @@ MutationObserver fires (debounced 200ms)
   │     → await historyStore.init(location.href)   ← loads saved translations for new page
   │     → if autoTranslateAll: dispatch trans:translate-all (delayed 1s)
   │
-  ├─ mountPlatformDom()   ← idempotent: toaster + sidebar, bail if already mounted
+  ├─ mountGlobalUiDom()   ← idempotent: sidebar + translate-all, bail if already mounted
   │
   ├─ platform.getBlocks() → Block[]
   │
-  ├─ processBlocksDom(blocks)
+  ├─ processBlocks(blocks)
   │     → for each block:
   │         create anchor element (idempotent by data-attr check)
   │         mount React translate UI into shadow DOM
   │         register in blockRoots map (keyed by anchor element)
   │
-  └─ mountTranslateAllDom(anchor)   ← idempotent
+  └─ render <Toaster /> inside App when platform is supported
 ```
 
 All mount operations are **idempotent** — they check for an existing
-`data-trans-*` attribute before doing anything, so calling them on every
-observer tick is safe and cheap.
+extension host id before doing anything, so calling them on every observer tick
+is safe and cheap.
 
 ---
 
 ## Step 5 — Block-Level Observer
 
 In addition to the page-level observer, each mounted block runs its own
-`observeBlockDom` watcher (`dom/observerDom.ts`):
+block-level watcher inside `useTranslate`:
 
 ```ts
 // Watches the stable containerEl of the block
@@ -190,16 +178,16 @@ User is on: github.com/owner/repo/issues  (issue list)
   content script loads
   detectPlatform → null
   no retry interval started
-  observePageDom active ✓
+  useWatchPlatformDom observer active ✓
 
 User clicks an issue → Turbo replaces DOM
   MutationObserver fires (debounced 200ms)
   detectPlatform(location.href) → githubAdapter ✓
   location.href !== lastUrl → URL change detected
   historyStore.init(new URL) → loads saved translations
-  mountPlatformDom() → toaster + sidebar mounted
+  mountGlobalUiDom() → sidebar + translate-all mounted
   getBlocks() → [title, task, ...comments]
-  processBlocksDom() → injects translate UI
+  processBlocks() → injects translate UI
 ```
 
 ---
@@ -214,4 +202,4 @@ User clicks an issue → Turbo replaces DOM
    - `getHeaderAnchor()` (optional): where to mount the Translate All button
 3. Add the adapter to `PLATFORMS` in `platforms/index.ts`.
 
-No changes needed in `main.tsx` or `observerDom.ts`.
+No changes needed in `main.tsx` or `hooks/useWatchPlatformDom.tsx`.

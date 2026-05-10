@@ -1,7 +1,6 @@
-// translationSync.ts — Coordinator: wraps useHistoryStore write operations + optional DB sync.
-// Use this module (not useHistoryStore directly) from hooks and components for any write.
-// Read operations (getBlockHistory, getSelectedEntry) can call useHistoryStore directly —
-// this is intentional: reads are pure getters, no sync side effects needed.
+// translationSync.ts — Write-only coordinator: wraps useHistoryStore mutations with optional DB sync.
+// Use this module for any history write (add, select, delete).
+// Pure reads use useHistoryStore.getState() directly — no sync side effects needed.
 
 import { deleteBlockHistoryDbApi, saveBlockHistoryDbApi } from '../apis/dbHistoryApi';
 import type { BlockTypeEnum } from '../enums';
@@ -20,18 +19,6 @@ const syncDelete = (parsedContent: string, pageUrl: string): void => {
   if (!isSyncEnabled()) return;
   deleteBlockHistoryDbApi(parsedContent, pageUrl).catch(() => {});
 };
-
-/**
- * Returns the history for a block on the current page, or null.
- */
-export const getBlockHistory = (parsedContent: string) =>
-  useHistoryStore.getState().getBlockHistory(parsedContent);
-
-/**
- * Returns the currently selected entry for a block, or null.
- */
-export const getSelectedEntry = (parsedContent: string) =>
-  useHistoryStore.getState().getSelectedEntry(parsedContent);
 
 /**
  * Adds a new translation entry and optionally syncs to DB.

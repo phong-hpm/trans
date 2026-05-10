@@ -72,6 +72,7 @@ trans/
         │   ├── cacheApi.ts              — Abstraction over chrome.storage.local (fetchCacheItemApi, saveCacheItemApi, deleteCacheItemApi, fetchAllCacheItemsApi, fetchCacheUsageApi, getCacheQuotaApi, onCacheChangedApi)
         │   └── syncApi.ts               — Abstraction over chrome.storage.sync (fetchSettingsApi, saveSettingsApi, onSettingsChangedApi)
         ├── constants/
+        │   ├── dom.ts                   — DOM ids and attribute names used by extension-injected nodes
         │   ├── env.ts                   — ENV default export: { isDev, backendUrl } derived from import.meta.env
         │   ├── languages.ts             — LANGUAGES constant: supported target languages
         │   ├── providers.ts             — PROVIDERS list and MODELS map (provider → model options)
@@ -109,19 +110,18 @@ trans/
         │   └── history.ts               — Zustand history store: page histories in memory, init(), addEntry(), selectEntry(), deleteEntry(), deleteBlockHistory(), clearPage(), clearAll()
         ├── content/
         │   ├── DETECTION.md             — Explains platform detection, block discovery, MutationObserver strategy, and Turbo navigation handling
-        │   ├── main.tsx                 — Content-script runtime: detects supported pages and mounts React islands
+        │   ├── main.tsx                 — Content-script entrypoint: boots the React runtime island
         │   ├── activeTranslations.ts    — In-memory Set of parsedContent keys currently showing translation; survives component re-mounts
         │   ├── translationSync.ts       — Sync coordinator: wraps useHistoryStore + optionally syncs to backend DB
         │   ├── batchTranslate.ts        — batchTranslateAll: extracts segments from all blocks, sends one BatchTranslate message, saves results to history
         │   ├── dom/
-        │   │   ├── injectDom.tsx        — Shadow DOM injection engine: processBlocksDom mounts translate UI per block
-        │   │   ├── segmentsDom.ts       — Extract/apply/restore DOM text segments; read-only readTextDom for context building
-        │   │   ├── mountDom.tsx         — mountModalDom, mountSidebarDom, mountToasterDom, mountTranslateAllDom (uses createShadowHost)
-        │   │   ├── shadowDom.ts         — createShadowHost: shared factory for shadow root hosts with Tailwind styles injected
-        │   │   └── observerDom.ts       — observePageDom (debounced body watcher), observeBlockDom (re-render detector)
+        │   │   ├── globalUiDom.tsx      — Mount the global shadow-root UI island owned by App
+        │   │   ├── segmentsDom.ts       — Extract/apply/restore DOM text segments
+        │   │   ├── textDom.ts           — Read text from host-page DOM without mutating it
+        │   │   └── shadowDom.ts         — createShadowHost: shared factory for shadow root hosts with Tailwind styles injected
         │   ├── shadow.css               — Tailwind directives; imported via ?inline → injected into shadow roots
         │   ├── components/
-        │   │   ├── PlatformRuntime.tsx — React-owned side effects for platform state, history, settings, and dev logs
+        │   │   ├── App.tsx — Root content-script React app: platform scanning, history, settings, and dev logs
         │   │   ├── TranslateAllButton.tsx — Fixed floating pill button (bottom-right); calls batchTranslateAll then dispatches trans:translate-all; tracks per-block progress
         │   │   ├── TranslatePopup.tsx   — Mode-selection dropdown portalled into shadow root; uses ThemeWrapper
         │   │   ├── TranslateToolbar.tsx — Top-right toolbar for task/comment blocks: toggle + split translate + IconButton(retranslate) + Button(history); uses ThemeWrapper
@@ -139,8 +139,15 @@ trans/
         │   │       ├── TabContent.tsx   — Shared sidebar tab content surface
         │   │       └── BlockCollapse.tsx — Collapsible block entry with translation entries, select + ConfirmIconButton delete
         │   └── hooks/
+        │       ├── useReapplyTranslationOnBlockDomChange.ts — Re-apply active translations after host DOM replacement
+        │       ├── useTargetElements.ts — Resolve live connected DOM elements targeted by a block toolbar
+        │       ├── useTranslatedDom.ts  — Apply, restore, and rehydrate translated DOM segments
+        │       ├── useTranslateApi.ts   — Send per-block translation requests through the background worker
+        │       ├── useTranslateRuntimeEvents.ts — Handle document-level translate/settings events for a block
+        │       ├── useTranslationHistorySync.ts — Sync block toolbar state with translation history store
         │       ├── useTranslate.ts      — Translation state machine with history-aware cache, retranslate, selectHistoryEntry, deleteHistoryEntry
-        │       └── useBlockHistories.ts — Load and subscribe to all block histories for current page
+        │       ├── useBlockHistories.ts — Load and subscribe to all block histories for current page
+        │       └── useWatchPlatformDom.tsx — Watch platform DOM changes and mount per-block translation toolbars
 ```
 
 # To delete: rm -rf extension/src/content/components/Modal
