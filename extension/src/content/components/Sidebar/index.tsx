@@ -9,16 +9,21 @@ import { IconButton } from '../../../components/IconButton';
 import { ThemeWrapper } from '../../../components/ThemeWrapper';
 import { SidebarModeEnum, SidebarTabEnum } from '../../../enums';
 import { useGlobalStore } from '../../../store/global';
+import { ControlPanel } from '../ControlPanel';
 import { HistoryTab } from './HistoryTab';
 import { Tabs } from './Tabs';
 
-const TABS = [{ id: SidebarTabEnum.History, label: 'History' }];
-// 320px = Tailwind w-80 (20rem × 16px). Also used for document.body.style.marginRight in page mode.
-const SIDEBAR_WIDTH = 320;
+const TABS = [
+  { id: SidebarTabEnum.History, label: 'History' },
+  { id: SidebarTabEnum.Settings, label: 'Settings' },
+];
+// Also used for document.body.style.marginRight in page mode.
+const SIDEBAR_WIDTH = 480;
 
 export const Sidebar: React.FC = () => {
-  const { showSidebar, sidebarMode, updateSettings } = useGlobalStore();
-  const [activeTab, setActiveTab] = useState<string>(SidebarTabEnum.History);
+  const { showSidebar, sidebarMode, activeSidebarTab, setSidebarTab, updateSettings } =
+    useGlobalStore();
+  const [isMounted, setIsMounted] = useState(showSidebar);
   // Persisted across open/close cycles — stored here so HistoryTab unmount doesn't reset it
   const [openBlocks, setOpenBlocks] = useState<Record<string, boolean>>({});
 
@@ -27,6 +32,16 @@ export const Sidebar: React.FC = () => {
   }, []);
 
   const isDrawerMode = sidebarMode === SidebarModeEnum.Drawer;
+
+  useEffect(() => {
+    if (showSidebar) {
+      setIsMounted(true);
+      return;
+    }
+
+    const timeout = window.setTimeout(() => setIsMounted(false), 200);
+    return () => window.clearTimeout(timeout);
+  }, [showSidebar]);
 
   // Push page content when NOT in drawer mode (i.e., page mode).
   // Back up the previous marginRight so cleanup restores it (not '')
@@ -40,7 +55,7 @@ export const Sidebar: React.FC = () => {
     };
   }, [showSidebar, isDrawerMode]);
 
-  if (!showSidebar) return null;
+  if (!isMounted) return null;
 
   const handleClose = () => updateSettings({ showSidebar: false });
   const handleModeToggle = () =>
@@ -51,6 +66,8 @@ export const Sidebar: React.FC = () => {
       <div
         className={clsx(
           'fixed top-0 right-0 h-dvh flex flex-col border-l shadow-xl',
+          'transition-transform duration-200 ease-out will-change-transform',
+          showSidebar ? 'translate-x-0' : 'translate-x-full',
           'bg-white border-gray-300',
           'dark:bg-gray-950 dark:border-gray-600'
         )}
@@ -94,13 +111,18 @@ export const Sidebar: React.FC = () => {
         </div>
 
         {/* Tab bar */}
-        <Tabs tabs={TABS} activeTab={activeTab} onChange={setActiveTab} />
+        <Tabs
+          tabs={TABS}
+          activeTab={activeSidebarTab}
+          onChange={(id) => setSidebarTab(id as SidebarTabEnum)}
+        />
 
         {/* Tab content — scrollable */}
-        <div className="flex-1 overflow-y-auto">
-          {activeTab === SidebarTabEnum.History && (
+        <div className="flex-1 min-h-0 overflow-y-auto">
+          {activeSidebarTab === SidebarTabEnum.History && (
             <HistoryTab openBlocks={openBlocks} onSetBlock={handleSetBlock} />
           )}
+          {activeSidebarTab === SidebarTabEnum.Settings && <ControlPanel />}
         </div>
       </div>
     </ThemeWrapper>

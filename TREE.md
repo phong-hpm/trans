@@ -122,7 +122,6 @@ trans/
         │   ├── shadow.css               — Tailwind directives; imported via ?inline → injected into shadow roots
         │   ├── components/
         │   │   ├── TranslateAllButton.tsx — Fixed floating pill button (bottom-right); calls batchTranslateAll then dispatches trans:translate-all; tracks per-block progress
-        │   │   ├── TranslateButton.tsx  — Circle icon button used for title blocks; uses BlockTypeEnum
         │   │   ├── TranslatePopup.tsx   — Mode-selection dropdown portalled into shadow root; uses ThemeWrapper
         │   │   ├── TranslateToolbar.tsx — Top-right toolbar for task/comment blocks: toggle + split translate + IconButton(retranslate) + Button(history); uses ThemeWrapper
         │   │   ├── translateOptions.ts  — COMMENT_OPTIONS, SIMPLE_OPTIONS, TranslateOption type shared between Popup and Toolbar
@@ -130,7 +129,6 @@ trans/
         │   │   │   ├── index.tsx        — Nav shell: Settings | Provider | Page | Storage | Develop (dev only)
         │   │   │   ├── SettingsPanel.tsx — Language select + display toggles
         │   │   │   ├── ProviderPanel.tsx — Provider/model selects + user context textarea
-        │   │   │   ├── PagePanel.tsx    — Platform info + clear page history
         │   │   │   ├── StoragePanel.tsx — Storage usage bar + clear all history
         │   │   │   └── DevelopPanel.tsx — Dev-only panel: Log Global Store, Log page history buttons (hidden in production)
         │   │   └── Sidebar/
@@ -155,7 +153,7 @@ trans/
 |---|---|
 | Add support for a new platform | `platforms/<name>/` — implement `PlatformAdapter`, register in `platforms/index.ts` |
 | Change which elements get a button (GitHub) | `platforms/github/index.ts` — `getBlocks` |
-| Change button appearance / states | `content/components/TranslateButton.tsx` |
+| Change button appearance / states | `content/components/TranslateToolbar.tsx` |
 | Change translation logic / error handling | `content/hooks/useTranslate.ts` |
 | Change sidebar appearance / layout | `content/components/Sidebar/index.tsx` |
 | Change history entry display | `content/components/Sidebar/BlockCollapse.tsx` |

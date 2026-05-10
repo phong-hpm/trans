@@ -14,26 +14,6 @@ interface TranslateMessage extends TranslateRequest {
   type: MessageTypeEnum.Translate;
 }
 
-// Forward icon click to the active content script as a ToggleModal message.
-// Retries up to 3 times with a 350ms delay if the content script is not yet ready.
-chrome.action.onClicked.addListener((tab) => {
-  if (!tab.id) return;
-  const tabId = tab.id;
-
-  const sendToggle = async (maxRetries: number): Promise<void> => {
-    for (let attempt = 0; attempt <= maxRetries; attempt++) {
-      try {
-        await chrome.tabs.sendMessage(tabId, { type: MessageTypeEnum.ToggleModal });
-        return;
-      } catch {
-        if (attempt < maxRetries) await new Promise((r) => setTimeout(r, 350));
-      }
-    }
-  };
-
-  void sendToggle(3);
-});
-
 const postJson = (url: string, body: unknown): Promise<Response> =>
   fetch(url, {
     method: 'POST',

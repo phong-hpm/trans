@@ -28,6 +28,7 @@ export const useTranslate = (
   parsedContent: string,
   blockType: BlockTypeEnum,
   getElement: () => HTMLElement,
+  getElements?: () => HTMLElement[],
   getContextBlocks?: () => ContextBlock[],
   getContainerEl?: () => HTMLElement
 ) => {
@@ -68,6 +69,11 @@ export const useTranslate = (
   const translateRef = useRef<() => Promise<void>>(async () => {});
   const restoreRef = useRef<() => void>(() => {});
 
+  const getTargetElements = useCallback((): HTMLElement[] => {
+    const elements = getElements?.() ?? [getElement()];
+    return elements.filter((el, index) => el.isConnected && elements.indexOf(el) === index);
+  }, [getElement, getElements]);
+
   const setState = useCallback(
     (s: TranslateState) => {
       stateRef.current = s;
@@ -84,9 +90,9 @@ export const useTranslate = (
   const restore = useCallback(() => {
     const segments = segmentsRef.current;
     if (!segments) return;
-    restoreOriginalDom(segments, getElement());
+    getTargetElements().forEach((el) => restoreOriginalDom(segments, el));
     setState(TranslateStateEnum.Idle);
-  }, [getElement, setState]);
+  }, [getTargetElements, setState]);
 
   // No dep array — runs every render to keep ref pointing at the latest restore closure
   useEffect(() => {
@@ -128,7 +134,7 @@ export const useTranslate = (
     [blockType, targetLanguage, provider, model, userContext, getContextBlocks]
   );
 
-  const applyFromEntry = useCallback((entry: TranslationEntry, el: HTMLElement) => {
+  const applyFromEntry = useCallback((entry: TranslationEntry, elements: HTMLElement[]) => {
     if (!segmentsRef.current) return;
     const map = new Map(entry.segments.map((s) => [s.text, s.translatedText]));
     const updated = segmentsRef.current.map((s) => ({
@@ -136,7 +142,7 @@ export const useTranslate = (
       translatedText: map.get(s.text) ?? s.text,
     }));
     segmentsRef.current = updated;
-    applyTranslationDom(updated, el);
+    elements.forEach((el) => applyTranslationDom(updated, el));
   }, []);
 
   /**
@@ -146,30 +152,29 @@ export const useTranslate = (
    */
   const applyToLiveElement = useCallback(
     (translated: TranslatedSegment[]): void => {
-      const currentEl = getElement();
-      const firstId = translated[0]?.id;
-      const spansPresent = firstId
-        ? !!currentEl.querySelector(`[data-trans-id="${firstId}"]`)
-        : false;
+      const currentElements = getTargetElements();
+      const spansPresent = translated.every((segment) =>
+        currentElements.some((el) => el.querySelector(`[data-trans-id="${segment.id}"]`))
+      );
 
       if (spansPresent) {
         segmentsRef.current = translated;
-        applyTranslationDom(translated, currentEl);
+        currentElements.forEach((el) => applyTranslationDom(translated, el));
       } else {
         // Element replaced during async gap — re-extract text nodes and re-apply by text match
         const map = new Map(translated.map((s) => [s.text, s.translatedText]));
-        const raw = extractSegmentsDom(currentEl);
+        const raw = currentElements.flatMap((el) => extractSegmentsDom(el));
         if (raw.length) {
           const rehydrated = raw.map((s) => ({
             ...s,
             translatedText: map.get(s.text) ?? s.text,
           }));
           segmentsRef.current = rehydrated;
-          applyTranslationDom(rehydrated, currentEl);
+          currentElements.forEach((el) => applyTranslationDom(rehydrated, el));
         }
       }
     },
-    [getElement]
+    [getTargetElements]
   );
 
   const translate = useCallback(async () => {
@@ -186,8 +191,8 @@ export const useTranslate = (
     setState(TranslateStateEnum.Loading);
 
     try {
-      const el = getElement();
-      const rawSegments = extractSegmentsDom(el);
+      const elements = getTargetElements();
+      const rawSegments = elements.flatMap((el) => extractSegmentsDom(el));
 
       if (!rawSegments.length) {
         setState(TranslateStateEnum.Idle);
@@ -199,7 +204,7 @@ export const useTranslate = (
       // Check for a selected history entry (synchronous — no async gap, el is still valid)
       const selectedEntry = useHistoryStore.getState().getSelectedEntry(parsedContent);
       if (selectedEntry) {
-        applyFromEntry(selectedEntry, el);
+        applyFromEntry(selectedEntry, elements);
         setState(TranslateStateEnum.Translated);
         return;
       }
@@ -218,7 +223,7 @@ export const useTranslate = (
       toast.error(msg);
       setState(TranslateStateEnum.Idle);
     }
-  }, [parsedContent, getElement, setState, callApi, applyFromEntry, applyToLiveElement]);
+  }, [parsedContent, getTargetElements, setState, callApi, applyFromEntry, applyToLiveElement]);
 
   // No dep array — runs every render to keep ref pointing at the latest translate closure
   useEffect(() => {
@@ -230,8 +235,7 @@ export const useTranslate = (
 
     // If no segments yet, extract from current live element first
     if (!segmentsRef.current) {
-      const el = getElement();
-      const extracted = extractSegmentsDom(el);
+      const extracted = getTargetElements().flatMap((el) => extractSegmentsDom(el));
       if (!extracted.length) return;
       segmentsRef.current = extracted.map((s) => ({ ...s, translatedText: s.text }));
     }
@@ -257,7 +261,7 @@ export const useTranslate = (
       toast.error(msg);
       setState(TranslateStateEnum.Idle);
     }
-  }, [parsedContent, getElement, setState, callApi, applyToLiveElement]);
+  }, [parsedContent, getTargetElements, setState, callApi, applyToLiveElement]);
 
   const selectHistoryEntry = useCallback(
     (entryId: string) => {
@@ -302,10 +306,10 @@ export const useTranslate = (
       // Re-apply if currently showing translation
       const selected = hist.entries.find((e) => e.selected);
       if (selected && stateRef.current === TranslateStateEnum.Translated && segmentsRef.current) {
-        applyFromEntry(selected, getElement());
+        applyFromEntry(selected, getTargetElements());
       }
     });
-  }, [parsedContent, getElement, applyFromEntry]);
+  }, [parsedContent, getTargetElements, applyFromEntry]);
 
   // Auto-apply saved translation when store is ready and alwaysShowTranslated is enabled
   useEffect(() => {
@@ -332,12 +336,14 @@ export const useTranslate = (
       if (stateRef.current !== TranslateStateEnum.Translated) return;
       if (!segmentsRef.current?.length) return;
 
-      const liveEl = getElement();
-      if (!liveEl.isConnected) return; // block removed from DOM
+      const liveElements = getTargetElements();
+      if (!liveElements.length) return; // block removed from DOM
 
       // If our spans still exist in the current element, nothing to re-apply
-      const firstId = segmentsRef.current[0].id;
-      if (liveEl.querySelector(`[data-trans-id="${firstId}"]`)) return;
+      const spansPresent = segmentsRef.current.every((segment) =>
+        liveElements.some((el) => el.querySelector(`[data-trans-id="${segment.id}"]`))
+      );
+      if (spansPresent) return;
 
       // Content element was replaced — re-extract and re-apply translation
       const translationMap = new Map(segmentsRef.current.map((s) => [s.text, s.translatedText]));
@@ -345,20 +351,20 @@ export const useTranslate = (
       // Disconnect before mutating DOM to prevent infinite callback loop
       observer.disconnect();
 
-      const raw = extractSegmentsDom(liveEl);
+      const raw = liveElements.flatMap((el) => extractSegmentsDom(el));
       if (raw.length) {
         const rehydrated = raw.map((s) => ({
           ...s,
           translatedText: translationMap.get(s.text) ?? s.text,
         }));
         segmentsRef.current = rehydrated;
-        applyTranslationDom(rehydrated, liveEl);
+        liveElements.forEach((el) => applyTranslationDom(rehydrated, el));
       }
 
       // Reconnect to the same stable container
       observer.observe(containerEl, { childList: true, subtree: true });
     });
-  }, [getElement, getContainerEl]);
+  }, [getElement, getTargetElements, getContainerEl]);
 
   // Handle translate-all event: run translate() and signal completion when done
   useEffect(() => {

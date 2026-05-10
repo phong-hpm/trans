@@ -13,35 +13,25 @@ export const githubAdapter: PlatformAdapter = {
   getBlocks: (): Block[] => {
     const blocks: Block[] = [];
 
-    // Issue title
-    const titleContainer = document.querySelector<HTMLElement>(q.titleContainer);
-    const titleContentEl = document.querySelector<HTMLElement>(q.titleText);
-    if (titleContainer && titleContentEl) {
-      blocks.push({
-        blockType: BlockTypeEnum.Title,
-        containerEl: titleContainer,
-        contentEl: titleContentEl,
-        getLiveElement: () => document.querySelector<HTMLElement>(q.titleText),
-      });
-    }
-
     // Issue body
     const issueBodyBlock = document.querySelector<HTMLElement>(q.issueBody);
     const bodyContentEl = document.querySelector<HTMLElement>(
       `${q.issueBodyViewer} ${q.markdownBody}`
     );
+    const titleContentEl = document.querySelector<HTMLElement>(q.titleText);
     if (issueBodyBlock && bodyContentEl) {
       blocks.push({
         blockType: BlockTypeEnum.Task,
         containerEl: issueBodyBlock,
         contentEl: bodyContentEl,
+        attachedContentEls: titleContentEl ? [titleContentEl] : [],
         getLiveElement: () =>
           document.querySelector<HTMLElement>(`${q.issueBodyViewer} ${q.markdownBody}`),
-        getContextBlocks: (): ContextBlock[] => {
+        getLiveAttachedElements: () => {
           const titleEl = getTitleEl();
-          if (!titleEl) return [];
-          return [{ type: BlockTypeEnum.Title, text: getSegmentTextDom(titleEl) }];
+          return titleEl ? [titleEl] : [];
         },
+        getContextBlocks: (): ContextBlock[] => [],
       });
     }
 

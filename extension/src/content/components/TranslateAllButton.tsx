@@ -1,13 +1,15 @@
-// TranslateAllButton.tsx — Fixed floating button that batch-translates all blocks in one API call
+// TranslateAllButton.tsx — Floating extension launcher with settings and batch translate actions
 
 import clsx from 'clsx';
-import { Languages, Loader2 } from 'lucide-react';
+import { Languages, Loader2, Settings } from 'lucide-react';
 import type React from 'react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 
+import extensionIconUrl from '../../../icons/icon128.png';
 import { ThemeWrapper } from '../../components/ThemeWrapper';
 import type { Block } from '../../platforms/types';
+import { useGlobalStore } from '../../store/global';
 import { batchTranslateAll } from '../batchTranslate';
 
 interface Props {
@@ -18,6 +20,7 @@ export const TranslateAllButton: React.FC<Props> = ({ getBlocks }) => {
   const [isTranslating, setIsTranslating] = useState(false);
   const [done, setDone] = useState(0);
   const [total, setTotal] = useState(0);
+  const openSettingsPanel = useGlobalStore((s) => s.openSettingsPanel);
   const totalRef = useRef(0);
   const doneRef = useRef(0);
   // Ref-based guard for atomic double-click protection (state updates are async/batched)
@@ -72,34 +75,76 @@ export const TranslateAllButton: React.FC<Props> = ({ getBlocks }) => {
 
   return (
     <ThemeWrapper>
-      <button
-        type="button"
-        onClick={handleClick}
-        disabled={isTranslating}
-        title="Translate all blocks"
-        className={clsx(
-          'flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-colors',
-          'shadow-md border',
-          isTranslating
-            ? 'border-blue-200 bg-blue-50 text-blue-600 cursor-not-allowed dark:border-blue-800 dark:bg-blue-950/40 dark:text-blue-400'
-            : 'border-gray-200 bg-white text-gray-700 hover:bg-gray-50 hover:shadow-lg dark:border-gray-600 dark:bg-gray-900 dark:text-gray-200 dark:hover:bg-gray-800'
-        )}
+      <div
+        className="group relative flex flex-col items-end gap-2"
         style={{ fontFamily: 'system-ui, sans-serif' }}
       >
-        {isTranslating ? (
-          <>
-            <Loader2 className="w-3.5 h-3.5 animate-spin flex-shrink-0" />
-            <span className="whitespace-nowrap tabular-nums">
+        <div
+          className={clsx(
+            'absolute bottom-10 right-0 flex min-w-40 flex-col overflow-hidden rounded-md border shadow-lg',
+            'pointer-events-none translate-y-1 opacity-0 transition-all duration-150',
+            'group-hover:pointer-events-auto group-hover:translate-y-0 group-hover:opacity-100',
+            'group-focus-within:pointer-events-auto group-focus-within:translate-y-0 group-focus-within:opacity-100',
+            'border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-900'
+          )}
+        >
+          <button
+            type="button"
+            onClick={openSettingsPanel}
+            className={clsx(
+              'flex items-center gap-2 px-3 py-2 text-left text-xs font-medium transition-colors',
+              'text-gray-700 hover:bg-gray-50 dark:text-gray-100 dark:hover:bg-gray-800'
+            )}
+          >
+            <Settings className="h-3.5 w-3.5 flex-shrink-0" />
+            <span className="whitespace-nowrap">Settings</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={handleClick}
+            disabled={isTranslating}
+            className={clsx(
+              'flex items-center gap-2 border-t px-3 py-2 text-left text-xs font-medium transition-colors',
+              'border-gray-100 text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60',
+              'dark:border-gray-800 dark:text-gray-100 dark:hover:bg-gray-800'
+            )}
+          >
+            {isTranslating ? (
+              <Loader2 className="h-3.5 w-3.5 flex-shrink-0 animate-spin" />
+            ) : (
+              <Languages className="h-3.5 w-3.5 flex-shrink-0" />
+            )}
+            <span className="whitespace-nowrap">Translate all</span>
+          </button>
+        </div>
+
+        <button
+          type="button"
+          title="Task Translator"
+          className={clsx(
+            'relative flex h-10 w-10 items-center justify-center rounded-full border bg-white p-1.5 shadow-md',
+            'transition-all duration-150 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-blue-500',
+            'border-gray-200 dark:border-gray-600 dark:bg-gray-900'
+          )}
+        >
+          <img
+            src={extensionIconUrl}
+            alt="Task Translator"
+            className="h-full w-full rounded-full"
+          />
+          {isTranslating && (
+            <span
+              className={clsx(
+                'absolute -right-1 -top-1 rounded-full border px-1 text-[10px] font-medium tabular-nums',
+                'border-blue-200 bg-blue-50 text-blue-600 dark:border-blue-800 dark:bg-blue-950 dark:text-blue-400'
+              )}
+            >
               {done}/{total}
             </span>
-          </>
-        ) : (
-          <>
-            <Languages className="w-3.5 h-3.5 flex-shrink-0" />
-            <span className="whitespace-nowrap">Translate all</span>
-          </>
-        )}
-      </button>
+          )}
+        </button>
+      </div>
     </ThemeWrapper>
   );
 };

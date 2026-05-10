@@ -4,7 +4,7 @@ import { MessageTypeEnum } from '../enums';
 import type { Block } from '../platforms/types';
 import { useGlobalStore } from '../store/global';
 import type { BatchTranslateResponse } from '../types';
-import { getParsedContentDom } from './dom/injectDom';
+import { getParsedContentsDom } from './dom/injectDom';
 import { extractSegmentsDom } from './dom/segmentsDom';
 import { addTranslationEntry } from './translationSync';
 
@@ -36,10 +36,15 @@ export const batchTranslateAll = async (blocks: Block[]): Promise<number> => {
 
   const prepared: PreparedBlock[] = [];
   for (const block of blocks) {
-    const parsedContent = getParsedContentDom(block.contentEl);
+    const livePrimary = block.getLiveElement?.() ?? block.contentEl;
+    const liveAttached = block.getLiveAttachedElements?.() ?? block.attachedContentEls ?? [];
+    const elements = [...liveAttached, livePrimary].filter(
+      (el, index, all): el is HTMLElement => !!el && el.isConnected && all.indexOf(el) === index
+    );
+    const parsedContent = getParsedContentsDom(elements);
     if (!parsedContent) continue;
 
-    const rawSegments = extractSegmentsDom(block.contentEl);
+    const rawSegments = elements.flatMap((el) => extractSegmentsDom(el));
     if (!rawSegments.length) continue;
 
     prepared.push({
