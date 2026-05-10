@@ -3,7 +3,7 @@
 import { MessageTypeEnum } from '../enums';
 import type { Block } from '../platforms/types';
 import { useGlobalStore } from '../store/global';
-import type { BatchTranslateResponse } from '../types';
+import type { BatchTranslateResponse, ContextBlock } from '../types';
 import { getParsedContentsDom } from './dom/injectDom';
 import { extractSegmentsDom } from './dom/segmentsDom';
 import { addTranslationEntry } from './translationSync';
@@ -13,10 +13,11 @@ import { addTranslationEntry } from './translationSync';
  *
  * Flow:
  *   1. Extract DOM segments from each block.
- *   2. Send one BackgroundBatchTranslateMessage to the background worker.
- *   3. Background POSTs to /translate/batch — one LLM call for all segments.
- *   4. Save each block's result to the history store.
- *   5. Dispatch trans:translate-all — each block's translate() reads from history
+ *   2. Build one full-page context from every block.
+ *   3. Send one BackgroundBatchTranslateMessage to the background worker.
+ *   4. Background POSTs to /translate/batch — one LLM call for all segments.
+ *   5. Save each block's result to the history store.
+ *   6. Dispatch trans:translate-all — each block's translate() reads from history
  *      and applies the translation without calling the API again.
  *
  * Returns the number of blocks that were sent for translation (0 if nothing to do).
@@ -28,7 +29,6 @@ export const batchTranslateAll = async (blocks: Block[]): Promise<number> => {
   type PreparedBlock = {
     parsedContent: string;
     segments: { id: string; text: string }[];
-    contextBlocks: ReturnType<NonNullable<Block['getContextBlocks']>>;
     blockType: Block['blockType'];
     // id→text map for result reconstruction
     idToText: Map<string, string>;
@@ -50,7 +50,6 @@ export const batchTranslateAll = async (blocks: Block[]): Promise<number> => {
     prepared.push({
       parsedContent,
       segments: rawSegments.map(({ id, text }) => ({ id, text })),
-      contextBlocks: block.getContextBlocks?.() ?? [],
       blockType: block.blockType,
       idToText: new Map(rawSegments.map((s) => [s.id, s.text])),
     });
@@ -58,13 +57,18 @@ export const batchTranslateAll = async (blocks: Block[]): Promise<number> => {
 
   if (!prepared.length) return 0;
 
+  const contextBlocks: ContextBlock[] = prepared.map(({ blockType, parsedContent }) => ({
+    type: blockType,
+    text: parsedContent,
+  }));
+
   const result = (await chrome.runtime.sendMessage({
     type: MessageTypeEnum.BatchTranslate,
-    blocks: prepared.map(({ blockType, segments, contextBlocks }) => ({
+    blocks: prepared.map(({ blockType, segments }) => ({
       blockType,
       segments,
-      contextBlocks,
     })),
+    contextBlocks,
     targetLanguage,
     provider,
     model,

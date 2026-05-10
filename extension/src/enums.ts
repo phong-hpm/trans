@@ -31,7 +31,9 @@ export enum SidebarModeEnum {
 
 export enum SidebarTabEnum {
   History = 'history',
-  Settings = 'settings',
+  General = 'general',
+  Provider = 'provider',
+  Develop = 'develop',
 }
 
 export enum TranslateStateEnum {

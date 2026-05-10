@@ -13,11 +13,11 @@ export interface TranslateProviderParams {
 export interface BatchTranslateProviderBlock {
   blockType: BlockType;
   segments: TranslateSegment[];
-  contextBlocks?: ContextBlock[];
 }
 
 export interface BatchTranslateProviderParams {
   blocks: BatchTranslateProviderBlock[];
+  contextBlocks?: ContextBlock[];
   targetLanguage: string;
   model: string;
   userContext?: string;

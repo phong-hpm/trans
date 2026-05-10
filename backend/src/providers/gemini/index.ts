@@ -37,16 +37,16 @@ export const geminiProvider: TranslationProvider = {
     return parseJson<{ id: string; translatedText: string }[]>(result.response.text(), model);
   },
 
-  async translateBatch({ blocks, targetLanguage, model, userContext }) {
+  async translateBatch({ blocks, contextBlocks, targetLanguage, model, userContext }) {
     const genAI = getClient();
     const instance = genAI.getGenerativeModel({
       model,
       systemInstruction: buildBatchPrompt(targetLanguage, userContext),
     });
     const userMessage = JSON.stringify({
+      context: contextBlocks ?? [],
       blocks: blocks.map((b) => ({
         type: b.blockType,
-        context: b.contextBlocks ?? [],
         segments: b.segments,
       })),
     });

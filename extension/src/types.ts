@@ -36,12 +36,12 @@ export interface BackgroundTranslateMessage extends TranslateRequest {
 export interface BatchTranslateBlock {
   blockType: BlockTypeEnum;
   segments: { id: string; text: string }[];
-  contextBlocks?: ContextBlock[];
 }
 
 export interface BackgroundBatchTranslateMessage {
   type: string;
   blocks: BatchTranslateBlock[];
+  contextBlocks?: ContextBlock[];
   targetLanguage: string;
   provider: string;
   model: string;

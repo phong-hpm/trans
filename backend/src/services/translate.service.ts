@@ -14,6 +14,7 @@ interface TranslateParams {
 
 interface TranslateBatchParams {
   blocks: BatchBlock[];
+  contextBlocks?: ContextBlock[];
   targetLanguage: string;
   provider: string;
   model: string;
@@ -39,6 +40,7 @@ const filterNoise = (segments: TranslateSegment[]): TranslateSegment[] =>
 
 export const translateBatchSegments = async ({
   blocks,
+  contextBlocks,
   targetLanguage,
   provider,
   model,
@@ -56,6 +58,7 @@ export const translateBatchSegments = async ({
   const llmProvider = getProvider(provider);
   const flatResults = await llmProvider.translateBatch({
     blocks: filteredBlocks,
+    contextBlocks,
     targetLanguage,
     model,
     userContext,

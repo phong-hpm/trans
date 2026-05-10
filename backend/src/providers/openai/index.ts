@@ -40,12 +40,12 @@ export const openaiProvider: TranslationProvider = {
     return parseJson<{ id: string; translatedText: string }[]>(raw, model);
   },
 
-  async translateBatch({ blocks, targetLanguage, model, userContext }) {
+  async translateBatch({ blocks, contextBlocks, targetLanguage, model, userContext }) {
     const client = getClient();
     const userMessage = JSON.stringify({
+      context: contextBlocks ?? [],
       blocks: blocks.map((b) => ({
         type: b.blockType,
-        context: b.contextBlocks ?? [],
         segments: b.segments,
       })),
     });

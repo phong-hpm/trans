@@ -38,7 +38,7 @@ export const HistoryTab: React.FC<Props> = ({ openBlocks, onSetBlock }) => {
   }, [focusedParsedContent, clearFocusedBlock, onSetBlock]);
 
   const pageInfo = (
-    <div className="mt-auto border-t border-gray-200 p-3 dark:border-gray-700">
+    <div className="mt-auto border-t border-gray-200 bg-gray-50 p-3 dark:border-gray-700">
       {platformName ? (
         <div className="space-y-3">
           <div className="flex flex-wrap items-center gap-2">
@@ -91,7 +91,7 @@ export const HistoryTab: React.FC<Props> = ({ openBlocks, onSetBlock }) => {
 
   if (!histories.length) {
     return (
-      <div className="flex min-h-full flex-col">
+      <div className="flex-shrink-0 flex min-h-full flex-col">
         <div
           className={clsx(
             'flex flex-1 flex-col items-center justify-center px-4 py-12 text-center',
@@ -109,7 +109,7 @@ export const HistoryTab: React.FC<Props> = ({ openBlocks, onSetBlock }) => {
 
   return (
     <div className="flex min-h-full flex-col">
-      <div className="py-1">
+      <div className="flex-grow py-1">
         {histories.map((item) => (
           <BlockCollapse
             key={item.parsedContent}

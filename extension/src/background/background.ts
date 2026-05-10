@@ -70,6 +70,7 @@ chrome.runtime.onMessage.addListener(
       const url = `${ENV.backendUrl}/translate/batch`;
       const requestData = {
         blocks: msg.blocks,
+        contextBlocks: msg.contextBlocks,
         targetLanguage: msg.targetLanguage,
         provider: msg.provider,
         model: msg.model,
