@@ -1,11 +1,12 @@
 // Sidebar/BlockCollapse.tsx — Collapsible block entry showing translation history entries
 
 import clsx from 'clsx';
-import { Check, ChevronDown, ChevronRight, Trash2 } from 'lucide-react';
+import { ChevronDown, Trash2 } from 'lucide-react';
 import type React from 'react';
 import { useMemo } from 'react';
 
 import { ConfirmIconButton } from '../../../components/IconButton';
+import { BlockTypeEnum } from '../../../enums';
 import type { BlockHistory } from '../../../types';
 import { deleteEntry, selectEntry } from '../../translationSync';
 
@@ -27,6 +28,8 @@ export const BlockCollapse: React.FC<Props> = ({
   refCallback,
 }) => {
   const entryCount = history.entries.length;
+  const blockType = history.blockType ?? BlockTypeEnum.Task;
+  const blockTypeLabel = blockType === BlockTypeEnum.Comment ? 'Comment' : 'Task';
 
   // Sort entries newest first — memoized so we don't re-sort on unrelated renders
   const sorted = useMemo(
@@ -39,75 +42,101 @@ export const BlockCollapse: React.FC<Props> = ({
   };
 
   return (
-    <div ref={refCallback} className={clsx('border-b', 'border-gray-100', 'dark:border-gray-800')}>
+    <div ref={refCallback} className="px-2 py-1">
       {/* Collapsed header */}
       <button
         type="button"
         onClick={onToggle}
         className={clsx(
-          'w-full flex items-center gap-2 px-3 py-2 text-left transition-colors',
-          'hover:bg-gray-50',
-          'dark:hover:bg-gray-900'
+          'w-full flex items-center gap-2 rounded-md border px-3 py-2 text-left shadow-sm transition-colors',
+          isOpen ? 'rounded-b-none' : '',
+          'border-gray-200 bg-white hover:bg-gray-50',
+          'dark:border-gray-700 dark:bg-gray-950 dark:hover:bg-gray-900'
         )}
       >
-        <span className={clsx('flex-shrink-0', 'text-gray-400', 'dark:text-gray-500')}>
-          {isOpen ? (
-            <ChevronDown className="w-3.5 h-3.5" />
-          ) : (
-            <ChevronRight className="w-3.5 h-3.5" />
+        <span
+          className={clsx(
+            'flex-shrink-0 text-[10px] font-semibold uppercase tracking-wide',
+            'text-violet-600',
+            'dark:text-violet-400'
           )}
+        >
+          {blockTypeLabel}
         </span>
 
-        <span className={clsx('flex-1 text-xs truncate', 'text-gray-700', 'dark:text-gray-300')}>
+        <span
+          className={clsx(
+            'min-w-0 flex-1 truncate text-xs font-medium',
+            'text-gray-900',
+            'dark:text-gray-100'
+          )}
+        >
           {preview}
         </span>
 
         <span
           className={clsx(
-            'flex-shrink-0 text-[10px] font-medium px-1.5 py-0.5 rounded-full',
-            'bg-gray-100 text-gray-500',
-            'dark:bg-gray-800 dark:bg-gray-800 dark:text-gray-400'
+            'flex-shrink-0 text-xs font-medium tabular-nums',
+            'text-gray-400',
+            'dark:text-gray-500'
           )}
         >
           {entryCount}
         </span>
+
+        <ChevronDown
+          className={clsx(
+            'h-3.5 w-3.5 flex-shrink-0 transition-transform',
+            !isOpen && '-rotate-90',
+            'text-gray-400 dark:text-gray-500'
+          )}
+        />
       </button>
 
       {/* Expanded entry list */}
       {isOpen && (
-        <div className={clsx('border-t', 'border-gray-100', 'dark:border-gray-800')}>
+        <div
+          className={clsx(
+            'overflow-hidden rounded-b-md border border-t-0 shadow-sm',
+            'border-gray-200 bg-white',
+            'dark:border-gray-700 dark:bg-gray-950'
+          )}
+        >
           {sorted.map((entry) => {
             const translatedPreview = entry.segments.map((s) => s.translatedText).join(' ');
 
             return (
-              <div key={entry.id} className="flex items-start">
+              <div
+                key={entry.id}
+                className={clsx(
+                  'flex items-start border-t first:border-t-0',
+                  'border-gray-100 dark:border-gray-800'
+                )}
+              >
                 {/* Entry row — keyboard-accessible button for entry selection */}
                 <button
                   type="button"
                   onClick={() => handleSelectEntry(entry.id)}
                   className={clsx(
-                    'flex-1 flex items-start gap-2 px-3 py-2 text-left cursor-pointer border-l-2 transition-colors min-w-0',
+                    'min-w-0 flex-1 cursor-pointer px-3 py-2 text-left transition-colors',
                     entry.selected
-                      ? 'border-blue-500 bg-blue-50 dark:bg-blue-950/30'
-                      : 'border-transparent hover:bg-gray-50 dark:hover:bg-gray-900'
+                      ? 'bg-violet-50 dark:bg-violet-950/30'
+                      : 'hover:bg-gray-50 dark:hover:bg-gray-900'
                   )}
                 >
-                  {/* Selected checkmark */}
-                  <span className="flex-shrink-0 w-3.5 h-3.5 mt-0.5">
-                    {entry.selected && (
-                      <Check
-                        className={clsx('w-3.5 h-3.5', 'text-blue-500', 'dark:text-blue-400')}
-                      />
-                    )}
-                  </span>
-
                   {/* Translation preview + date */}
                   <div className="flex-1 min-w-0">
-                    <p className={clsx('text-xs truncate', 'text-gray-700', 'dark:text-gray-300')}>
+                    <p
+                      className={clsx(
+                        'truncate text-xs font-medium',
+                        'text-gray-900',
+                        'dark:text-gray-100'
+                      )}
+                    >
                       {translatedPreview}
                     </p>
                     <p
-                      className={clsx('text-[10px] mt-0.5', 'text-gray-400', 'dark:text-gray-500')}
+                      className={clsx('mt-0.5 text-[10px]', 'text-gray-500', 'dark:text-gray-400')}
                     >
                       {new Date(entry.createdAt).toLocaleString()}
                     </p>

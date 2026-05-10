@@ -12,6 +12,7 @@ import {
   subscribeHistoryChangesApi,
 } from '../apis/historyApi';
 import { clearActiveTranslations } from '../content/activeTranslations';
+import type { BlockTypeEnum } from '../enums';
 import type { BlockHistory, TranslationEntry } from '../types';
 import { normalizePageUrl } from '../utils/url';
 
@@ -41,7 +42,8 @@ interface HistoryStore {
    */
   addEntry: (
     parsedContent: string,
-    segments: { text: string; translatedText: string }[]
+    segments: { text: string; translatedText: string }[],
+    blockType?: BlockTypeEnum
   ) => Promise<BlockHistory>;
 
   /**
@@ -109,7 +111,7 @@ export const useHistoryStore = create<HistoryStore>((set, get) => {
         .getBlockHistory(parsedContent)
         ?.entries.find((e) => e.selected) ?? null,
 
-    addEntry: async (parsedContent, segments) => {
+    addEntry: async (parsedContent, segments, blockType) => {
       const { pageUrl } = get();
       if (!pageUrl) throw new Error('[HistoryStore] store not initialized');
 
@@ -133,6 +135,7 @@ export const useHistoryStore = create<HistoryStore>((set, get) => {
         id: existing?.id ?? nanoid(8),
         pageUrl,
         parsedContent,
+        blockType: blockType ?? existing?.blockType,
         entries,
       };
 

@@ -38,7 +38,7 @@ export const HistoryTab: React.FC<Props> = ({ openBlocks, onSetBlock }) => {
   }, [focusedParsedContent, clearFocusedBlock, onSetBlock]);
 
   const pageInfo = (
-    <div className="mt-auto border-t border-gray-200 bg-gray-50 p-3 dark:border-gray-700">
+    <div className="mt-auto border-t border-gray-200 bg-gray-50 p-3 dark:border-gray-700 dark:bg-gray-900">
       {platformName ? (
         <div className="space-y-3">
           <div className="flex flex-wrap items-center gap-2">

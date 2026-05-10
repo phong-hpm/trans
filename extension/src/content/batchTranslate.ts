@@ -83,12 +83,12 @@ export const batchTranslateAll = async (blocks: Block[]): Promise<number> => {
   // Save each block's result to history store
   await Promise.all(
     result.blocks.map((blockResult, i) => {
-      const { parsedContent, idToText } = prepared[i];
+      const { parsedContent, idToText, blockType } = prepared[i];
       const translatedSegments = blockResult.segments.map((s) => ({
         text: idToText.get(s.id) ?? s.text,
         translatedText: s.translatedText,
       }));
-      return addTranslationEntry(parsedContent, translatedSegments);
+      return addTranslationEntry(parsedContent, translatedSegments, blockType);
     })
   );
 

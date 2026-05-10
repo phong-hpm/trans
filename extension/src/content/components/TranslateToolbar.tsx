@@ -71,7 +71,10 @@ export const TranslateToolbar: React.FC<Props> = ({
   return (
     <ThemeWrapper>
       <div
-        className="flex justify-start items-center gap-2"
+        className={clsx(
+          'inline-flex justify-start items-center gap-2 rounded-md',
+          'text-gray-700 dark:text-gray-200'
+        )}
         style={{ fontFamily: 'system-ui, sans-serif' }}
       >
         {/* Split button: [label] | [▼] */}
@@ -79,7 +82,7 @@ export const TranslateToolbar: React.FC<Props> = ({
           className={clsx(
             'flex items-center rounded border shadow-sm overflow-hidden',
             'border-gray-200 bg-white',
-            'dark:border-gray-600 dark:bg-gray-950'
+            'dark:border-gray-700 dark:bg-gray-900'
           )}
         >
           <button
@@ -93,7 +96,7 @@ export const TranslateToolbar: React.FC<Props> = ({
             }
             className={clsx(
               'flex items-center gap-1 px-2 py-1 text-xs transition-colors disabled:opacity-60',
-              'text-gray-700 hover:bg-gray-50',
+              'text-gray-700 hover:bg-gray-100',
               'dark:text-gray-200 dark:hover:bg-gray-800'
             )}
           >
@@ -110,7 +113,7 @@ export const TranslateToolbar: React.FC<Props> = ({
             title="Select translation mode"
             className={clsx(
               'flex items-center justify-center px-1.5 py-1 transition-colors',
-              'hover:bg-gray-50',
+              'hover:bg-gray-100',
               'dark:hover:bg-gray-800'
             )}
           >

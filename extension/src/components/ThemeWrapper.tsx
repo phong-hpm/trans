@@ -15,8 +15,9 @@ interface Props {
 export const ThemeWrapper: React.FC<Props> = ({ children, className, style }) => {
   const { theme } = useGlobalStore();
   const themeClass = theme === ThemeEnum.Dark ? 'dark' : '';
+  const colorScheme = theme === ThemeEnum.Dark ? 'dark' : 'light';
   return (
-    <div className={clsx(themeClass, className)} style={style}>
+    <div className={clsx(themeClass, className)} style={{ colorScheme, ...style }}>
       {children}
     </div>
   );

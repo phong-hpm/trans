@@ -36,11 +36,23 @@ export const Toggle: React.FC<Props> = ({ label, sublabel, checked, onChange }) 
     </button>
     {label && (
       <div>
-        <div className={clsx('text-xs font-medium', 'text-gray-700', 'dark:text-gray-200')}>
+        <div
+          className={clsx(
+            'rounded px-1.5 py-0.5 text-xs font-medium',
+            'bg-white/90 text-gray-700',
+            'dark:bg-gray-900/90 dark:text-gray-200'
+          )}
+        >
           {label}
         </div>
         {sublabel && (
-          <div className={clsx('text-xs mt-0.5', 'text-gray-400', 'dark:text-gray-500')}>
+          <div
+            className={clsx(
+              'mt-0.5 rounded px-1.5 py-0.5 text-xs',
+              'bg-white/90 text-gray-400',
+              'dark:bg-gray-900/90 dark:text-gray-500'
+            )}
+          >
             {sublabel}
           </div>
         )}

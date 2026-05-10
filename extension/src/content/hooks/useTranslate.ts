@@ -212,7 +212,7 @@ export const useTranslate = (
       // No history — call API (async: element may be replaced while waiting)
       const translated = await callApi(segmentsRef.current);
 
-      const updatedHistory = await addTranslationEntry(parsedContent, translated);
+      const updatedHistory = await addTranslationEntry(parsedContent, translated, blockType);
       setHistory(updatedHistory.entries);
 
       // Apply to current live element — handles replacement that happened during API call
@@ -223,7 +223,15 @@ export const useTranslate = (
       toast.error(msg);
       setState(TranslateStateEnum.Idle);
     }
-  }, [parsedContent, getTargetElements, setState, callApi, applyFromEntry, applyToLiveElement]);
+  }, [
+    parsedContent,
+    blockType,
+    getTargetElements,
+    setState,
+    callApi,
+    applyFromEntry,
+    applyToLiveElement,
+  ]);
 
   // No dep array — runs every render to keep ref pointing at the latest translate closure
   useEffect(() => {
@@ -250,7 +258,7 @@ export const useTranslate = (
       }));
       const translated = await callApi(toTranslate);
 
-      const updatedHistory = await addTranslationEntry(parsedContent, translated);
+      const updatedHistory = await addTranslationEntry(parsedContent, translated, blockType);
       setHistory(updatedHistory.entries);
 
       // Apply to current live element — handles replacement during API call
@@ -261,7 +269,7 @@ export const useTranslate = (
       toast.error(msg);
       setState(TranslateStateEnum.Idle);
     }
-  }, [parsedContent, getTargetElements, setState, callApi, applyToLiveElement]);
+  }, [parsedContent, blockType, getTargetElements, setState, callApi, applyToLiveElement]);
 
   const selectHistoryEntry = useCallback(
     (entryId: string) => {

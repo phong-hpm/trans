@@ -109,7 +109,7 @@ trans/
         │   └── history.ts               — Zustand history store: page histories in memory, init(), addEntry(), selectEntry(), deleteEntry(), deleteBlockHistory(), clearPage(), clearAll()
         ├── content/
         │   ├── DETECTION.md             — Explains platform detection, block discovery, MutationObserver strategy, and Turbo navigation handling
-        │   ├── main.tsx                 — Entry: detectPlatform, init stores, mount DOM, observe page
+        │   ├── main.tsx                 — Content-script runtime: detects supported pages and mounts React islands
         │   ├── activeTranslations.ts    — In-memory Set of parsedContent keys currently showing translation; survives component re-mounts
         │   ├── translationSync.ts       — Sync coordinator: wraps useHistoryStore + optionally syncs to backend DB
         │   ├── batchTranslate.ts        — batchTranslateAll: extracts segments from all blocks, sends one BatchTranslate message, saves results to history
@@ -121,6 +121,7 @@ trans/
         │   │   └── observerDom.ts       — observePageDom (debounced body watcher), observeBlockDom (re-render detector)
         │   ├── shadow.css               — Tailwind directives; imported via ?inline → injected into shadow roots
         │   ├── components/
+        │   │   ├── PlatformRuntime.tsx — React-owned side effects for platform state, history, settings, and dev logs
         │   │   ├── TranslateAllButton.tsx — Fixed floating pill button (bottom-right); calls batchTranslateAll then dispatches trans:translate-all; tracks per-block progress
         │   │   ├── TranslatePopup.tsx   — Mode-selection dropdown portalled into shadow root; uses ThemeWrapper
         │   │   ├── TranslateToolbar.tsx — Top-right toolbar for task/comment blocks: toggle + split translate + IconButton(retranslate) + Button(history); uses ThemeWrapper

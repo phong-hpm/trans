@@ -1,12 +1,15 @@
-// dom/mountDom.tsx — Mount global UI components (sidebar, toaster, launcher) into document.body
+// dom/mountDom.tsx — Mount global UI components (runtime, sidebar, launcher) into document.body
 
+import type { Root } from 'react-dom/client';
 import { createRoot } from 'react-dom/client';
-import { Toaster } from 'sonner';
 
 import type { Block } from '../../platforms/types';
+import { PlatformRuntime } from '../components/PlatformRuntime';
 import { Sidebar } from '../components/Sidebar';
 import { TranslateAllButton } from '../components/TranslateAllButton';
 import { createShadowHost } from './shadowDom';
+
+let runtimeRoot: Root | null = null;
 
 /**
  * Shared helper: creates a shadow DOM host, appends it to body, and mounts a React component.
@@ -19,6 +22,27 @@ const mountShadowDom = (dataAttr: string, hostStyle: string, Component: React.FC
 
   document.body.appendChild(host);
   createRoot(mount).render(<Component />);
+};
+
+export const mountRuntimeDom = ({
+  href,
+  platformName,
+  getBlocks,
+}: {
+  href: string;
+  platformName: string | null;
+  getBlocks: () => Block[];
+}): void => {
+  if (!runtimeRoot) {
+    const el = document.createElement('div');
+    el.setAttribute('data-trans-runtime', '');
+    document.body.appendChild(el);
+    runtimeRoot = createRoot(el);
+  }
+
+  runtimeRoot.render(
+    <PlatformRuntime href={href} platformName={platformName} getBlocks={getBlocks} />
+  );
 };
 
 /**
@@ -46,16 +70,4 @@ export const mountTranslateAllDom = (getBlocks: () => Block[]): void => {
 
   document.body.appendChild(host);
   createRoot(mount).render(<TranslateAllButton getBlocks={getBlocks} />);
-};
-
-/**
- * Mounts the Sonner Toaster into document.body. Idempotent.
- */
-export const mountToasterDom = (): void => {
-  if (document.querySelector('[data-trans-toaster]')) return;
-
-  const el = document.createElement('div');
-  el.setAttribute('data-trans-toaster', '');
-  document.body.appendChild(el);
-  createRoot(el).render(<Toaster position="bottom-right" richColors />);
 };

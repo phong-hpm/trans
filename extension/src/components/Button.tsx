@@ -62,8 +62,8 @@ export const Button: React.FC<Props> = ({
         variant === 'outline' &&
           color === 'ghost' && [
             'border',
-            'border-gray-200 text-gray-600 hover:bg-gray-50',
-            'dark:border-gray-600 dark:bg-gray-950 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-200',
+            'border-gray-200 bg-white text-gray-700 hover:bg-gray-50',
+            'dark:border-gray-700 dark:bg-gray-900 dark:text-gray-200 dark:hover:bg-gray-800',
           ],
         className
       )}

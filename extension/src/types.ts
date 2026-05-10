@@ -69,6 +69,7 @@ export interface BlockHistory {
   id?: string;
   pageUrl: string;
   parsedContent: string;
+  blockType?: BlockTypeEnum;
   entries: TranslationEntry[];
 }
 

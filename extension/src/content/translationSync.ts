@@ -4,6 +4,7 @@
 // this is intentional: reads are pure getters, no sync side effects needed.
 
 import { deleteBlockHistoryDbApi, saveBlockHistoryDbApi } from '../apis/dbHistoryApi';
+import type { BlockTypeEnum } from '../enums';
 import { useGlobalStore } from '../store/global';
 import { useHistoryStore } from '../store/history';
 import type { BlockHistory } from '../types';
@@ -37,9 +38,10 @@ export const getSelectedEntry = (parsedContent: string) =>
  */
 export const addTranslationEntry = async (
   parsedContent: string,
-  segments: { text: string; translatedText: string }[]
+  segments: { text: string; translatedText: string }[],
+  blockType?: BlockTypeEnum
 ): Promise<BlockHistory> => {
-  const history = await useHistoryStore.getState().addEntry(parsedContent, segments);
+  const history = await useHistoryStore.getState().addEntry(parsedContent, segments, blockType);
   syncSave(history);
   return history;
 };

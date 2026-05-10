@@ -76,28 +76,28 @@ export const TranslateAllButton: React.FC<Props> = ({ getBlocks }) => {
   return (
     <ThemeWrapper>
       <div
-        className="group relative flex flex-col items-end gap-2"
+        className="group relative flex h-10 items-center justify-end"
         style={{ fontFamily: 'system-ui, sans-serif' }}
       >
         <div
           className={clsx(
-            'absolute bottom-10 right-0 flex min-w-40 flex-col overflow-hidden rounded-md border shadow-lg',
+            'absolute bottom-10 right-0 flex min-w-36 flex-col items-end gap-1 pb-2',
             'pointer-events-none translate-y-1 opacity-0 transition-all duration-150',
             'group-hover:pointer-events-auto group-hover:translate-y-0 group-hover:opacity-100',
-            'group-focus-within:pointer-events-auto group-focus-within:translate-y-0 group-focus-within:opacity-100',
-            'border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-900'
+            'group-focus-within:pointer-events-auto group-focus-within:translate-y-0 group-focus-within:opacity-100'
           )}
         >
           <button
             type="button"
             onClick={openSettingsPanel}
             className={clsx(
-              'flex items-center gap-2 px-3 py-2 text-left text-xs font-medium transition-colors',
-              'text-gray-700 hover:bg-gray-50 dark:text-gray-100 dark:hover:bg-gray-800'
+              'flex items-center justify-end gap-2 rounded px-1.5 py-1 text-right text-xs font-medium transition-colors',
+              'bg-white/90 text-gray-700 hover:text-gray-950',
+              'dark:bg-gray-900/90 dark:text-gray-200 dark:hover:text-white'
             )}
           >
-            <Settings className="h-3.5 w-3.5 flex-shrink-0" />
             <span className="whitespace-nowrap">Settings</span>
+            <Settings className="h-3.5 w-3.5 flex-shrink-0" />
           </button>
 
           <button
@@ -105,17 +105,17 @@ export const TranslateAllButton: React.FC<Props> = ({ getBlocks }) => {
             onClick={handleClick}
             disabled={isTranslating}
             className={clsx(
-              'flex items-center gap-2 border-t px-3 py-2 text-left text-xs font-medium transition-colors',
-              'border-gray-100 text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60',
-              'dark:border-gray-800 dark:text-gray-100 dark:hover:bg-gray-800'
+              'flex items-center justify-end gap-2 rounded px-1.5 py-1 text-right text-xs font-medium transition-colors',
+              'bg-white/90 text-gray-700 hover:text-gray-950 disabled:cursor-not-allowed disabled:opacity-60',
+              'dark:bg-gray-900/90 dark:text-gray-200 dark:hover:text-white'
             )}
           >
+            <span className="whitespace-nowrap">Translate all</span>
             {isTranslating ? (
               <Loader2 className="h-3.5 w-3.5 flex-shrink-0 animate-spin" />
             ) : (
               <Languages className="h-3.5 w-3.5 flex-shrink-0" />
             )}
-            <span className="whitespace-nowrap">Translate all</span>
           </button>
         </div>
 
