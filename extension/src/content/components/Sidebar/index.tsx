@@ -1,21 +1,27 @@
 // Sidebar/index.tsx — Main sidebar shell with drawer and page display modes
 
 import clsx from 'clsx';
-import { AlignRight, Languages, PanelRight, X } from 'lucide-react';
+import { AlignRight, Bot, Bug, Clock, Languages, PanelRight, Settings, X } from 'lucide-react';
 import type React from 'react';
 import { useCallback, useEffect, useState } from 'react';
 
 import { IconButton } from '../../../components/IconButton';
 import { ThemeWrapper } from '../../../components/ThemeWrapper';
+import ENV from '../../../constants/env';
 import { SidebarModeEnum, SidebarTabEnum } from '../../../enums';
 import { useGlobalStore } from '../../../store/global';
-import { ControlPanel } from '../ControlPanel';
+import { DevelopPanel } from '../ControlPanel/DevelopPanel';
+import { ProviderPanel } from '../ControlPanel/ProviderPanel';
+import { SettingsPanel } from '../ControlPanel/SettingsPanel';
 import { HistoryTab } from './HistoryTab';
+import { TabContent } from './TabContent';
 import { Tabs } from './Tabs';
 
 const TABS = [
-  { id: SidebarTabEnum.History, label: 'History' },
-  { id: SidebarTabEnum.Settings, label: 'Settings' },
+  { id: SidebarTabEnum.History, label: 'History', icon: Clock },
+  { id: SidebarTabEnum.General, label: 'General', icon: Settings },
+  { id: SidebarTabEnum.Provider, label: 'Provider', icon: Bot },
+  ...(ENV.isDev ? [{ id: SidebarTabEnum.Develop, label: 'Develop', icon: Bug }] : []),
 ];
 // Also used for document.body.style.marginRight in page mode.
 const SIDEBAR_WIDTH = 480;
@@ -120,9 +126,25 @@ export const Sidebar: React.FC = () => {
         {/* Tab content — scrollable */}
         <div className="flex-1 min-h-0 overflow-y-auto">
           {activeSidebarTab === SidebarTabEnum.History && (
-            <HistoryTab openBlocks={openBlocks} onSetBlock={handleSetBlock} />
+            <TabContent padded={false}>
+              <HistoryTab openBlocks={openBlocks} onSetBlock={handleSetBlock} />
+            </TabContent>
           )}
-          {activeSidebarTab === SidebarTabEnum.Settings && <ControlPanel />}
+          {activeSidebarTab === SidebarTabEnum.General && (
+            <TabContent padded={false}>
+              <SettingsPanel />
+            </TabContent>
+          )}
+          {activeSidebarTab === SidebarTabEnum.Provider && (
+            <TabContent>
+              <ProviderPanel />
+            </TabContent>
+          )}
+          {activeSidebarTab === SidebarTabEnum.Develop && ENV.isDev && (
+            <TabContent>
+              <DevelopPanel />
+            </TabContent>
+          )}
         </div>
       </div>
     </ThemeWrapper>

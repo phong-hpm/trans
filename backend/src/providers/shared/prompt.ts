@@ -91,10 +91,12 @@ ${buildSharedPrompt(targetLanguage, userContext).trim().split('INPUT FORMAT:')[0
 
 INPUT FORMAT (batch — all blocks in one call):
 {
+  "context": [
+    { "type": "title" | "task" | "comment", "text": "..." }
+  ],
   "blocks": [
     {
       "type": "title" | "task" | "comment",
-      "context": [{ "type": "...", "text": "..." }],
       "segments": [{ "id": "...", "text": "..." }]
     }
   ]
@@ -108,4 +110,6 @@ Return a single flat JSON array covering ALL segments across ALL blocks — no m
 
 Preserve the same STYLE RULES, KEEP IN ENGLISH, ANTI-LITERAL, and DO NOT MODIFY rules as the single-block mode.
 Maintain consistent terminology across all blocks in the batch.
+Use the top-level context as the full page context for terminology and ambiguity resolution.
+Do not translate context unless the same text appears as an item inside segments.
 `;

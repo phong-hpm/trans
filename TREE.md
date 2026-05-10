@@ -135,6 +135,7 @@ trans/
         │   │       ├── index.tsx        — Main sidebar shell: drawer/page modes (isDrawerMode), updateSettings(); uses ThemeWrapper
         │   │       ├── Tabs.tsx         — Generic bottom-border tab bar component
         │   │       ├── HistoryTab.tsx   — History tab: lists all block histories, focuses on openSidebarToBlock target
+        │   │       ├── TabContent.tsx   — Shared sidebar tab content surface
         │   │       └── BlockCollapse.tsx — Collapsible block entry with translation entries, select + ConfirmIconButton delete
         │   └── hooks/
         │       ├── useTranslate.ts      — Translation state machine with history-aware cache, retranslate, selectHistoryEntry, deleteHistoryEntry

@@ -20,8 +20,9 @@ export const NavLayout: React.FC<Props> = ({ items, activeId, onSelect, children
   <div className="flex min-h-full flex-col">
     <nav
       className={clsx(
-        'flex flex-shrink-0 overflow-x-auto border-b px-3',
-        'border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-900'
+        'relative flex flex-shrink-0 overflow-x-auto px-3 pt-3',
+        'after:absolute after:bottom-0 after:left-0 after:h-px after:w-full after:bg-gray-200 after:content-[""]',
+        'bg-gray-50 dark:bg-gray-900 dark:after:bg-gray-700'
       )}
     >
       {items.map(({ id, label, icon: Icon }) => {
@@ -32,10 +33,10 @@ export const NavLayout: React.FC<Props> = ({ items, activeId, onSelect, children
             type="button"
             onClick={() => onSelect(id)}
             className={clsx(
-              'flex items-center gap-1.5 border-b-2 px-3 py-2.5 text-xs font-medium transition-colors',
+              'relative -mb-px flex items-center gap-1.5 rounded-t-md border border-b-0 px-2.5 py-1.5 text-xs font-semibold transition-colors',
               isActive
-                ? 'border-blue-500 text-blue-600 dark:text-blue-400'
-                : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
+                ? 'z-10 border-gray-200 bg-white text-gray-900 shadow-sm dark:border-gray-700 dark:bg-gray-950 dark:text-gray-100'
+                : 'border-transparent bg-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
             )}
           >
             <Icon className="w-3.5 h-3.5 flex-shrink-0" />
@@ -45,6 +46,6 @@ export const NavLayout: React.FC<Props> = ({ items, activeId, onSelect, children
       })}
     </nav>
 
-    <div className="flex-1 p-4">{children}</div>
+    <div className="flex-1 bg-gray-50 p-4 dark:bg-gray-900">{children}</div>
   </div>
 );

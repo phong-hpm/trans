@@ -37,11 +37,11 @@ export interface TranslateResponse {
 export interface BatchBlock {
   blockType: BlockType;
   segments: TranslateSegment[];
-  contextBlocks?: ContextBlock[];
 }
 
 export interface BatchTranslateRequest {
   blocks: BatchBlock[];
+  contextBlocks?: ContextBlock[];
   targetLanguage: string;
   provider: string;
   model: string;

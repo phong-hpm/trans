@@ -55,7 +55,7 @@ export const translateController = async (req: Request, res: Response): Promise<
 };
 
 export const translateBatchController = async (req: Request, res: Response): Promise<void> => {
-  const { blocks, targetLanguage, provider, model, userContext } =
+  const { blocks, contextBlocks, targetLanguage, provider, model, userContext } =
     req.body as Partial<BatchTranslateRequest>;
 
   if (!blocks?.length || !targetLanguage || !provider || !model) {
@@ -92,6 +92,7 @@ export const translateBatchController = async (req: Request, res: Response): Pro
   try {
     const result = await translateBatchSegments({
       blocks,
+      contextBlocks,
       targetLanguage,
       provider,
       model,

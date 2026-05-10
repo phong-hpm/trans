@@ -78,7 +78,7 @@ export const useGlobalStore = create<GlobalStore>((set) => {
     },
 
     openSettingsPanel: () => {
-      set({ showSidebar: true, activeSidebarTab: SidebarTabEnum.Settings });
+      set({ showSidebar: true, activeSidebarTab: SidebarTabEnum.General });
       saveSettingsApi({ showSidebar: true });
     },
 
