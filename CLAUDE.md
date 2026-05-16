@@ -129,6 +129,17 @@ Tasks are tracked in `working-tasks/`. Numbered `.md` files (e.g. `01-feature.md
 
 ---
 
+### Command aliases
+
+| Shorthand | Full command |
+|---|---|
+| `ct` | `check task` |
+| `dt` | `do task` |
+
+Numbers can be appended directly: `dt8` = `do task 8`, `ct` = `check task`.
+
+---
+
 ### Command: "check task"
 
 1. Read the first line of `_progress.md` — it has the form `DONE [x/y]`

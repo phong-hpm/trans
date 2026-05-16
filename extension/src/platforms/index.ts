@@ -1,9 +1,9 @@
 // index.ts — Platform registry: maps URLs to their adapter
 
-import { githubAdapter } from './github';
+import { GitHubPlatformAdapter } from './github';
 import type { PlatformAdapter } from './types';
 
-const PLATFORMS: PlatformAdapter[] = [githubAdapter];
+const adapterInstances: PlatformAdapter[] = [new GitHubPlatformAdapter()];
 
-export const detectPlatform = (url: string): PlatformAdapter | null =>
-  PLATFORMS.find((p) => p.pagePattern.test(url)) ?? null;
+export const getPlatformAdapter = (url: string): PlatformAdapter | null =>
+  adapterInstances.find((p) => p.pagePattern.test(url)) ?? null;

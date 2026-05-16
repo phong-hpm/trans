@@ -4,7 +4,7 @@
 import type { BlockTypeEnum } from '../../enums';
 import type { PlatformBlock } from '../../platforms/types';
 import type { ContextBlock } from '../../types';
-import { getParsedContentsDom } from '../dom/textDom';
+import { PlatformDomTextReader } from '../dom/PlatformDomTextReader';
 
 export class TranslatableBlock {
   constructor(private readonly platformBlock: PlatformBlock) {}
@@ -34,6 +34,7 @@ export class TranslatableBlock {
 
   get parsedContent(): string {
     const els = [...(this.platformBlock.attachedContentEls ?? []), this.platformBlock.contentEl];
-    return getParsedContentsDom(els);
+    const platformDomTextReader = new PlatformDomTextReader();
+    return platformDomTextReader.getParsedText(els);
   }
 }

@@ -6,8 +6,8 @@ import { MessageTypeEnum } from '../../enums';
 import type { PlatformBlock } from '../../platforms/types';
 import { useGlobalStore } from '../../store/global';
 import type { BatchTranslateResponse, ContextBlock } from '../../types';
-import { extractSegmentsDom } from '../dom/segmentsDom';
-import { getParsedContentsDom } from '../dom/textDom';
+import { PlatformDomTextMutator } from '../dom/PlatformDomTextMutator';
+import { PlatformDomTextReader } from '../dom/PlatformDomTextReader';
 import { addTranslationEntry } from '../translationSync';
 
 /**
@@ -25,7 +25,8 @@ import { addTranslationEntry } from '../translationSync';
  * Returns the number of blocks that were sent for translation (0 if nothing to do).
  */
 export const useTranslateAll = () => {
-  const { targetLanguage, provider, model, userContext } = useGlobalStore();
+  const { settings } = useGlobalStore();
+  const { targetLanguage, provider, model, userContext } = settings;
 
   const onTranslateAll = useCallback(
     async (blocks: PlatformBlock[]): Promise<number> => {
@@ -44,10 +45,12 @@ export const useTranslateAll = () => {
         const elements = [...liveAttached, livePrimary].filter(
           (el, index, all): el is HTMLElement => !!el && el.isConnected && all.indexOf(el) === index
         );
-        const parsedContent = getParsedContentsDom(elements);
+        const platformDomTextReader = new PlatformDomTextReader();
+        const parsedContent = platformDomTextReader.getParsedText(elements);
         if (!parsedContent) continue;
 
-        const rawSegments = elements.flatMap((el) => extractSegmentsDom(el));
+        const segmenter = new PlatformDomTextMutator(elements);
+        const rawSegments = segmenter.extractAndMark();
         if (!rawSegments.length) continue;
 
         prepared.push({

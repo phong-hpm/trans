@@ -30,7 +30,7 @@ export const TranslateToolbar: React.FC<Props> = ({ platformBlock }) => {
   const [selectedOption, setSelectedOption] = useState<TranslateOption>(options[0]);
   const [popupOpen, setPopupOpen] = useState(false);
   const dropdownRef = useRef<HTMLButtonElement>(null);
-  const { openSidebarToBlock } = useGlobalStore();
+  const { setShowSidebar, setFocusedParsedContent } = useGlobalStore();
 
   const { state, translate, retranslate, restore, hasTranslation, history, setMode } =
     useTranslate(platformBlock);
@@ -126,7 +126,10 @@ export const TranslateToolbar: React.FC<Props> = ({ platformBlock }) => {
             variant="outline"
             color="ghost"
             size="sm"
-            onClick={() => openSidebarToBlock(parsedContent)}
+            onClick={() => {
+              setShowSidebar(true);
+              setFocusedParsedContent(parsedContent);
+            }}
             title="View translation history"
           >
             <Clock className="w-3 h-3 flex-shrink-0" />

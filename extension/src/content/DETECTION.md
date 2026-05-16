@@ -21,15 +21,14 @@ pages have translatable blocks. The extension must:
 
 ## Files Involved
 
-| File                            | Role                                                  |
-| ------------------------------- | ----------------------------------------------------- |
-| `main.tsx`                      | Entry point — wires everything together               |
-| `hooks/useWatchPlatformDom.tsx` | Watches platform DOM and mounts per-block toolbars    |
-| `dom/globalUiDom.tsx`           | Global shadow-root UI mount (sidebar + translate-all) |
-| `platforms/index.ts`            | `detectPlatform(url)` — maps URL to adapter           |
-| `platforms/types.ts`            | `PlatformAdapter` and `Block` interfaces              |
-| `platforms/github/index.ts`     | GitHub adapter — queries DOM for blocks               |
-| `platforms/github/queries.ts`   | All GitHub CSS selectors in one place                 |
+| File                                         | Role                                                           |
+| -------------------------------------------- | -------------------------------------------------------------- |
+| `main.tsx`                                   | Entry point — wires everything together                        |
+| `platformRuntime/PlatformRuntimeContext.tsx` | Platform DOM runtime: block scanning, shadow app root, context |
+| `platforms/index.ts`                         | `getPlatformAdapter(url)` — maps URL to adapter                |
+| `platforms/types.ts`                         | `PlatformAdapter` and `Block` interfaces                       |
+| `platforms/github/index.ts`                  | GitHub adapter — queries DOM for blocks                        |
+| `platforms/github/queries.ts`                | All GitHub CSS selectors in one place                          |
 
 ---
 
@@ -39,7 +38,7 @@ pages have translatable blocks. The extension must:
 // platforms/index.ts
 const PLATFORMS: PlatformAdapter[] = [githubAdapter];
 
-export const detectPlatform = (url: string): PlatformAdapter | null =>
+export const getPlatformAdapter = (url: string): PlatformAdapter | null =>
   PLATFORMS.find((p) => p.pagePattern.test(url)) ?? null;
 ```
 
@@ -50,7 +49,7 @@ Each adapter exposes a `pagePattern: RegExp`. For GitHub:
 pagePattern: /\/issues\/\d+/; // matches /owner/repo/issues/123
 ```
 
-`detectPlatform` returns the matching adapter, or `null` if the current URL is
+`getPlatformAdapter` returns the matching adapter, or `null` if the current URL is
 not a supported page (e.g. issue list, pull requests, settings).
 
 To add a new platform: create a new adapter in `platforms/<name>/`, add it to
@@ -125,7 +124,7 @@ design decision:
 ```
 MutationObserver fires (debounced 200ms)
   │
-  ├─ detectPlatform(location.href)
+  ├─ getPlatformAdapter(location.href)
   │     → null?  return early, do nothing
   │     → adapter? continue
   │
@@ -134,8 +133,6 @@ MutationObserver fires (debounced 200ms)
   │     → setPlatformName(platform.name)
   │     → await historyStore.init(location.href)   ← loads saved translations for new page
   │     → if autoTranslateAll: dispatch trans:translate-all (delayed 1s)
-  │
-  ├─ mountGlobalUiDom()   ← idempotent: sidebar + translate-all, bail if already mounted
   │
   ├─ platform.getBlocks() → Block[]
   │
@@ -176,16 +173,15 @@ text nodes and re-applies the existing translation without calling the API again
 ```
 User is on: github.com/owner/repo/issues  (issue list)
   content script loads
-  detectPlatform → null
+  getPlatformAdapter → null
   no retry interval started
-  useWatchPlatformDom observer active ✓
+  PlatformRuntimeProvider MutationObserver active ✓
 
 User clicks an issue → Turbo replaces DOM
   MutationObserver fires (debounced 200ms)
-  detectPlatform(location.href) → githubAdapter ✓
+  getPlatformAdapter(location.href) → githubAdapter ✓
   location.href !== lastUrl → URL change detected
   historyStore.init(new URL) → loads saved translations
-  mountGlobalUiDom() → sidebar + translate-all mounted
   getBlocks() → [title, task, ...comments]
   processBlocks() → injects translate UI
 ```

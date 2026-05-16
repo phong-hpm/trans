@@ -2,17 +2,26 @@
 
 import type React from 'react';
 import { useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { Toaster } from 'sonner';
 
+import { getSettingsApi, subscribeSettingsChangesApi } from '../../apis/syncApi';
 import ENV from '../../constants/env';
+import { DEFAULT_SETTINGS } from '../../constants/settings';
 import { LogTypeEnum, MessageTypeEnum } from '../../enums';
 import { useGlobalStore } from '../../store/global';
 import { useHistoryStore } from '../../store/history';
-import { mountGlobalUiDom } from '../dom/globalUiDom';
-import { useWatchPlatformDom } from '../hooks/useWatchPlatformDom';
+import type { ExtensionSettings } from '../../types';
+import {
+  PlatformRuntimeProvider,
+  usePlatformRuntimeContext,
+} from '../context/PlatformRuntimeContext';
+import { GlobalActionButton } from './GlobalActionButton';
+import { Sidebar } from './Sidebar';
 
-export const App: React.FC = () => {
-  const { href, platformName, getBlocks } = useWatchPlatformDom();
+const AppBase: React.FC = () => {
+  const { href, platformAdapter, shadowAppRootElement } = usePlatformRuntimeContext();
+  const platformName = platformAdapter?.name ?? null;
   const { init: initHistory } = useHistoryStore();
   const lastAutoTranslateHrefRef = useRef<string | null>(null);
 
@@ -23,7 +32,33 @@ export const App: React.FC = () => {
   };
 
   useEffect(() => {
-    useGlobalStore.getState().init();
+    let unsubscribeSettingsChanges: (() => void) | null = null;
+    let cancelled = false;
+
+    getSettingsApi(DEFAULT_SETTINGS).then((items) => {
+      if (cancelled) return;
+
+      useGlobalStore.setState({ settings: items as ExtensionSettings, ready: true });
+
+      unsubscribeSettingsChanges = subscribeSettingsChangesApi((changes) => {
+        const patch = Object.fromEntries(
+          Object.entries(changes)
+            .filter(([key]) => key in DEFAULT_SETTINGS)
+            .map(([key, change]) => [key, change.newValue])
+        ) as Partial<ExtensionSettings>;
+
+        if (Object.keys(patch).length) {
+          useGlobalStore.setState((state) => ({
+            settings: { ...state.settings, ...patch },
+          }));
+        }
+      });
+    });
+
+    return () => {
+      cancelled = true;
+      unsubscribeSettingsChanges?.();
+    };
   }, []);
 
   useEffect(() => {
@@ -62,17 +97,17 @@ export const App: React.FC = () => {
   useEffect(() => {
     return useGlobalStore.subscribe((state, prev) => {
       const changed =
-        state.alwaysShowTranslated !== prev.alwaysShowTranslated ||
-        state.autoTranslateTask !== prev.autoTranslateTask;
+        state.settings.alwaysShowTranslated !== prev.settings.alwaysShowTranslated ||
+        state.settings.autoTranslateTask !== prev.settings.autoTranslateTask;
       if (!changed) return;
 
       document.dispatchEvent(
         new CustomEvent('trans:settings-change', {
           detail: {
-            alwaysShowTranslated: state.alwaysShowTranslated,
-            prevAlwaysShowTranslated: prev.alwaysShowTranslated,
-            autoTranslateTask: state.autoTranslateTask,
-            prevAutoTranslateTask: prev.autoTranslateTask,
+            alwaysShowTranslated: state.settings.alwaysShowTranslated,
+            prevAlwaysShowTranslated: prev.settings.alwaysShowTranslated,
+            autoTranslateTask: state.settings.autoTranslateTask,
+            prevAutoTranslateTask: prev.settings.autoTranslateTask,
           },
         })
       );
@@ -81,21 +116,37 @@ export const App: React.FC = () => {
 
   useEffect(() => {
     return useGlobalStore.subscribe((state, prev) => {
-      if (!state.ready || prev.ready || !state.autoTranslateAll) return;
+      if (!state.ready || prev.ready || !state.settings.autoTranslateAll) return;
       runAutoTranslateAll(href);
     });
   }, [href]);
 
   useEffect(() => {
-    useGlobalStore.getState().setPlatformName(platformName);
     if (!platformName) return;
 
-    mountGlobalUiDom(getBlocks);
-
     void initHistory(href).then(() => {
-      if (useGlobalStore.getState().autoTranslateAll) runAutoTranslateAll(href);
+      if (useGlobalStore.getState().settings.autoTranslateAll) runAutoTranslateAll(href);
     });
-  }, [href, platformName, getBlocks, initHistory]);
+  }, [href, platformName, initHistory]);
 
-  return platformName ? <Toaster position="bottom-right" richColors /> : null;
+  return (
+    <>
+      {shadowAppRootElement &&
+        createPortal(
+          <>
+            <Sidebar />
+            <GlobalActionButton />
+          </>,
+          shadowAppRootElement
+        )}
+
+      {platformName && <Toaster position="bottom-right" richColors />}
+    </>
+  );
 };
+
+export const App: React.FC = () => (
+  <PlatformRuntimeProvider>
+    <AppBase />
+  </PlatformRuntimeProvider>
+);

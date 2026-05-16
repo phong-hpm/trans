@@ -27,8 +27,9 @@ const TABS = [
 const SIDEBAR_WIDTH = 480;
 
 export const Sidebar: React.FC = () => {
-  const { showSidebar, sidebarMode, activeSidebarTab, setSidebarTab, updateSettings } =
-    useGlobalStore();
+  const { settings, updateSettings } = useGlobalStore();
+  const { showSidebar, sidebarMode } = settings;
+  const [activeSidebarTab, setActiveSidebarTab] = useState(SidebarTabEnum.History);
   const [isMounted, setIsMounted] = useState(showSidebar);
   // Persisted across open/close cycles — stored here so HistoryTab unmount doesn't reset it
   const [openBlocks, setOpenBlocks] = useState<Record<string, boolean>>({});
@@ -120,7 +121,7 @@ export const Sidebar: React.FC = () => {
         <Tabs
           tabs={TABS}
           activeTab={activeSidebarTab}
-          onChange={(id) => setSidebarTab(id as SidebarTabEnum)}
+          onChange={(id) => setActiveSidebarTab(id as SidebarTabEnum)}
         />
 
         {/* Tab content — scrollable */}

@@ -82,7 +82,6 @@ trans/
         │   ├── Confirm.tsx              — Shared inline Confirm / Cancel action row
         │   ├── IconButton.tsx           — Icon-only button (variant: contain|outline, color: primary|danger|ghost); also exports ConfirmIconButton (X/Check two-step confirm)
         │   ├── Input.tsx                — Reusable labeled text input component
-        │   ├── Modal.tsx                — Generic modal shell: backdrop + rounded card with header and body slot
         │   ├── Select.tsx               — Reusable labeled select component
         │   ├── TextareaInput.tsx        — Reusable labeled textarea with optional help text
         ├── utils/
@@ -107,22 +106,25 @@ trans/
         │   └── logger.ts               — Grouped request logger; relays to page DevTools in DEV mode
         ├── store/
         │   ├── global.ts                — Zustand global store: flat settings + ready flag + sidebar state, init(), updateSettings() (auto-saves), openSidebarToBlock(), clearFocusedBlock()
-        │   └── history.ts               — Zustand history store: page histories in memory, init(), addEntry(), selectEntry(), deleteEntry(), deleteBlockHistory(), clearPage(), clearAll()
+        │   ├── history.ts               — Zustand history store: page histories in memory, init(), addEntry(), selectEntry(), deleteEntry(), deleteBlockHistory(), clearPage(), clearAll()
+        │   └── translationDisplay.ts    — Zustand store tracking which blocks are currently showing translated text; showTranslation, showOriginal, isShowingTranslation, clear
         ├── content/
         │   ├── DETECTION.md             — Explains platform detection, block discovery, MutationObserver strategy, and Turbo navigation handling
         │   ├── main.tsx                 — Content-script entrypoint: boots the React runtime island
-        │   ├── activeTranslations.ts    — In-memory Set of parsedContent keys currently showing translation; survives component re-mounts
         │   ├── translationSync.ts       — Sync coordinator: wraps useHistoryStore + optionally syncs to backend DB
         │   ├── batchTranslate.ts        — batchTranslateAll: extracts segments from all blocks, sends one BatchTranslate message, saves results to history
         │   ├── dom/
-        │   │   ├── globalUiDom.tsx      — Mount the global shadow-root UI island owned by App
-        │   │   ├── segmentsDom.ts       — Extract/apply/restore DOM text segments
-        │   │   ├── textDom.ts           — Read text from host-page DOM without mutating it
-        │   │   └── shadowDom.ts         — createShadowHost: shared factory for shadow root hosts with Tailwind styles injected
+        │   │   ├── PlatformDomTextMutator.ts   — Mark, apply, and restore text segments on one or many live platform DOM elements
+        │   │   ├── PlatformDomTextReader.ts     — Read-only text access on one or many live platform DOM elements; owns skip-tag rules and exposes readable text nodes
+        │   │   └── shadowDom.ts                — createShadowHost: shared factory for shadow root hosts with Tailwind styles injected
         │   ├── shadow.css               — Tailwind directives; imported via ?inline → injected into shadow roots
+        │   ├── context/
+        │   │   └── PlatformRuntimeContext.tsx — Platform DOM runtime state + shadow app root + MutationObserver; provides PlatformRuntimeProvider and usePlatformRuntimeContext
+        │   ├── renderer/
+        │   │   └── PlatformBlockToolbarRenderer.tsx — Mounts and manages per-block TranslateToolbar React roots inside shadow DOM
         │   ├── components/
         │   │   ├── App.tsx — Root content-script React app: platform scanning, history, settings, and dev logs
-        │   │   ├── TranslateAllButton.tsx — Fixed floating pill button (bottom-right); calls batchTranslateAll then dispatches trans:translate-all; tracks per-block progress
+        │   │   ├── GlobalActionButton.tsx — Floating action button (bottom-right); opens settings or triggers batch translate; tracks per-block progress
         │   │   ├── TranslatePopup.tsx   — Mode-selection dropdown portalled into shadow root; uses ThemeWrapper
         │   │   ├── TranslateToolbar.tsx — Top-right toolbar for task/comment blocks: toggle + split translate + IconButton(retranslate) + Button(history); uses ThemeWrapper
         │   │   ├── translateOptions.ts  — COMMENT_OPTIONS, SIMPLE_OPTIONS, TranslateOption type shared between Popup and Toolbar
@@ -146,11 +148,9 @@ trans/
         │       ├── useTranslateRuntimeEvents.ts — Handle document-level translate/settings events for a block
         │       ├── useTranslationHistorySync.ts — Sync block toolbar state with translation history store
         │       ├── useTranslate.ts      — Translation state machine with history-aware cache, retranslate, selectHistoryEntry, deleteHistoryEntry
-        │       ├── useBlockHistories.ts — Load and subscribe to all block histories for current page
-        │       └── useWatchPlatformDom.tsx — Watch platform DOM changes and mount per-block translation toolbars
+        │       └── useBlockHistories.ts — Load and subscribe to all block histories for current page
 ```
 
-# To delete: rm -rf extension/src/content/components/Modal
 # To delete: rm extension/src/constants/github-query.ts
 # To delete: rm extension/src/content/settings.ts
 # To delete: rm extension/src/content/hooks/useTheme.ts

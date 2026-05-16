@@ -22,7 +22,12 @@
       "Bash(yarn fix *)",
       "Bash(yarn tsc *)",
       "Bash(npx tsc *)",
-      "Bash(yarn build *)"
+      "Bash(yarn build *)",
+      "Bash(sed -i '' 's|import type { TranslatedSegment } from '\\\\''../dom/segmentsDom'\\\\'';|import type { TranslatedSegment } from '\\\\''../../types'\\\\'';|g' /Volumes/Work/projects/trans/extension/src/content/hooks/useTranslatedDom.ts /Volumes/Work/projects/trans/extension/src/content/hooks/useTranslateApi.ts /Volumes/Work/projects/trans/extension/src/content/hooks/useTranslationHistorySync.ts /Volumes/Work/projects/trans/extension/src/content/hooks/useTranslate.ts /Volumes/Work/projects/trans/extension/src/content/hooks/useReapplyTranslationOnBlockDomChange.ts)",
+      "Bash(sed -i '' 's|import type { TranslatedSegment } from '\\\\''./segmentsDom'\\\\'';|import type { TranslatedSegment } from '\\\\''../../types'\\\\'';|g' /Volumes/Work/projects/trans/extension/src/content/dom/PlatformDomTextMutator.ts)",
+      "Bash(grep -v \"unchanged\\\\|Done\\\\|yarn run\\\\|\\\\$\")",
+      "Bash(yarn eslint *)",
+      "Bash(grep -v \"^$\")"
     ]
   }
 }

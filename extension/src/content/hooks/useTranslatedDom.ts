@@ -6,8 +6,8 @@ import { useCallback } from 'react';
 import { getSegmentSelector } from '../../constants/dom';
 import type { PlatformBlock } from '../../platforms/types';
 import type { TranslationEntry } from '../../types';
-import type { TranslatedSegment } from '../dom/segmentsDom';
-import { applyTranslationDom, extractSegmentsDom, restoreOriginalDom } from '../dom/segmentsDom';
+import type { TranslatedSegment } from '../../types';
+import { PlatformDomTextMutator } from '../dom/PlatformDomTextMutator';
 import { useTargetElements } from './useTargetElements';
 
 interface Params {
@@ -27,7 +27,8 @@ export const useTranslatedDom = ({ platformBlock, segmentsRef }: Params): Result
   const restoreSegments = useCallback(() => {
     const segments = segmentsRef.current;
     if (!segments) return;
-    getTargetElements().forEach((element) => restoreOriginalDom(segments, element));
+    const segmenter = new PlatformDomTextMutator(getTargetElements());
+    segmenter.restore(segments);
   }, [segmentsRef, getTargetElements]);
 
   const applyFromEntry = useCallback(
@@ -39,7 +40,8 @@ export const useTranslatedDom = ({ platformBlock, segmentsRef }: Params): Result
         translatedText: map.get(segment.text) ?? segment.text,
       }));
       segmentsRef.current = updated;
-      elements.forEach((element) => applyTranslationDom(updated, element));
+      const segmenter = new PlatformDomTextMutator(elements);
+      segmenter.apply(updated);
     },
     [segmentsRef]
   );
@@ -51,14 +53,16 @@ export const useTranslatedDom = ({ platformBlock, segmentsRef }: Params): Result
         currentElements.some((element) => element.querySelector(getSegmentSelector(segment.id)))
       );
 
+      const segmenter = new PlatformDomTextMutator(currentElements);
+
       if (spansPresent) {
         segmentsRef.current = translated;
-        currentElements.forEach((element) => applyTranslationDom(translated, element));
+        segmenter.apply(translated);
         return;
       }
 
       const map = new Map(translated.map((segment) => [segment.text, segment.translatedText]));
-      const raw = currentElements.flatMap((element) => extractSegmentsDom(element));
+      const raw = segmenter.extractAndMark();
       if (!raw.length) return;
 
       const rehydrated = raw.map((segment) => ({
@@ -66,7 +70,7 @@ export const useTranslatedDom = ({ platformBlock, segmentsRef }: Params): Result
         translatedText: map.get(segment.text) ?? segment.text,
       }));
       segmentsRef.current = rehydrated;
-      currentElements.forEach((element) => applyTranslationDom(rehydrated, element));
+      segmenter.apply(rehydrated);
     },
     [segmentsRef, getTargetElements]
   );

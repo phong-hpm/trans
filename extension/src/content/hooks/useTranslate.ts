@@ -15,11 +15,11 @@ import { TranslateStateEnum } from '../../enums';
 import type { PlatformBlock } from '../../platforms/types';
 import { useGlobalStore } from '../../store/global';
 import { useHistoryStore } from '../../store/history';
+import { useTranslationDisplayStore } from '../../store/translationDisplay';
 import type { TranslationEntry } from '../../types';
-import { markActive, markInactive } from '../activeTranslations';
+import type { TranslatedSegment } from '../../types';
 import { TranslatableBlock } from '../block/TranslatableBlock';
-import type { TranslatedSegment } from '../dom/segmentsDom';
-import { extractSegmentsDom } from '../dom/segmentsDom';
+import { PlatformDomTextMutator } from '../dom/PlatformDomTextMutator';
 import { addTranslationEntry } from '../translationSync';
 import { useReapplyTranslationOnBlockDomChange } from './useReapplyTranslationOnBlockDomChange';
 import { useTargetElements } from './useTargetElements';
@@ -34,15 +34,9 @@ export const useTranslate = (platformBlock: PlatformBlock) => {
   const translatableBlock = useMemo(() => new TranslatableBlock(platformBlock), [platformBlock]);
   const parsedContent = translatableBlock.parsedContent;
   const blockType = translatableBlock.blockType;
-  const {
-    targetLanguage,
-    provider,
-    model,
-    userContext,
-    ready,
-    alwaysShowTranslated,
-    autoTranslateTask,
-  } = useGlobalStore();
+  const { settings, ready } = useGlobalStore();
+  const { targetLanguage, provider, model, userContext, alwaysShowTranslated, autoTranslateTask } =
+    settings;
   const { getBlockHistory, getSelectedEntry } = useHistoryStore();
   const [uiState, setUiState] = useState<TranslateState>(TranslateStateEnum.Idle);
   const [history, setHistory] = useState<TranslationEntry[]>([]);
@@ -72,9 +66,9 @@ export const useTranslate = (platformBlock: PlatformBlock) => {
       stateRef.current = s;
       setUiState(s);
       if (s === TranslateStateEnum.Translated) {
-        markActive(parsedContent);
+        useTranslationDisplayStore.getState().showTranslation(parsedContent);
       } else if (s === TranslateStateEnum.Idle) {
-        markInactive(parsedContent);
+        useTranslationDisplayStore.getState().showOriginal(parsedContent);
       }
     },
     [parsedContent]
@@ -103,7 +97,8 @@ export const useTranslate = (platformBlock: PlatformBlock) => {
     const elements = getTargetElements();
     if (segmentsRef.current) return elements;
 
-    const rawSegments = elements.flatMap((el) => extractSegmentsDom(el));
+    const segmenter = new PlatformDomTextMutator(elements);
+    const rawSegments = segmenter.extractAndMark();
     if (!rawSegments.length) return null;
 
     segmentsRef.current = rawSegments.map((segment) => ({

@@ -10,6 +10,7 @@ import { useGlobalStore } from '../../../store/global';
 import { StoragePanel } from './StoragePanel';
 
 export const SettingsPanel: React.FC = () => {
+  const { settings, updateSettings } = useGlobalStore();
   const {
     theme,
     targetLanguage,
@@ -17,8 +18,7 @@ export const SettingsPanel: React.FC = () => {
     autoTranslateTask,
     autoTranslateAll,
     syncToDb,
-    updateSettings,
-  } = useGlobalStore();
+  } = settings;
 
   return (
     <div className="flex min-h-full flex-col">

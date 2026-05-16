@@ -12,6 +12,10 @@ export interface TranslateSegment {
   text: string;
 }
 
+export interface TranslatedSegment extends TranslateSegment {
+  translatedText: string;
+}
+
 export interface TranslateRequest {
   blockType: BlockTypeEnum;
   segments: TranslateSegment[];

@@ -1,4 +1,4 @@
-// TranslateAllButton.tsx — Floating extension launcher with settings and batch translate actions
+// GlobalActionButton.tsx — Floating extension launcher with settings and batch translate actions
 
 import clsx from 'clsx';
 import { Languages, Loader2, Settings } from 'lucide-react';
@@ -8,19 +8,16 @@ import { toast } from 'sonner';
 
 import extensionIconUrl from '../../../icons/icon128.png';
 import { ThemeWrapper } from '../../components/ThemeWrapper';
-import type { PlatformBlock } from '../../platforms/types';
 import { useGlobalStore } from '../../store/global';
+import { usePlatformRuntimeContext } from '../context/PlatformRuntimeContext';
 import { useTranslateAll } from '../hooks/useTranslateAll';
 
-interface Props {
-  getBlocks: () => PlatformBlock[];
-}
-
-export const TranslateAllButton: React.FC<Props> = ({ getBlocks }) => {
+export const GlobalActionButton: React.FC = () => {
+  const { platformAdapter } = usePlatformRuntimeContext();
   const [isTranslating, setIsTranslating] = useState(false);
   const [done, setDone] = useState(0);
   const [total, setTotal] = useState(0);
-  const { openSettingsPanel } = useGlobalStore();
+  const { setShowSidebar } = useGlobalStore();
   const { onTranslateAll } = useTranslateAll();
   const totalRef = useRef(0);
   const doneRef = useRef(0);
@@ -45,7 +42,7 @@ export const TranslateAllButton: React.FC<Props> = ({ getBlocks }) => {
     // Ref guard is atomic; state guard is for UI disabled state
     if (isTranslatingRef.current) return;
 
-    const blocks = getBlocks();
+    const blocks = platformAdapter?.getBlocks() ?? [];
     if (!blocks.length) return;
 
     isTranslatingRef.current = true;
@@ -72,7 +69,7 @@ export const TranslateAllButton: React.FC<Props> = ({ getBlocks }) => {
       isTranslatingRef.current = false;
       setIsTranslating(false);
     }
-  }, [onTranslateAll, getBlocks]);
+  }, [onTranslateAll, platformAdapter]);
 
   return (
     <ThemeWrapper>
@@ -90,7 +87,7 @@ export const TranslateAllButton: React.FC<Props> = ({ getBlocks }) => {
         >
           <button
             type="button"
-            onClick={openSettingsPanel}
+            onClick={() => setShowSidebar(true)}
             className={clsx(
               'flex items-center justify-end gap-2 rounded px-1.5 py-1 text-right text-xs font-medium transition-colors',
               'bg-white/90 text-gray-700 hover:text-gray-950',

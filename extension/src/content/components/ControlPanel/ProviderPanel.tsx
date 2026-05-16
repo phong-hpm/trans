@@ -7,9 +7,13 @@ import { TextareaInput } from '../../../components/TextareaInput';
 import { MODELS, PROVIDERS } from '../../../constants/providers';
 import type { ProviderEnum } from '../../../enums';
 import { useGlobalStore } from '../../../store/global';
+import { usePlatformRuntimeContext } from '../../context/PlatformRuntimeContext';
 
 export const ProviderPanel: React.FC = () => {
-  const { provider, model, userContext, platformName, updateSettings } = useGlobalStore();
+  const { settings, updateSettings } = useGlobalStore();
+  const { provider, model, userContext } = settings;
+  const { platformAdapter } = usePlatformRuntimeContext();
+  const platformName = platformAdapter?.name ?? null;
 
   const handleProviderChange = (newProvider: string) => {
     const p = newProvider as ProviderEnum;

@@ -6,10 +6,10 @@ import { useEffect } from 'react';
 import { TranslateStateEnum } from '../../enums';
 import type { PlatformBlock } from '../../platforms/types';
 import { useHistoryStore } from '../../store/history';
+import { useTranslationDisplayStore } from '../../store/translationDisplay';
 import type { TranslationEntry } from '../../types';
-import { isActive } from '../activeTranslations';
+import type { TranslatedSegment } from '../../types';
 import { TranslatableBlock } from '../block/TranslatableBlock';
-import type { TranslatedSegment } from '../dom/segmentsDom';
 import { useTargetElements } from './useTargetElements';
 
 interface Params {
@@ -39,7 +39,7 @@ export const useTranslationHistorySync = ({
     const hist = getBlockHistory(parsedContent);
     if (hist?.entries.length) {
       setHistory(hist.entries);
-      if (isActive(parsedContent)) {
+      if (useTranslationDisplayStore.getState().isShowingTranslation(parsedContent)) {
         translateRef.current();
       }
     }

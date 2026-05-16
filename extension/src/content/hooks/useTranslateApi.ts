@@ -4,8 +4,8 @@ import { useCallback } from 'react';
 
 import { BlockTypeEnum, MessageTypeEnum } from '../../enums';
 import type { PlatformBlock } from '../../platforms/types';
+import type { TranslatedSegment } from '../../types';
 import { TranslatableBlock } from '../block/TranslatableBlock';
-import type { TranslatedSegment } from '../dom/segmentsDom';
 
 interface Params {
   platformBlock: PlatformBlock;

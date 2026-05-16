@@ -6,9 +6,9 @@ import { useEffect } from 'react';
 import { getSegmentSelector } from '../../constants/dom';
 import { TranslateStateEnum } from '../../enums';
 import type { PlatformBlock } from '../../platforms/types';
+import type { TranslatedSegment } from '../../types';
 import { TranslatableBlock } from '../block/TranslatableBlock';
-import type { TranslatedSegment } from '../dom/segmentsDom';
-import { applyTranslationDom, extractSegmentsDom } from '../dom/segmentsDom';
+import { PlatformDomTextMutator } from '../dom/PlatformDomTextMutator';
 import { useTargetElements } from './useTargetElements';
 
 interface Params {
@@ -45,14 +45,15 @@ export const useReapplyTranslationOnBlockDomChange = ({
 
       observer.disconnect();
 
-      const raw = liveElements.flatMap((element) => extractSegmentsDom(element));
+      const segmenter = new PlatformDomTextMutator(liveElements);
+      const raw = segmenter.extractAndMark();
       if (raw.length) {
         const rehydrated = raw.map((segment) => ({
           ...segment,
           translatedText: translationMap.get(segment.text) ?? segment.text,
         }));
         segmentsRef.current = rehydrated;
-        liveElements.forEach((element) => applyTranslationDom(rehydrated, element));
+        segmenter.apply(rehydrated);
       }
 
       observer.observe(containerEl, { childList: true, subtree: true });

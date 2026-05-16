@@ -7,6 +7,7 @@ import { useEffect, useRef } from 'react';
 import { ConfirmButton } from '../../../components/Button';
 import { useGlobalStore } from '../../../store/global';
 import { useHistoryStore } from '../../../store/history';
+import { usePlatformRuntimeContext } from '../../context/PlatformRuntimeContext';
 import { useBlockHistories } from '../../hooks/useBlockHistories';
 import { BlockCollapse } from './BlockCollapse';
 
@@ -18,7 +19,9 @@ interface Props {
 }
 
 export const HistoryTab: React.FC<Props> = ({ openBlocks, onSetBlock }) => {
-  const { focusedParsedContent, clearFocusedBlock, platformName } = useGlobalStore();
+  const { focusedParsedContent, setFocusedParsedContent } = useGlobalStore();
+  const { platformAdapter } = usePlatformRuntimeContext();
+  const platformName = platformAdapter?.name ?? null;
   const pageCount = useHistoryStore((s) => s.histories.length);
   const clearPage = useHistoryStore((s) => s.clearPage);
   const histories = useBlockHistories();
@@ -33,9 +36,9 @@ export const HistoryTab: React.FC<Props> = ({ openBlocks, onSetBlock }) => {
         behavior: 'smooth',
         block: 'start',
       });
-      clearFocusedBlock();
+      setFocusedParsedContent(null);
     });
-  }, [focusedParsedContent, clearFocusedBlock, onSetBlock]);
+  }, [focusedParsedContent, setFocusedParsedContent, onSetBlock]);
 
   const pageInfo = (
     <div className="mt-auto border-t border-gray-200 bg-gray-50 p-3 dark:border-gray-700 dark:bg-gray-900">

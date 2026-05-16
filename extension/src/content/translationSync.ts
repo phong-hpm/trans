@@ -8,7 +8,7 @@ import { useGlobalStore } from '../store/global';
 import { useHistoryStore } from '../store/history';
 import type { BlockHistory } from '../types';
 
-const isSyncEnabled = (): boolean => useGlobalStore.getState().syncToDb;
+const isSyncEnabled = (): boolean => useGlobalStore.getState().settings.syncToDb;
 
 const syncSave = (history: BlockHistory): void => {
   if (!isSyncEnabled()) return;

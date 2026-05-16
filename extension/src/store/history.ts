@@ -11,10 +11,10 @@ import {
   saveBlockHistoryApi,
   subscribeHistoryChangesApi,
 } from '../apis/historyApi';
-import { clearActiveTranslations } from '../content/activeTranslations';
 import type { BlockTypeEnum } from '../enums';
 import type { BlockHistory, TranslationEntry } from '../types';
 import { normalizePageUrl } from '../utils/url';
+import { useTranslationDisplayStore } from './translationDisplay';
 
 interface HistoryStore {
   pageUrl: string | null;
@@ -87,7 +87,7 @@ export const useHistoryStore = create<HistoryStore>((set, get) => {
       storageUnsub = null;
 
       // Clear in-memory active translation tracking for the previous page
-      clearActiveTranslations();
+      useTranslationDisplayStore.getState().clear();
 
       const pageUrl = normalizePageUrl(rawPageUrl);
       const histories = await getAllHistoriesApi(pageUrl);
