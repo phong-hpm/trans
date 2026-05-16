@@ -10,19 +10,22 @@ import { IconButton } from '../../components/IconButton';
 import { ThemeWrapper } from '../../components/ThemeWrapper';
 import { Toggle } from '../../components/Toggle';
 import { BlockTypeEnum, TranslateStateEnum } from '../../enums';
-import type { BlockTranslationTarget } from '../../platforms/types';
+import type { PlatformBlock } from '../../platforms/types';
 import { useGlobalStore } from '../../store/global';
+import { TranslatableBlock } from '../block/TranslatableBlock';
 import { useTranslate } from '../hooks/useTranslate';
 import type { TranslateOption } from './translateOptions';
 import { COMMENT_OPTIONS, SIMPLE_OPTIONS } from './translateOptions';
 import { TranslatePopup } from './TranslatePopup';
 
 interface Props {
-  blockTarget: BlockTranslationTarget;
+  platformBlock: PlatformBlock;
 }
 
-export const TranslateToolbar: React.FC<Props> = ({ blockTarget }) => {
-  const { parsedContent, blockType } = blockTarget;
+export const TranslateToolbar: React.FC<Props> = ({ platformBlock }) => {
+  const translatableBlock = new TranslatableBlock(platformBlock);
+  const parsedContent = translatableBlock.parsedContent;
+  const blockType = platformBlock.blockType;
   const options = blockType === BlockTypeEnum.Comment ? COMMENT_OPTIONS : SIMPLE_OPTIONS;
   const [selectedOption, setSelectedOption] = useState<TranslateOption>(options[0]);
   const [popupOpen, setPopupOpen] = useState(false);
@@ -30,7 +33,7 @@ export const TranslateToolbar: React.FC<Props> = ({ blockTarget }) => {
   const { openSidebarToBlock } = useGlobalStore();
 
   const { state, translate, retranslate, restore, hasTranslation, history, setMode } =
-    useTranslate(blockTarget);
+    useTranslate(platformBlock);
 
   const isTranslated = state === TranslateStateEnum.Translated;
   const isLoading = state === TranslateStateEnum.Loading;

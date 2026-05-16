@@ -3,12 +3,12 @@
 import { createRoot } from 'react-dom/client';
 
 import { ROOT_NODE_ID } from '../../constants/dom';
-import type { Block } from '../../platforms/types';
+import type { PlatformBlock } from '../../platforms/types';
 import { Sidebar } from '../components/Sidebar';
 import { TranslateAllButton } from '../components/TranslateAllButton';
 import { createShadowHost } from './shadowDom';
 
-export const mountGlobalUiDom = (getBlocks: () => Block[]): void => {
+export const mountGlobalUiDom = (getBlocks: () => PlatformBlock[]): void => {
   if (document.getElementById(ROOT_NODE_ID)) return;
 
   const { host, mount } = createShadowHost(

@@ -3,7 +3,7 @@
 import type { BlockTypeEnum } from '../enums';
 import type { ContextBlock } from '../types';
 
-export interface Block {
+export interface PlatformBlock {
   blockType: BlockTypeEnum;
   containerEl: HTMLElement;
   contentEl: HTMLElement;
@@ -17,23 +17,5 @@ export interface Block {
 export interface PlatformAdapter {
   name: string;
   pagePattern: RegExp;
-  getBlocks: () => Block[];
-}
-
-/** Normalized DOM access contract for a single translatable block.
- *  Platform-specific querying stays in the platform layer; React components
- *  and hooks only consume this stable interface. */
-export interface BlockDomAccess {
-  getElement: () => HTMLElement;
-  getElements: () => HTMLElement[];
-  getContextBlocks?: () => ContextBlock[];
-  getContainerEl: () => HTMLElement;
-}
-
-/** Single typed target passed from the platform mounting layer into React.
- *  Replaces loose parsedContent / blockType / DOM-callback props. */
-export interface BlockTranslationTarget {
-  parsedContent: string;
-  blockType: BlockTypeEnum;
-  domAccess: BlockDomAccess;
+  getBlocks: () => PlatformBlock[];
 }

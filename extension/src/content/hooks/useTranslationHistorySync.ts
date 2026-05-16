@@ -4,15 +4,16 @@ import type { MutableRefObject } from 'react';
 import { useEffect } from 'react';
 
 import { TranslateStateEnum } from '../../enums';
-import type { BlockTranslationTarget } from '../../platforms/types';
+import type { PlatformBlock } from '../../platforms/types';
 import { useHistoryStore } from '../../store/history';
 import type { TranslationEntry } from '../../types';
 import { isActive } from '../activeTranslations';
+import { TranslatableBlock } from '../block/TranslatableBlock';
 import type { TranslatedSegment } from '../dom/segmentsDom';
 import { useTargetElements } from './useTargetElements';
 
 interface Params {
-  blockTarget: BlockTranslationTarget;
+  platformBlock: PlatformBlock;
   setHistory: (entries: TranslationEntry[]) => void;
   stateRef: MutableRefObject<TranslateStateEnum>;
   segmentsRef: MutableRefObject<TranslatedSegment[] | null>;
@@ -22,7 +23,7 @@ interface Params {
 }
 
 export const useTranslationHistorySync = ({
-  blockTarget,
+  platformBlock,
   setHistory,
   stateRef,
   segmentsRef,
@@ -30,9 +31,9 @@ export const useTranslationHistorySync = ({
   restoreRef,
   applyFromEntry,
 }: Params): void => {
-  const { parsedContent } = blockTarget;
+  const parsedContent = new TranslatableBlock(platformBlock).parsedContent;
   const { getBlockHistory } = useHistoryStore();
-  const getTargetElements = useTargetElements(blockTarget);
+  const getTargetElements = useTargetElements(platformBlock);
 
   useEffect(() => {
     const hist = getBlockHistory(parsedContent);

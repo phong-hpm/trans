@@ -2,10 +2,11 @@
 
 import { useCallback } from 'react';
 
-import type { BlockTranslationTarget } from '../../platforms/types';
+import type { PlatformBlock } from '../../platforms/types';
+import { TranslatableBlock } from '../block/TranslatableBlock';
 
-export const useTargetElements = (blockTarget: BlockTranslationTarget): (() => HTMLElement[]) =>
+export const useTargetElements = (platformBlock: PlatformBlock): (() => HTMLElement[]) =>
   useCallback((): HTMLElement[] => {
-    const elements = blockTarget.domAccess.getElements();
+    const elements = new TranslatableBlock(platformBlock).elements;
     return elements.filter((el, index) => el.isConnected && elements.indexOf(el) === index);
-  }, [blockTarget]);
+  }, [platformBlock]);

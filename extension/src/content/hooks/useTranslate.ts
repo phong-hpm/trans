@@ -8,15 +8,16 @@
 // stateRef + segmentsRef together form the block's runtime translation state; uiState is the
 // React mirror used for rendering only.
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
 
 import { TranslateStateEnum } from '../../enums';
-import type { BlockTranslationTarget } from '../../platforms/types';
+import type { PlatformBlock } from '../../platforms/types';
 import { useGlobalStore } from '../../store/global';
 import { useHistoryStore } from '../../store/history';
 import type { TranslationEntry } from '../../types';
 import { markActive, markInactive } from '../activeTranslations';
+import { TranslatableBlock } from '../block/TranslatableBlock';
 import type { TranslatedSegment } from '../dom/segmentsDom';
 import { extractSegmentsDom } from '../dom/segmentsDom';
 import { addTranslationEntry } from '../translationSync';
@@ -29,8 +30,10 @@ import { useTranslationHistorySync } from './useTranslationHistorySync';
 
 type TranslateState = TranslateStateEnum;
 
-export const useTranslate = (blockTarget: BlockTranslationTarget) => {
-  const { parsedContent, blockType } = blockTarget;
+export const useTranslate = (platformBlock: PlatformBlock) => {
+  const translatableBlock = useMemo(() => new TranslatableBlock(platformBlock), [platformBlock]);
+  const parsedContent = translatableBlock.parsedContent;
+  const blockType = translatableBlock.blockType;
   const {
     targetLanguage,
     provider,
@@ -57,9 +60,9 @@ export const useTranslate = (blockTarget: BlockTranslationTarget) => {
   const translateRef = useRef<() => Promise<void>>(async () => {});
   const restoreRef = useRef<() => void>(() => {});
 
-  const getTargetElements = useTargetElements(blockTarget);
+  const getTargetElements = useTargetElements(platformBlock);
   const { restoreSegments, applyFromEntry, applyToLiveElement } = useTranslatedDom({
-    blockTarget,
+    platformBlock,
     segmentsRef,
   });
   const getMode = useCallback(() => modeRef.current, []);
@@ -88,7 +91,7 @@ export const useTranslate = (blockTarget: BlockTranslationTarget) => {
   });
 
   const callApi = useTranslateApi({
-    blockTarget,
+    platformBlock,
     targetLanguage,
     provider,
     model,
@@ -197,7 +200,7 @@ export const useTranslate = (blockTarget: BlockTranslationTarget) => {
   }, [parsedContent, blockType, ensureSegmentsExtracted, setState, callApi, applyToLiveElement]);
 
   useTranslationHistorySync({
-    blockTarget,
+    platformBlock,
     setHistory,
     stateRef,
     segmentsRef,
@@ -221,7 +224,7 @@ export const useTranslate = (blockTarget: BlockTranslationTarget) => {
   }, [parsedContent, ready, autoTranslateTask]);
 
   useReapplyTranslationOnBlockDomChange({
-    blockTarget,
+    platformBlock,
     stateRef,
     segmentsRef,
   });

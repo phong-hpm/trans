@@ -3,11 +3,12 @@
 import { useCallback } from 'react';
 
 import { BlockTypeEnum, MessageTypeEnum } from '../../enums';
-import type { BlockTranslationTarget } from '../../platforms/types';
+import type { PlatformBlock } from '../../platforms/types';
+import { TranslatableBlock } from '../block/TranslatableBlock';
 import type { TranslatedSegment } from '../dom/segmentsDom';
 
 interface Params {
-  blockTarget: BlockTranslationTarget;
+  platformBlock: PlatformBlock;
   targetLanguage: string;
   provider: string;
   model: string;
@@ -16,7 +17,7 @@ interface Params {
 }
 
 export const useTranslateApi = ({
-  blockTarget,
+  platformBlock,
   targetLanguage,
   provider,
   model,
@@ -25,8 +26,9 @@ export const useTranslateApi = ({
 }: Params): ((rawSegments: TranslatedSegment[]) => Promise<TranslatedSegment[]>) =>
   useCallback(
     async (rawSegments: TranslatedSegment[]): Promise<TranslatedSegment[]> => {
-      const { blockType, domAccess } = blockTarget;
-      const allContext = domAccess.getContextBlocks?.() ?? [];
+      const translatableBlock = new TranslatableBlock(platformBlock);
+      const { blockType } = translatableBlock;
+      const allContext = translatableBlock.contextBlocks;
       const mode = getMode();
       const contextBlocks =
         mode === 'direct'
@@ -56,5 +58,5 @@ export const useTranslateApi = ({
           segment.text,
       }));
     },
-    [blockTarget, targetLanguage, provider, model, userContext, getMode]
+    [platformBlock, targetLanguage, provider, model, userContext, getMode]
   );

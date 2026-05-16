@@ -8,12 +8,12 @@ import { toast } from 'sonner';
 
 import extensionIconUrl from '../../../icons/icon128.png';
 import { ThemeWrapper } from '../../components/ThemeWrapper';
-import type { Block } from '../../platforms/types';
+import type { PlatformBlock } from '../../platforms/types';
 import { useGlobalStore } from '../../store/global';
 import { useTranslateAll } from '../hooks/useTranslateAll';
 
 interface Props {
-  getBlocks: () => Block[];
+  getBlocks: () => PlatformBlock[];
 }
 
 export const TranslateAllButton: React.FC<Props> = ({ getBlocks }) => {

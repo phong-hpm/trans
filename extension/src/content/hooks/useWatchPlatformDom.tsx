@@ -6,15 +6,15 @@ import { createRoot } from 'react-dom/client';
 
 import { BLOCK_HOST_DATASET_KEY, BLOCK_HOST_SELECTOR } from '../../constants/dom';
 import { detectPlatform } from '../../platforms';
-import type { Block, BlockDomAccess, BlockTranslationTarget } from '../../platforms/types';
+import type { PlatformBlock } from '../../platforms/types';
+import { TranslatableBlock } from '../block/TranslatableBlock';
 import { TranslateToolbar } from '../components/TranslateToolbar';
 import { createShadowHost } from '../dom/shadowDom';
-import { getParsedContentsDom } from '../dom/textDom';
 
 interface UseWatchPlatformDomResult {
   href: string;
   platformName: string | null;
-  getBlocks: () => Block[];
+  getBlocks: () => PlatformBlock[];
 }
 
 const blockRoots = new Map<HTMLElement, Root>();
@@ -30,38 +30,19 @@ const cleanupOrphanedRoots = (): void => {
 
 const mountBlockToolbar = ({
   anchor,
-  block,
-  parsedContent,
+  platformBlock,
 }: {
   anchor: HTMLElement;
-  block: Block;
-  parsedContent: string;
+  platformBlock: PlatformBlock;
 }): void => {
   if (anchor.querySelector(BLOCK_HOST_SELECTOR)) return;
 
+  const translatableBlock = new TranslatableBlock(platformBlock);
   const { host, mount } = createShadowHost('');
-  host.dataset[BLOCK_HOST_DATASET_KEY] = parsedContent.slice(0, 40);
-
-  // Build normalized DOM access — all platform-specific querying stays here
-  const domAccess: BlockDomAccess = {
-    getElement: () => block.getLiveElement?.() ?? block.contentEl,
-    getElements: () => {
-      const primary = domAccess.getElement();
-      const attached = block.getLiveAttachedElements?.() ?? block.attachedContentEls ?? [];
-      return [...attached, primary].filter((el, index, elements) => elements.indexOf(el) === index);
-    },
-    getContextBlocks: block.getContextBlocks,
-    getContainerEl: () => block.containerEl,
-  };
-
-  const blockTarget: BlockTranslationTarget = {
-    parsedContent,
-    blockType: block.blockType,
-    domAccess,
-  };
+  host.dataset[BLOCK_HOST_DATASET_KEY] = translatableBlock.parsedContent.slice(0, 40);
 
   const root = createRoot(mount);
-  root.render(<TranslateToolbar blockTarget={blockTarget} />);
+  root.render(<TranslateToolbar platformBlock={platformBlock} />);
   blockRoots.set(anchor, root);
   anchor.appendChild(host);
 };
@@ -76,20 +57,17 @@ const createBlockAnchor = (contentEl: HTMLElement): HTMLElement | null => {
   return anchor;
 };
 
-const processBlocks = (blocks: Block[]): void => {
+const processBlocks = (blocks: PlatformBlock[]): void => {
   cleanupOrphanedRoots();
 
-  for (const block of blocks) {
-    const anchor = createBlockAnchor(block.contentEl);
+  for (const platformBlock of blocks) {
+    const anchor = createBlockAnchor(platformBlock.contentEl);
     if (!anchor) continue;
 
-    const parsedContent = getParsedContentsDom([
-      ...(block.attachedContentEls ?? []),
-      block.contentEl,
-    ]);
+    const parsedContent = new TranslatableBlock(platformBlock).parsedContent;
     if (!parsedContent) continue;
 
-    mountBlockToolbar({ anchor, block, parsedContent });
+    mountBlockToolbar({ anchor, platformBlock });
   }
 };
 
@@ -116,7 +94,7 @@ export const useWatchPlatformDom = (): UseWatchPlatformDomResult => {
 
   const getBlocks = useCallback(() => detectPlatform(location.href)?.getBlocks() ?? [], []);
 
-  const syncPlatformDom = useCallback(() => {
+  const syncPlatformDom = useCallback((): void => {
     const platform = detectPlatform(location.href);
     const nextHref = location.href;
     const nextPlatformName = platform?.name ?? null;

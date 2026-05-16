@@ -3,15 +3,15 @@
 import { getOriginalTextDom } from '../../content/dom/textDom';
 import { BlockTypeEnum } from '../../enums';
 import type { ContextBlock } from '../../types';
-import type { Block, PlatformAdapter } from '../types';
+import type { PlatformAdapter, PlatformBlock } from '../types';
 import { getTaskEl, getTitleEl, githubQueries as q } from './queries';
 
 export const githubAdapter: PlatformAdapter = {
   name: 'GitHub',
   pagePattern: q.pagePattern,
 
-  getBlocks: (): Block[] => {
-    const blocks: Block[] = [];
+  getBlocks: (): PlatformBlock[] => {
+    const blocks: PlatformBlock[] = [];
 
     // Issue body
     const issueBodyBlock = document.querySelector<HTMLElement>(q.issueBody);

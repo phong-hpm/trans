@@ -5,26 +5,27 @@ import { useEffect } from 'react';
 
 import { getSegmentSelector } from '../../constants/dom';
 import { TranslateStateEnum } from '../../enums';
-import type { BlockTranslationTarget } from '../../platforms/types';
+import type { PlatformBlock } from '../../platforms/types';
+import { TranslatableBlock } from '../block/TranslatableBlock';
 import type { TranslatedSegment } from '../dom/segmentsDom';
 import { applyTranslationDom, extractSegmentsDom } from '../dom/segmentsDom';
 import { useTargetElements } from './useTargetElements';
 
 interface Params {
-  blockTarget: BlockTranslationTarget;
+  platformBlock: PlatformBlock;
   stateRef: MutableRefObject<TranslateStateEnum>;
   segmentsRef: MutableRefObject<TranslatedSegment[] | null>;
 }
 
 export const useReapplyTranslationOnBlockDomChange = ({
-  blockTarget,
+  platformBlock,
   stateRef,
   segmentsRef,
 }: Params): void => {
-  const getTargetElements = useTargetElements(blockTarget);
+  const getTargetElements = useTargetElements(platformBlock);
 
   useEffect(() => {
-    const containerEl = blockTarget.domAccess.getContainerEl();
+    const containerEl = new TranslatableBlock(platformBlock).containerEl;
 
     const observer = new MutationObserver(() => {
       if (stateRef.current !== TranslateStateEnum.Translated) return;
@@ -59,5 +60,5 @@ export const useReapplyTranslationOnBlockDomChange = ({
 
     observer.observe(containerEl, { childList: true, subtree: true });
     return () => observer.disconnect();
-  }, [blockTarget, getTargetElements, stateRef, segmentsRef]);
+  }, [platformBlock, getTargetElements, stateRef, segmentsRef]);
 };

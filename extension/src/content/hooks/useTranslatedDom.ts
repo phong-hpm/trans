@@ -4,14 +4,14 @@ import type { MutableRefObject } from 'react';
 import { useCallback } from 'react';
 
 import { getSegmentSelector } from '../../constants/dom';
-import type { BlockTranslationTarget } from '../../platforms/types';
+import type { PlatformBlock } from '../../platforms/types';
 import type { TranslationEntry } from '../../types';
 import type { TranslatedSegment } from '../dom/segmentsDom';
 import { applyTranslationDom, extractSegmentsDom, restoreOriginalDom } from '../dom/segmentsDom';
 import { useTargetElements } from './useTargetElements';
 
 interface Params {
-  blockTarget: BlockTranslationTarget;
+  platformBlock: PlatformBlock;
   segmentsRef: MutableRefObject<TranslatedSegment[] | null>;
 }
 
@@ -21,8 +21,8 @@ interface Result {
   applyToLiveElement: (translated: TranslatedSegment[]) => void;
 }
 
-export const useTranslatedDom = ({ blockTarget, segmentsRef }: Params): Result => {
-  const getTargetElements = useTargetElements(blockTarget);
+export const useTranslatedDom = ({ platformBlock, segmentsRef }: Params): Result => {
+  const getTargetElements = useTargetElements(platformBlock);
 
   const restoreSegments = useCallback(() => {
     const segments = segmentsRef.current;

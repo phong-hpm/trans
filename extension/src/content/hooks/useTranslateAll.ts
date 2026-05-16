@@ -3,7 +3,7 @@
 import { useCallback } from 'react';
 
 import { MessageTypeEnum } from '../../enums';
-import type { Block } from '../../platforms/types';
+import type { PlatformBlock } from '../../platforms/types';
 import { useGlobalStore } from '../../store/global';
 import type { BatchTranslateResponse, ContextBlock } from '../../types';
 import { extractSegmentsDom } from '../dom/segmentsDom';
@@ -28,18 +28,19 @@ export const useTranslateAll = () => {
   const { targetLanguage, provider, model, userContext } = useGlobalStore();
 
   const onTranslateAll = useCallback(
-    async (blocks: Block[]): Promise<number> => {
+    async (blocks: PlatformBlock[]): Promise<number> => {
       type PreparedBlock = {
         parsedContent: string;
         segments: { id: string; text: string }[];
-        blockType: Block['blockType'];
+        blockType: PlatformBlock['blockType'];
         idToText: Map<string, string>;
       };
 
       const prepared: PreparedBlock[] = [];
-      for (const block of blocks) {
-        const livePrimary = block.getLiveElement?.() ?? block.contentEl;
-        const liveAttached = block.getLiveAttachedElements?.() ?? block.attachedContentEls ?? [];
+      for (const platformBlock of blocks) {
+        const livePrimary = platformBlock.getLiveElement?.() ?? platformBlock.contentEl;
+        const liveAttached =
+          platformBlock.getLiveAttachedElements?.() ?? platformBlock.attachedContentEls ?? [];
         const elements = [...liveAttached, livePrimary].filter(
           (el, index, all): el is HTMLElement => !!el && el.isConnected && all.indexOf(el) === index
         );
@@ -52,7 +53,7 @@ export const useTranslateAll = () => {
         prepared.push({
           parsedContent,
           segments: rawSegments.map(({ id, text }) => ({ id, text })),
-          blockType: block.blockType,
+          blockType: platformBlock.blockType,
           idToText: new Map(rawSegments.map((s) => [s.id, s.text])),
         });
       }
